@@ -11,31 +11,21 @@ internal extension StringLexeme {
     }
 }
 
-private struct NewlineLex: Lexeme {
-    init(_ lexemes: inout [Lexeme]) {
-        lexemes.append(self)
-    }
-}
+private struct NewlineLex: Lexeme {}
+private struct DelimiterLex: Lexeme {}
 
 private struct WhitespaceLex: Lexeme {
-    init(_ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
+    init(_ chars: inout StringFifo) {
         while chars.peek()?.isWhitespace ?? false {
             _ = chars.pop()
         }
-        lexemes.append(self)
-    }
-}
-
-private struct DelimiterLex: Lexeme {
-    init(_ lexemes: inout [Lexeme]) {
-        lexemes.append(self)
     }
 }
 
 private struct CommentLex: StringLexeme {
     var string_rep: String = ""
 
-    init(_ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
+    init(_ chars: inout StringFifo) {
         var depth = 0
 
         while let c = chars.pop() {
@@ -49,14 +39,12 @@ private struct CommentLex: StringLexeme {
             }
             self.push(c)
         }
-
-        lexemes.append(self)
     }
 }
 
 private struct StringLex: StringLexeme {
     var string_rep: String = ""
-    init(_ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
+    init(_ chars: inout StringFifo) {
         while let c = chars.pop() {
             if c == "\\" {
                 self.push(c)
@@ -67,20 +55,17 @@ private struct StringLex: StringLexeme {
             }
             self.push(c)
         }
-
-        lexemes.append(self)
     }
 }
 
 private struct WordLex: StringLexeme {
     var string_rep: String = ""
 
-    init(firstChar: Character, _ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
+    init(firstChar: Character, _ chars: inout StringFifo) {
         self.push(firstChar)
         while chars.peek()?.isLetter ?? false {
             self.push(chars.pop()!)
         }
-        lexemes.append(self)
     }
 }
 
@@ -90,7 +75,7 @@ internal struct NumberLex: StringLexeme {
         return Float(string_rep)!
     }
 
-    fileprivate init(firstChar: Character, _ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
+    fileprivate init(firstChar: Character, _ chars: inout StringFifo) {
         self.push(firstChar)
 
         var accept_decimal_point = firstChar != "."
@@ -117,8 +102,6 @@ internal struct NumberLex: StringLexeme {
             self.push(c)
             _ = chars.pop()
         }
-
-        lexemes.append(self)
     }
 }
 
@@ -135,30 +118,37 @@ private struct StringFifo {
     }
 }
 
+private func next_lexeme(_ chars: inout StringFifo) -> Lexeme? {
+    guard let c = chars.pop() else { return nil }
+
+    if c == "(" {
+        return CommentLex(&chars)
+    } else if c == "\"" {
+        return StringLex(&chars)
+    } else if c == "\r" {
+        return next_lexeme(&chars)
+    } else if c == "\n" || c == "\r\n" {
+        return NewlineLex()
+    } else if c.isWhitespace {
+        return WhitespaceLex(&chars)
+    } else if c.isLetter {
+        return WordLex(firstChar: c, &chars)
+    } else if c.isNumber || c == "+" || c == "-" || c == "." {
+        return NumberLex(firstChar: c, &chars)
+    } else if c == "," || c == "&" {
+        return DelimiterLex()
+    } else {
+        assertionFailure("Found unlexable chars at end of input")
+        return nil
+    }
+}
+
 internal func lex(_ inp: String) -> [Lexeme] {
     var lexemes: [Lexeme] = []
     var chars = StringFifo(inp)
 
-    while let c = chars.pop() {
-        if c == "(" {
-            CommentLex(&lexemes, &chars)
-        } else if c == "\"" {
-            StringLex(&lexemes, &chars)
-        } else if c == "\r" {
-            continue
-        } else if c == "\n" || c == "\r\n" {
-            NewlineLex(&lexemes)
-        } else if c.isWhitespace {
-            WhitespaceLex(&lexemes, &chars)
-        } else if c.isLetter {
-            WordLex(firstChar: c, &lexemes, &chars)
-        } else if c.isNumber || c == "+" || c == "-" || c == "." {
-            NumberLex(firstChar: c, &lexemes, &chars)
-        } else if c == "," || c == "&" {
-            DelimiterLex(&lexemes)
-        } else {
-            assertionFailure("Found unlexable chars at end of inp")
-        }
+    while let l = next_lexeme(&chars) {
+        lexemes.append(l)
     }
 
     return lexemes
