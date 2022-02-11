@@ -1,6 +1,3 @@
-public struct GetSchwifty {
-    public private(set) var text = "Hello, World!"
-
-    public init() {
-    }
+public func get_schwifty(_ in: String) -> String {
+    return ""
 }
