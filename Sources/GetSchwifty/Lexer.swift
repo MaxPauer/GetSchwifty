@@ -12,6 +12,7 @@ private extension StringLexeme {
 }
 
 private struct NewlineLex: Lexeme {}
+private struct WhitespaceLex: Lexeme {}
 private struct CommentLex: StringLexeme {
     var string_rep: String = ""
 }
@@ -19,11 +20,11 @@ private struct StringLex: StringLexeme {
     var string_rep: String = ""
 }
 
-private func lex_comment(_ lexemes: inout [Lexeme], _ chars: inout String.Iterator) {
+private func lex_comment(_ lexemes: inout [Lexeme], _ chars: inout String) {
     var depth = 0
     var comment = CommentLex()
 
-    while let c = chars.next() {
+    while let c = chars.popLast() {
         if c == "(" {
             depth += 1
         } else if c == ")" {
@@ -38,13 +39,13 @@ private func lex_comment(_ lexemes: inout [Lexeme], _ chars: inout String.Iterat
     lexemes.append(comment)
 }
 
-private func lex_string(_ lexemes: inout [Lexeme], _ chars: inout String.Iterator) {
+private func lex_string(_ lexemes: inout [Lexeme], _ chars: inout String) {
     var string = StringLex()
 
-    while let c = chars.next() {
+    while let c = chars.popLast() {
         if c == "\\" {
             string.push(c)
-            string.push(chars.next()!)
+            string.push(chars.popLast()!)
             continue
         } else if c == "\"" {
             break
@@ -59,11 +60,18 @@ private func lex_newline(_ lexemes: inout [Lexeme]) {
     lexemes.append(NewlineLex())
 }
 
+private func lex_whitespace(_ lexemes: inout [Lexeme], _ chars: inout String) {
+    while chars.last?.isWhitespace ?? false {
+        _ = chars.popLast()
+    }
+    lexemes.append(WhitespaceLex())
+}
+
 internal func lex(_ inp: String) -> [Lexeme] {
     var lexemes: [Lexeme] = []
-    var chars = inp.makeIterator()
+    var chars = String(inp.reversed())
 
-    while let c = chars.next() {
+    while let c = chars.popLast() {
         if c == "(" {
             lex_comment(&lexemes, &chars)
         } else if c == "\"" {
@@ -72,6 +80,8 @@ internal func lex(_ inp: String) -> [Lexeme] {
             continue
         } else if c == "\n" || c == "\r\n" {
             lex_newline(&lexemes)
+        } else if c.isWhitespace {
+            lex_whitespace(&lexemes, &chars)
         } else {
             assertionFailure("Found unlexable chars at end of inp")
         }

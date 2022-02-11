@@ -42,4 +42,17 @@ final class LexerTests: XCTestCase {
         testLex("\n\n\n\n\r", 4)
         testLex("\n\n\r\n\n\r", 4)
     }
+
+        func testWhitespace() throws {
+        let testLex = { (inp: String, exp: Int) in
+            let lexemes = lex(inp)
+            XCTAssertEqual(lexemes.count, exp)
+        }
+
+        testLex("", 0)
+        testLex(" ", 1)
+        testLex("  ", 1)
+        testLex(" \t ", 1)
+        testLex("  \t \t ", 1)
+    }
 }
