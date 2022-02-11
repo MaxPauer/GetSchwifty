@@ -19,6 +19,9 @@ private struct CommentLex: StringLexeme {
 private struct StringLex: StringLexeme {
     var string_rep: String = ""
 }
+private struct WordLex: StringLexeme {
+    var string_rep: String = ""
+}
 
 private struct StringFifo {
     private var intern: String
@@ -80,6 +83,15 @@ private func lex_whitespace(_ lexemes: inout [Lexeme], _ chars: inout StringFifo
     lexemes.append(WhitespaceLex())
 }
 
+private func lex_word(firstChar: Character, _ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
+    var word = WordLex()
+    word.push(firstChar)
+    while chars.peek()?.isLetter ?? false {
+        word.push(chars.pop()!)
+    }
+    lexemes.append(word)
+}
+
 internal func lex(_ inp: String) -> [Lexeme] {
     var lexemes: [Lexeme] = []
     var chars = StringFifo(inp)
@@ -95,6 +107,8 @@ internal func lex(_ inp: String) -> [Lexeme] {
             lex_newline(&lexemes)
         } else if c.isWhitespace {
             lex_whitespace(&lexemes, &chars)
+        } else if c.isLetter {
+            lex_word(firstChar: c, &lexemes, &chars)
         } else {
             assertionFailure("Found unlexable chars at end of inp")
         }

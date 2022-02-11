@@ -43,7 +43,7 @@ final class LexerTests: XCTestCase {
         testLex("\n\n\r\n\n\r", 4)
     }
 
-        func testWhitespace() throws {
+    func testWhitespace() throws {
         let testLex = { (inp: String, exp: Int) in
             let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, exp)
@@ -54,5 +54,21 @@ final class LexerTests: XCTestCase {
         testLex("  ", 1)
         testLex(" \t ", 1)
         testLex("  \t \t ", 1)
+    }
+
+    func testWords() throws {
+        let testLex = { (inp: String, exp: [String]) in
+            let lexemes = lex(inp)
+            XCTAssertEqual(lexemes.count, exp.count*2-1)
+            for i in 1...exp.count {
+                let e = exp[i-1]
+                let l = (lexemes[i*2-2] as! StringLexeme).string_rep
+                XCTAssertEqual(e, l)
+            }
+        }
+
+        testLex("hello", ["hello"])
+        testLex("hello darkness", ["hello", "darkness"])
+        testLex("hello darkness my old friend", ["hello", "darkness", "my", "old", "friend"])
     }
 }
