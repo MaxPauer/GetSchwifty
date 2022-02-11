@@ -5,7 +5,7 @@ internal protocol StringLexeme: Lexeme {
     mutating func push(_ c: Character)
 }
 
-private extension StringLexeme {
+internal extension StringLexeme {
     mutating func push(_ c: Character) {
         string_rep.append(c)
     }
@@ -21,6 +21,12 @@ private struct StringLex: StringLexeme {
 }
 private struct WordLex: StringLexeme {
     var string_rep: String = ""
+}
+internal struct NumberLex: StringLexeme {
+    var string_rep: String = ""
+    var float_rep: Float {
+        return Float(string_rep)!
+    }
 }
 
 private struct StringFifo {
@@ -92,6 +98,38 @@ private func lex_word(firstChar: Character, _ lexemes: inout [Lexeme], _ chars: 
     lexemes.append(word)
 }
 
+private func lex_number(firstChar: Character, _ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
+    var num = NumberLex()
+    num.push(firstChar)
+
+    var accept_decimal_point = firstChar != "."
+    var accept_exp = firstChar.isNumber
+    var accept_sign = false
+
+    while let c = chars.peek() {
+        if c.isNumber {
+            accept_exp = true
+            accept_sign = false
+        } else if accept_decimal_point && c == "." {
+            accept_decimal_point = false
+            accept_exp = false
+        } else if accept_exp && c.lowercased() == "e" {
+           accept_decimal_point = false
+           accept_sign = true
+           accept_exp = false
+        } else if accept_sign && (c == "-" || c == "+") {
+           accept_sign = false
+        } else {
+           break
+        }
+
+        num.push(c)
+        _ = chars.pop()
+    }
+
+    lexemes.append(num)
+}
+
 internal func lex(_ inp: String) -> [Lexeme] {
     var lexemes: [Lexeme] = []
     var chars = StringFifo(inp)
@@ -109,6 +147,8 @@ internal func lex(_ inp: String) -> [Lexeme] {
             lex_whitespace(&lexemes, &chars)
         } else if c.isLetter {
             lex_word(firstChar: c, &lexemes, &chars)
+        } else if c.isNumber || c == "+" || c == "-" || c == "." {
+            lex_number(firstChar: c, &lexemes, &chars)
         } else {
             assertionFailure("Found unlexable chars at end of inp")
         }

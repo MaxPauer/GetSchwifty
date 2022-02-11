@@ -71,4 +71,31 @@ final class LexerTests: XCTestCase {
         testLex("hello darkness", ["hello", "darkness"])
         testLex("hello darkness my old friend", ["hello", "darkness", "my", "old", "friend"])
     }
+
+    func testNums() throws {
+        let testLex = { (inp: String, exp: [Float]) in
+            let lexemes = lex(inp) as! [NumberLex]
+            XCTAssertEqual(lexemes.count, exp.count)
+            for (e, l) in zip(exp, lexemes) {
+                XCTAssertEqual(e, l.float_rep)
+            }
+        }
+
+        testLex("0", [0])
+        testLex("1", [1.0])
+        testLex("123", [123])
+        testLex("+23", [23])
+        testLex("-23", [-23])
+        testLex("1.23", [1.23])
+        testLex("1.2e3", [1.2e3])
+        testLex("1.2E3", [1.2e3])
+        testLex("12e3", [12e3])
+        testLex("-1.2e+3", [-1.2e+3])
+        testLex("-1.2E-3", [-1.2e-3])
+        testLex("1.2e3", [1.2e3])
+        testLex(".23", [0.23])
+        testLex(".11.99", [0.11, 0.99])
+        testLex("22+33", [22, 33])
+        testLex("-4e-3", [-4e-3])
+    }
 }
