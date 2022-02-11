@@ -20,11 +20,24 @@ private struct StringLex: StringLexeme {
     var string_rep: String = ""
 }
 
-private func lex_comment(_ lexemes: inout [Lexeme], _ chars: inout String) {
+private struct StringFifo {
+    private var intern: String
+    init(_ s: String) {
+        intern = String(s.reversed())
+    }
+    mutating func pop() -> Character? {
+        intern.popLast()
+    }
+    func peek() -> Character? {
+        intern.last
+    }
+}
+
+private func lex_comment(_ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
     var depth = 0
     var comment = CommentLex()
 
-    while let c = chars.popLast() {
+    while let c = chars.pop() {
         if c == "(" {
             depth += 1
         } else if c == ")" {
@@ -39,13 +52,13 @@ private func lex_comment(_ lexemes: inout [Lexeme], _ chars: inout String) {
     lexemes.append(comment)
 }
 
-private func lex_string(_ lexemes: inout [Lexeme], _ chars: inout String) {
+private func lex_string(_ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
     var string = StringLex()
 
-    while let c = chars.popLast() {
+    while let c = chars.pop() {
         if c == "\\" {
             string.push(c)
-            string.push(chars.popLast()!)
+            string.push(chars.pop()!)
             continue
         } else if c == "\"" {
             break
@@ -60,18 +73,18 @@ private func lex_newline(_ lexemes: inout [Lexeme]) {
     lexemes.append(NewlineLex())
 }
 
-private func lex_whitespace(_ lexemes: inout [Lexeme], _ chars: inout String) {
-    while chars.last?.isWhitespace ?? false {
-        _ = chars.popLast()
+private func lex_whitespace(_ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
+    while chars.peek()?.isWhitespace ?? false {
+        _ = chars.pop()
     }
     lexemes.append(WhitespaceLex())
 }
 
 internal func lex(_ inp: String) -> [Lexeme] {
     var lexemes: [Lexeme] = []
-    var chars = String(inp.reversed())
+    var chars = StringFifo(inp)
 
-    while let c = chars.popLast() {
+    while let c = chars.pop() {
         if c == "(" {
             lex_comment(&lexemes, &chars)
         } else if c == "\"" {
