@@ -118,6 +118,10 @@ private struct StringFifo {
     }
 }
 
+fileprivate func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
+    value[keyPath: pattern]
+}
+
 private func next_lexeme(_ chars: inout StringFifo) -> Lexeme? {
     guard let c = chars.pop() else { return nil }
 
@@ -132,11 +136,11 @@ private func next_lexeme(_ chars: inout StringFifo) -> Lexeme? {
         return NewlineLex()
     case ",", "&":
         return DelimiterLex()
-    case _ where c.isWhitespace:
+    case \.isWhitespace:
         return WhitespaceLex(&chars)
-    case _ where c.isLetter:
+    case \.isLetter:
         return WordLex(firstChar: c, &chars)
-    case _ where c.isNumber, "+", "-", ".":
+    case \.isNumber, "+", "-", ".":
         return NumberLex(firstChar: c, &chars)
     default:
         assertionFailure("Found unlexable chars at end of input")
