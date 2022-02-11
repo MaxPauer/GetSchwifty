@@ -13,6 +13,7 @@ internal extension StringLexeme {
 
 private struct NewlineLex: Lexeme {}
 private struct WhitespaceLex: Lexeme {}
+private struct DelimiterLex: Lexeme {}
 private struct CommentLex: StringLexeme {
     var string_rep: String = ""
 }
@@ -82,6 +83,10 @@ private func lex_newline(_ lexemes: inout [Lexeme]) {
     lexemes.append(NewlineLex())
 }
 
+private func lex_delimiter(_ lexemes: inout [Lexeme]) {
+    lexemes.append(DelimiterLex())
+}
+
 private func lex_whitespace(_ lexemes: inout [Lexeme], _ chars: inout StringFifo) {
     while chars.peek()?.isWhitespace ?? false {
         _ = chars.pop()
@@ -149,6 +154,8 @@ internal func lex(_ inp: String) -> [Lexeme] {
             lex_word(firstChar: c, &lexemes, &chars)
         } else if c.isNumber || c == "+" || c == "-" || c == "." {
             lex_number(firstChar: c, &lexemes, &chars)
+        } else if c == "," || c == "&" {
+            lex_delimiter(&lexemes)
         } else {
             assertionFailure("Found unlexable chars at end of inp")
         }

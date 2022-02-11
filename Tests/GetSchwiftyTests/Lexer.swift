@@ -98,4 +98,17 @@ final class LexerTests: XCTestCase {
         testLex("22+33", [22, 33])
         testLex("-4e-3", [-4e-3])
     }
+
+    func testDelimiter() throws {
+        let testLex = { (inp: String, exp: Int) in
+            let lexemes = lex(inp)
+            XCTAssertEqual(lexemes.count, exp)
+        }
+
+        testLex(",", 1)
+        testLex(",,", 2)
+        testLex("&,,", 3)
+        testLex("&", 1)
+        testLex(",&&,", 4)
+    }
 }
