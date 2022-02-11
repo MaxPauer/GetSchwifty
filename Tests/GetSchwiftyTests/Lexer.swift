@@ -1,10 +1,17 @@
 import XCTest
 @testable import GetSchwifty
 
+fileprivate struct WS {}
+fileprivate struct NL {}
+fileprivate struct SEP {}
+fileprivate struct S {
+    let s: String
+}
+
 final class LexerTests: XCTestCase {
     func testComments() throws {
         let testLex = { (inp: String, exp: String) in
-            let lexemes = lex(inp) as! [StringLexeme]
+            let lexemes = lex(inp) as! [CommentLex]
             XCTAssertEqual(lexemes.count, 1)
             XCTAssertEqual(lexemes[0].string_rep, exp)
         }
@@ -17,7 +24,7 @@ final class LexerTests: XCTestCase {
 
     func testStrings() throws {
         let testLex = { (inp: String, exp: String) in
-            let lexemes = lex(inp) as! [StringLexeme]
+            let lexemes = lex(inp) as! [StringLex]
             XCTAssertEqual(lexemes.count, 1)
             XCTAssertEqual(lexemes[0].string_rep, exp)
         }
@@ -45,7 +52,7 @@ final class LexerTests: XCTestCase {
 
     func testWhitespace() throws {
         let testLex = { (inp: String, exp: Int) in
-            let lexemes = lex(inp)
+            let lexemes = lex(inp) as! [WhitespaceLex]
             XCTAssertEqual(lexemes.count, exp)
         }
 
@@ -62,7 +69,8 @@ final class LexerTests: XCTestCase {
             XCTAssertEqual(lexemes.count, exp.count*2-1)
             for i in 1...exp.count {
                 let e = exp[i-1]
-                let l = (lexemes[i*2-2] as! StringLexeme).string_rep
+                let l = (lexemes[i*2-2] as! WordLex).string_rep
+                XCTAssert(exp.count == i || lexemes[i*2-1] is WhitespaceLex)
                 XCTAssertEqual(e, l)
             }
         }
@@ -110,5 +118,50 @@ final class LexerTests: XCTestCase {
         testLex("&,,", 3)
         testLex("&", 1)
         testLex(",&&,", 4)
+    }
+
+    func testFizzBuzz() throws {
+        let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
+        let lexemes = lex(fizzbuzz)
+
+        let expected: [Any] = [
+            "Midnight", WS(), "takes", WS(), "your", WS(), "heart", WS(), "and", WS(), "your", WS(), "soul", NL(),
+            "While", WS(), "your", WS(), "heart", WS(), "is", WS(), "as", WS(), "high", WS(), "as", WS(), "your", WS(), "soul", NL(),
+            "Put", WS(), "your", WS(), "heart", WS(), "without", WS(), "your", WS(), "soul", WS(), "into", WS(), "your", WS(), "heart", NL(),
+            NL(),
+            "Give", WS(), "back", WS(), "your", WS(), "heart", NL(),
+            NL(),
+            "Desire", WS(), "is", WS(), "a", WS(), "lovestruck", WS(), "ladykiller", NL(),
+            "My", WS(), "world", WS(), "is", WS(), "nothing", NL(),
+            "Fire", WS(), "is", WS(), "ice", NL(),
+            "Hate", WS(), "is", WS(), "water", NL(),
+            "Until", WS(), "my", WS(), "world", WS(), "is", WS(), "Desire", SEP(), NL(),
+            "Build", WS(), "my", WS(), "world", WS(), "up", NL(),
+            "If", WS(), "Midnight", WS(), "taking", WS(), "my", WS(), "world", SEP(), WS(), "Fire", WS(), "is", WS(), "nothing", WS(), "and", WS(), "Midnight", WS(), "taking", WS(), "my", WS(), "world", SEP(), WS(), "Hate", WS(), "is", WS(), "nothing", NL(),
+            "Shout", WS(), S(s: "FizzBuzz!"), NL(),
+            "Take", WS(), "it", WS(), "to", WS(), "the", WS(), "top", NL(),
+            NL(),
+            "If", WS(), "Midnight", WS(), "taking", WS(), "my", WS(), "world", SEP(), WS(), "Fire", WS(), "is", WS(), "nothing", NL(),
+            "Shout", WS(), S(s: "Fizz!"), NL(),
+            "Take", WS(), "it", WS(), "to", WS(), "the", WS(), "top", NL(),
+            NL(),
+            "If", WS(), "Midnight", WS(), "taking", WS(), "my", WS(), "world", SEP(), WS(), "Hate", WS(), "is", WS(), "nothing", NL(),
+            "Say", WS(), S(s: "Buzz!"), NL(),
+            "Take", WS(), "it", WS(), "to", WS(), "the", WS(), "top", NL(),
+            NL(),
+            "Whisper", WS(), "my", WS(), "world", NL()
+        ]
+
+        XCTAssertEqual(lexemes.count, expected.count)
+        for (lex, e) in zip(lexemes, expected) {
+            switch lex {
+            case let l as WordLex: XCTAssertEqual(l.string_rep, e as! String)
+            case let l as StringLex: XCTAssertEqual(l.string_rep, (e as! S).s)
+            case _ as WhitespaceLex: XCTAssert(e is WS)
+            case _ as NewlineLex: XCTAssert(e is NL)
+            case _ as DelimiterLex: XCTAssert(e is SEP)
+            default: XCTFail()
+            }
+        }
     }
 }

@@ -11,21 +11,21 @@ internal extension StringLexeme {
     }
 }
 
-private struct NewlineLex: Lexeme {}
-private struct DelimiterLex: Lexeme {}
+internal struct NewlineLex: Lexeme {}
+internal struct DelimiterLex: Lexeme {}
 
-private struct WhitespaceLex: Lexeme {
-    init(_ chars: inout StringFifo) {
+internal struct WhitespaceLex: Lexeme {
+    fileprivate init(_ chars: inout StringFifo) {
         while chars.peek()?.isWhitespace ?? false {
             _ = chars.pop()
         }
     }
 }
 
-private struct CommentLex: StringLexeme {
+internal struct CommentLex: StringLexeme {
     var string_rep: String = ""
 
-    init(_ chars: inout StringFifo) {
+    fileprivate init(_ chars: inout StringFifo) {
         var depth = 0
 
         while let c = chars.pop() {
@@ -42,9 +42,9 @@ private struct CommentLex: StringLexeme {
     }
 }
 
-private struct StringLex: StringLexeme {
+internal struct StringLex: StringLexeme {
     var string_rep: String = ""
-    init(_ chars: inout StringFifo) {
+    fileprivate init(_ chars: inout StringFifo) {
         while let c = chars.pop() {
             if c == "\\" {
                 self.push(c)
@@ -58,10 +58,10 @@ private struct StringLex: StringLexeme {
     }
 }
 
-private struct WordLex: StringLexeme {
+internal struct WordLex: StringLexeme {
     var string_rep: String = ""
 
-    init(firstChar: Character, _ chars: inout StringFifo) {
+    fileprivate init(firstChar: Character, _ chars: inout StringFifo) {
         self.push(firstChar)
         while chars.peek()?.isLetter ?? false {
             self.push(chars.pop()!)
