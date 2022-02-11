@@ -1,0 +1,12 @@
+{
+	"configurations": [
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Test GetSchwifty",
+			"program": "${workspaceFolder:GetSchwifty}/.build/debug/GetSchwiftyPackageTests.xctest",
+			"cwd": "${workspaceFolder:GetSchwifty}",
+			"preLaunchTask": "swift: Build All"
+		}
+	]
+}
