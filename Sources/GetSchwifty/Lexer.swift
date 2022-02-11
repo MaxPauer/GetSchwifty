@@ -121,23 +121,24 @@ private struct StringFifo {
 private func next_lexeme(_ chars: inout StringFifo) -> Lexeme? {
     guard let c = chars.pop() else { return nil }
 
-    if c == "(" {
+    switch c {
+    case "(":
         return CommentLex(&chars)
-    } else if c == "\"" {
+    case "\"":
         return StringLex(&chars)
-    } else if c == "\r" {
+    case "\r":
         return next_lexeme(&chars)
-    } else if c == "\n" || c == "\r\n" {
+    case "\n", "\r\n":
         return NewlineLex()
-    } else if c.isWhitespace {
-        return WhitespaceLex(&chars)
-    } else if c.isLetter {
-        return WordLex(firstChar: c, &chars)
-    } else if c.isNumber || c == "+" || c == "-" || c == "." {
-        return NumberLex(firstChar: c, &chars)
-    } else if c == "," || c == "&" {
+    case ",", "&":
         return DelimiterLex()
-    } else {
+    case _ where c.isWhitespace:
+        return WhitespaceLex(&chars)
+    case _ where c.isLetter:
+        return WordLex(firstChar: c, &chars)
+    case _ where c.isNumber, "+", "-", ".":
+        return NumberLex(firstChar: c, &chars)
+    default:
         assertionFailure("Found unlexable chars at end of input")
         return nil
     }
