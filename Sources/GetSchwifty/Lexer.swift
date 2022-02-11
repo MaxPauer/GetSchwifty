@@ -1,18 +1,21 @@
-internal protocol Lexeme {
+internal protocol Lexeme {}
+
+internal protocol StringLexeme: Lexeme {
     var string_rep: String { get set }
     mutating func push(_ c: Character)
 }
 
-private extension Lexeme {
+private extension StringLexeme {
     mutating func push(_ c: Character) {
         string_rep.append(c)
     }
 }
 
-private struct CommentLex: Lexeme {
+private struct NewlineLex: Lexeme {}
+private struct CommentLex: StringLexeme {
     var string_rep: String = ""
 }
-private struct StringLex: Lexeme {
+private struct StringLex: StringLexeme {
     var string_rep: String = ""
 }
 
@@ -52,6 +55,10 @@ private func lex_string(_ lexemes: inout [Lexeme], _ chars: inout String.Iterato
     lexemes.append(string)
 }
 
+private func lex_newline(_ lexemes: inout [Lexeme]) {
+    lexemes.append(NewlineLex())
+}
+
 internal func lex(_ inp: String) -> [Lexeme] {
     var lexemes: [Lexeme] = []
     var chars = inp.makeIterator()
@@ -59,12 +66,15 @@ internal func lex(_ inp: String) -> [Lexeme] {
     while let c = chars.next() {
         if c == "(" {
             lex_comment(&lexemes, &chars)
-            continue
         } else if c == "\"" {
             lex_string(&lexemes, &chars)
+        } else if c == "\r" {
             continue
+        } else if c == "\n" || c == "\r\n" {
+            lex_newline(&lexemes)
+        } else {
+            assertionFailure("Found unlexable chars at end of inp")
         }
-        assertionFailure("Found unlexable chars at end of inp")
     }
 
     return lexemes
