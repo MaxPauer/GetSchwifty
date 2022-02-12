@@ -10,16 +10,19 @@ fileprivate struct S {
 
 final class LexerTests: XCTestCase {
     func testComments() throws {
-        let testLex = { (inp: String, exp: String) in
+        let testLex = { (inp: String, exp: String, exp_lines: UInt) in
             let lexemes = lex(inp) as! [CommentLex]
             XCTAssertEqual(lexemes.count, 1)
             XCTAssertEqual(lexemes[0].string_rep, exp)
+            XCTAssertEqual(lexemes[0].lines, exp_lines)
         }
 
-        testLex("(hi)", "hi")
-        testLex("(hi", "hi")
-        testLex("(he(llo))", "he(llo)")
-        testLex("(he(ll)o)", "he(ll)o")
+        testLex("(hi)", "hi", 1)
+        testLex("(hi", "hi", 1)
+        testLex("(he(llo))", "he(llo)", 1)
+        testLex("(he(ll)o)", "he(ll)o", 1)
+        testLex("(he(\n)o)", "he(\n)o", 2)
+        testLex("(he(\n\r\n\r)o)", "he(\n\r\n\r)o", 3)
     }
 
     func testStrings() throws {

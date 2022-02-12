@@ -24,6 +24,7 @@ internal struct WhitespaceLex: Lexeme {
 
 internal struct CommentLex: StringLexeme {
     var string_rep: String = ""
+    var lines: UInt = 1
 
     fileprivate init(_ chars: inout Fifo<String>) {
         var depth = 0
@@ -36,6 +37,8 @@ internal struct CommentLex: StringLexeme {
                     break
                 }
                 depth -= 1
+            } else if c.isNewline {
+                lines += 1
             }
             self.push(c)
         }
@@ -105,6 +108,12 @@ internal struct NumberLex: StringLexeme {
     }
 }
 
+fileprivate extension Character {
+    var isNewline: Bool {
+        self == "\n" || self == "\r\n"
+    }
+}
+
 fileprivate func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
@@ -119,7 +128,7 @@ private func next_lexeme(_ chars: inout Fifo<String>) -> Lexeme? {
         return StringLex(&chars)
     case "\r":
         return next_lexeme(&chars)
-    case "\n", "\r\n":
+    case \.isNewline:
         return NewlineLex()
     case ",", "&":
         return DelimiterLex()
