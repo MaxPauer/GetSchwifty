@@ -5,7 +5,7 @@ public struct ParserError: Error, CustomStringConvertible {
     let partialErr: PartialParserError
 
     public var description: String {
-        "Parser Error on line \(onLine): \(partialErr)"
+        "Parser error in expression starting on line \(onLine): \(partialErr)"
     }
 }
 
