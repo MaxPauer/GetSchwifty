@@ -36,10 +36,10 @@ internal enum Lexeme: Lexemeish, Equatable, CustomStringConvertible {
         case .newline: return "Newline"
         case .delimiter: return "ListDelimiter"
         case .whitespace: return "Whitespace"
-        case .string(let s): return AnyLexeme.string.prettyName
-        case .comment(let c, _): return AnyLexeme.comment.prettyName
-        case .word(let w): return AnyLexeme.word.prettyName
-        case .number(let f): return AnyLexeme.number.prettyName
+        case .string: return AnyLexeme.string.prettyName
+        case .comment: return AnyLexeme.comment.prettyName
+        case .word: return AnyLexeme.word.prettyName
+        case .number: return AnyLexeme.number.prettyName
         }
     }
 
