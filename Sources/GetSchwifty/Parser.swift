@@ -25,13 +25,17 @@ internal struct Parser {
     var lines: UInt = 1
     var exprs: [Expr] = []
 
-    func parse_common_variable(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr {
-        guard let ws = lexemes.pop() else {
+    func drop_whitespace(_ lexemes: inout Lexemes) throws {
+        guard let next = lexemes.pop() else {
             throw UnexpectedEOFError(expected: .whitespace)
         }
-        guard ws == .whitespace else {
-            throw UnexpectedLexemeError(got: ws, expected: .whitespace)
+        guard next == .whitespace else {
+            throw UnexpectedLexemeError(got: next, expected: .whitespace)
         }
+    }
+
+    func parse_common_variable(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr {
+        try drop_whitespace(&lexemes)
 
         guard let sw = lexemes.pop() else {
             throw UnexpectedEOFError(expected: .word(""))
