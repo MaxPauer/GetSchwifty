@@ -13,25 +13,41 @@ extension Lex {
 internal struct NewlineLex: Lex {
     let prettyName = "Newline"
     let useLiteralDescription = false
-    let literal = "\n"
+    let literal: String
+
+    init(_ c: Character) {
+        literal = String(c)
+    }
 }
 
 internal struct DelimiterLex: Lex {
     var prettyName = "Delimiter"
     let useLiteralDescription = false
-    let literal = ","
+    let literal: String
+
+    init(_ c: Character) {
+        literal = String(c)
+    }
+}
+
+internal struct ApostropheLex: Lex {
+    var prettyName = "Apostrophe"
+    let useLiteralDescription = false
+    let literal = "'"
 }
 
 internal struct WhitespaceLex: Lex {
     var prettyName = "Whitespace"
     let useLiteralDescription = false
-    let literal = " "
+    let literal: String
 
-    init(_ chars: inout Fifo<String>) {
+    init(_ chars: inout Fifo<String>, firstChar: Character) {
+        var l = String(firstChar)
         while let c = chars.peek() {
             guard c.isWhitespace && !c.isNewline else { break }
-            chars.drop()
+            l.append(chars.pop()!)
         }
+        literal = l
     }
 }
 
@@ -104,7 +120,7 @@ internal struct NumberLex: Lex {
     let prettyName = "Number"
     let useLiteralDescription = true
     let value: Float
-    var literal: String { "\(value)" }
+    var literal: String
 
     init(_ chars: inout Fifo<String>, firstChar: Character) {
         var rep = String(firstChar)
@@ -132,6 +148,7 @@ internal struct NumberLex: Lex {
             rep.append(chars.pop()!)
         }
 
+        literal = rep
         value = Float(rep)!
     }
 }
@@ -157,11 +174,11 @@ private func nextLexeme(_ chars: inout Fifo<String>) -> Lex? {
     case "\r":
         return nextLexeme(&chars)
     case \.isNewline:
-        return NewlineLex()
+        return NewlineLex(c)
     case ",", "&":
-        return DelimiterLex()
+        return DelimiterLex(c)
     case \.isWhitespace:
-        return WhitespaceLex(&chars)
+        return WhitespaceLex(&chars, firstChar: c)
     case \.isLetter:
         return IdentifierLex(&chars, firstChar: c)
     case \.isNumber, "+", "-", ".":

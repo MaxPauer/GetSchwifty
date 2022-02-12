@@ -75,18 +75,10 @@ internal struct Parser {
             switch lex {
             case is NewlineLex:
                 break lexing
-            case is WhitespaceLex:
-                string += " "
+            case is WhitespaceLex, is IdentifierLex, is ApostropheLex, is DelimiterLex, is NumberLex:
+                string += lex.literal
             case is CommentLex:
                 break // nop
-            case let id as IdentifierLex:
-                string += id.literal
-            // case .apostrophe: // TODO
-            //     string += "'"
-            case is DelimiterLex:
-                string += "," // TODO: or &
-            case let num as NumberLex:
-                string += "\(num.value)" // TODO: original formatting
             case let str as StringLex:
                 string += "\"\(str.literal)\""
             default:
