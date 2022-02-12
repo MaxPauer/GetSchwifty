@@ -93,6 +93,25 @@ final class LexerTests: XCTestCase {
         testLex("  \t \t ", 1)
     }
 
+    func testWhitespaceAndNewline() throws {
+        let testLex = { (inp: String, exp: Int) in
+            let lexemes = lex(inp)
+            XCTAssertEqual(lexemes.count, exp)
+            lexemes.forEach {
+                XCTAssert($0 == .whitespace || $0 == .newline)
+            }
+        }
+
+        testLex("", 0)
+        testLex(" ", 1)
+        testLex("  ", 1)
+        testLex("  \n", 2)
+        testLex("\n ", 2)
+        testLex("  \n ", 3)
+        testLex("  \r\n\n ", 4)
+        testLex("  \r\n\n \n", 5)
+    }
+
     func testWords() throws {
         let testLex = { (inp: String, exp: [String]) in
             let lexemes = lex(inp)

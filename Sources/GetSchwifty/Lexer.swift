@@ -8,7 +8,8 @@ internal enum Lexeme: Equatable {
     case number(Float)
 
     init(whitespace chars: inout Fifo<String>) {
-        while chars.peek()?.isWhitespace ?? false {
+        while let c = chars.peek() {
+            guard c.isWhitespace && !c.isNewline else { break }
             _ = chars.pop()
         }
         self = .whitespace
