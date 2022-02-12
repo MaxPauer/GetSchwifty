@@ -103,7 +103,7 @@ internal struct Parser {
         return a
     }
 
-    func parseWord(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr? {
+    func parseIdentifier(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr? {
         let first = firstWord.lowercased()
         switch first {
         case "a", "an", "the", "my", "your", "our":
@@ -127,7 +127,7 @@ internal struct Parser {
         case let c as CommentLex:
             return CommentExpr(newLines: c.newLines)
         case let id as IdentifierLex:
-            return try parseWord(&lexemes, firstWord: id.literal)
+            return try parseIdentifier(&lexemes, firstWord: id.literal)
         default:
             // TODO: handle all and remove:
             return try nextExpr(&lexemes)

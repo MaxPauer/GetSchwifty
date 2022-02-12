@@ -70,7 +70,7 @@ final class ParserTests: XCTestCase {
             XCTAssertEqual(exprs.count, 1)
             let ass = exprs[0] as! AssignmentExpr
             XCTAssertEqual(ass.lhs!.name, expVarName)
-            let rhsVal = try! XCTUnwrap(ass.rhs!.number)
+            let rhsVal = try! XCTUnwrap((ass.rhs! as? ValueExpr)?.number)
             XCTAssertEqual(rhsVal, expVarValue)
         }
         testParse("My heaven is a halfpipe", "my heaven", 18.0)
@@ -84,7 +84,7 @@ final class ParserTests: XCTestCase {
             XCTAssertEqual(exprs.count, 1)
             let ass = exprs[0] as! AssignmentExpr
             XCTAssertEqual(ass.lhs!.name, expVarName)
-            let rhsVal = try! XCTUnwrap(ass.rhs!.string)
+            let rhsVal = try! XCTUnwrap((ass.rhs! as? ValueExpr)?.string)
             XCTAssertEqual(rhsVal, expVarValue)
         }
         testParse("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")

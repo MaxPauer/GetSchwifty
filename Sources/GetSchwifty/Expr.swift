@@ -42,19 +42,19 @@ internal enum ValueExpr: Expr {
 internal struct AssignmentExpr: Expr {
     var newLines: UInt = 0
     var lhs: VariableNameExpr?
-    var rhs: ValueExpr?
+    var rhs: Expr?
 
-    var isFinished: Bool {
-        lhs != nil && rhs != nil
-    }
+    private(set) var isFinished: Bool = false
 
     @discardableResult
     mutating func append(_ nextExpr: Expr) throws -> Expr {
-        assert(rhs == nil, "appending to finished AssignmentExpr")
-        guard let expr = nextExpr as? ValueExpr else {
-            throw UnexpectedExprError(got: nextExpr, expected: ValueExpr.self)
+        if nextExpr is NewlineExpr {
+            isFinished = true
+        } else if rhs == nil {
+            rhs = nextExpr
+        } else {
+            try rhs = rhs!.append(nextExpr)
         }
-        rhs = expr
         return self
     }
 }
