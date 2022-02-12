@@ -25,7 +25,7 @@ final class ParserTests: XCTestCase {
             let p = try! Parser(lexemes: lex(inp))
             XCTAssertEqual(p.rootExpr.children.count, exp.count)
             for (v, e) in zip(p.rootExpr.children, exp) {
-                XCTAssertEqual((v as! CommonVariableName).name, e)
+                XCTAssertEqual((v as! CommonVariableNameExpr).name, e)
             }
         }
 
@@ -58,7 +58,7 @@ final class ParserTests: XCTestCase {
             let p = try! Parser(lexemes: l)
             let exprs = p.rootExpr.children
             XCTAssertEqual(exprs.count, 1)
-            let ass = exprs[0] as! Assignment
+            let ass = exprs[0] as! AssignmentExpr
             XCTAssertEqual(ass.lhs!.name, expVarName)
             let rhsVal = try! XCTUnwrap(ass.rhs!.number)
             XCTAssertEqual(rhsVal, expVarValue)

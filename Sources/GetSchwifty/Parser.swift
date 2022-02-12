@@ -11,16 +11,16 @@ internal protocol VariableNameExpr: Expr {
 extension VariableNameExpr {
     mutating func append(_ nextExpr: Expr) throws -> Expr {
         switch nextExpr {
-        case var e as Assignment:
+        case var e as AssignmentExpr:
             e.lhs = self
             return e
         default:
-            throw UnexpectedExprError(got: nextExpr, expected: Assignment.self) // possibly others
+            throw UnexpectedExprError(got: nextExpr, expected: AssignmentExpr.self) // possibly others
         }
     }
 }
 
-internal struct CommonVariableName: VariableNameExpr {
+internal struct CommonVariableNameExpr: VariableNameExpr {
     var name: String
     let newLines: UInt = 0
     let isFinished: Bool = false
@@ -39,7 +39,7 @@ internal enum ValueExpr: Expr {
     }
 }
 
-internal struct Assignment: Expr {
+internal struct AssignmentExpr: Expr {
     var newLines: UInt = 0
     var isFinished: Bool {
         lhs != nil && rhs != nil
@@ -49,7 +49,7 @@ internal struct Assignment: Expr {
 
     @discardableResult
     mutating func append(_ nextExpr: Expr) throws -> Expr {
-        assert(rhs == nil, "appending to finished Assignment")
+        assert(rhs == nil, "appending to finished AssignmentExpr")
         guard let expr = nextExpr as? ValueExpr else {
             throw UnexpectedExprError(got: nextExpr, expected: ValueExpr.self)
         }
@@ -58,7 +58,7 @@ internal struct Assignment: Expr {
     }
 }
 
-internal struct Newline: Expr {
+internal struct NewlineExpr: Expr {
     let newLines: UInt = 1
     let isFinished: Bool = false
 
@@ -67,7 +67,7 @@ internal struct Newline: Expr {
     }
 }
 
-internal struct Comment: Expr {
+internal struct CommentExpr: Expr {
     var newLines: UInt
     let isFinished: Bool = false
 
@@ -123,7 +123,7 @@ internal struct Parser {
         }
 
         let secondWord = secWord.lowercased()
-        return CommonVariableName(name: "\(firstWord) \(secondWord)")
+        return CommonVariableNameExpr(name: "\(firstWord) \(secondWord)")
     }
 
     func parsePoeticNumber(_ lexemes: inout Lexemes) throws -> ValueExpr {
@@ -166,8 +166,8 @@ internal struct Parser {
         return .number(Float(number))
     }
 
-    func parsePoeticNumberAssignment(_ lexemes: inout Lexemes) throws -> Assignment {
-        var a = Assignment()
+    func parsePoeticNumberAssignmentExpr(_ lexemes: inout Lexemes) throws -> AssignmentExpr {
+        var a = AssignmentExpr()
         try a.append(parsePoeticNumber(&lexemes))
         return a
     }
@@ -178,7 +178,7 @@ internal struct Parser {
         case "a", "an", "the", "my", "your", "our":
             return try parseCommonVariable(&lexemes, firstWord: first)
         case "is", "are", "was", "were":
-            return try parsePoeticNumberAssignment(&lexemes)
+            return try parsePoeticNumberAssignmentExpr(&lexemes)
         default:
             //TODO: replace with throw "UnparsableWordError(word: firstWord)"
             return try nextExpr(&lexemes)
@@ -190,9 +190,9 @@ internal struct Parser {
 
         switch l {
         case .newline:
-            return Newline()
+            return NewlineExpr()
         case .comment(_, let l):
-            return Comment(newLines: l)
+            return CommentExpr(newLines: l)
         case .word(let w):
             return try parseWord(&lexemes, firstWord: w)
         default:
