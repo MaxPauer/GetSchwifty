@@ -1,6 +1,25 @@
 import XCTest
 @testable import GetSchwifty
 
+fileprivate extension Lexeme {
+    var word: String? {
+        guard case .word(let w) = self else { return nil }
+        return w
+    }
+    var string: String? {
+        guard case .string(let s) = self else { return nil }
+        return s
+    }
+    var comment: (String, UInt)? {
+        guard case .comment(let s, let l) = self else { return nil }
+        return (s,l)
+    }
+    var number: Float? {
+        guard case .number(let f) = self else { return nil }
+        return f
+    }
+}
+
 fileprivate struct WS {}
 fileprivate struct NL {}
 fileprivate struct SEP {}
@@ -11,10 +30,11 @@ fileprivate struct S {
 final class LexerTests: XCTestCase {
     func testComments() throws {
         let testLex = { (inp: String, exp: String, exp_lines: UInt) in
-            let lexemes = lex(inp) as! [CommentLex]
+            let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, 1)
-            XCTAssertEqual(lexemes[0].string_rep, exp)
-            XCTAssertEqual(lexemes[0].lines, exp_lines)
+            let (string_rep, lines) = try! XCTUnwrap(lexemes[0].comment)
+            XCTAssertEqual(string_rep, exp)
+            XCTAssertEqual(lines, exp_lines)
         }
 
         testLex("(hi)", "hi", 1)
@@ -27,9 +47,10 @@ final class LexerTests: XCTestCase {
 
     func testStrings() throws {
         let testLex = { (inp: String, exp: String) in
-            let lexemes = lex(inp) as! [StringLex]
+            let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, 1)
-            XCTAssertEqual(lexemes[0].string_rep, exp)
+            let string_rep = try! XCTUnwrap(lexemes[0].string)
+            XCTAssertEqual(string_rep, exp)
         }
 
         testLex("\"hi\"", "hi")
@@ -42,6 +63,9 @@ final class LexerTests: XCTestCase {
         let testLex = { (inp: String, exp: Int) in
             let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, exp)
+            lexemes.forEach {
+                XCTAssertEqual($0, .newline)
+            }
         }
 
         testLex("\n", 1)
@@ -55,8 +79,11 @@ final class LexerTests: XCTestCase {
 
     func testWhitespace() throws {
         let testLex = { (inp: String, exp: Int) in
-            let lexemes = lex(inp) as! [WhitespaceLex]
+            let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, exp)
+            lexemes.forEach {
+                XCTAssertEqual($0, .whitespace)
+            }
         }
 
         testLex("", 0)
@@ -72,9 +99,9 @@ final class LexerTests: XCTestCase {
             XCTAssertEqual(lexemes.count, exp.count*2-1)
             for i in 1...exp.count {
                 let e = exp[i-1]
-                let l = (lexemes[i*2-2] as! WordLex).string_rep
-                XCTAssert(exp.count == i || lexemes[i*2-1] is WhitespaceLex)
-                XCTAssertEqual(e, l)
+                let w = try! XCTUnwrap(lexemes[i*2-2].word)
+                XCTAssert(exp.count == i || lexemes[i*2-1] == .whitespace)
+                XCTAssertEqual(e, w)
             }
         }
 
@@ -85,10 +112,11 @@ final class LexerTests: XCTestCase {
 
     func testNums() throws {
         let testLex = { (inp: String, exp: [Float]) in
-            let lexemes = lex(inp) as! [NumberLex]
+            let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, exp.count)
             for (e, l) in zip(exp, lexemes) {
-                XCTAssertEqual(e, l.float_rep)
+                let f = try! XCTUnwrap(l.number)
+                XCTAssertEqual(e, f)
             }
         }
 
@@ -114,6 +142,9 @@ final class LexerTests: XCTestCase {
         let testLex = { (inp: String, exp: Int) in
             let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, exp)
+            lexemes.forEach {
+                XCTAssertEqual($0, .delimiter)
+            }
         }
 
         testLex(",", 1)
@@ -158,12 +189,12 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(lexemes.count, expected.count)
         for (lex, e) in zip(lexemes, expected) {
             switch lex {
-            case let l as WordLex: XCTAssertEqual(l.string_rep, e as! String)
-            case let l as StringLex: XCTAssertEqual(l.string_rep, (e as! S).s)
-            case _ as WhitespaceLex: XCTAssert(e is WS)
-            case _ as NewlineLex: XCTAssert(e is NL)
-            case _ as DelimiterLex: XCTAssert(e is SEP)
-            default: XCTFail()
+            case .word(let w):   XCTAssertEqual(w, e as! String)
+            case .string(let s): XCTAssertEqual(s, (e as! S).s)
+            case .whitespace:    XCTAssert(e is WS)
+            case .newline:       XCTAssert(e is NL)
+            case .delimiter:     XCTAssert(e is SEP)
+            default:             XCTFail()
             }
         }
     }

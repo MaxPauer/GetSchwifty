@@ -8,10 +8,10 @@ internal struct Parser {
 
         while let l = lexs.pop() {
             switch l {
-            case is NewlineLex:
+            case .newline:
                 lines += 1
-            case let c as CommentLex:
-                lines += c.lines
+            case .comment(_, let l):
+                lines += l
             default:
                 continue
             }
