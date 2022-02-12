@@ -15,7 +15,7 @@ internal struct NewlineLex: Lexeme {}
 internal struct DelimiterLex: Lexeme {}
 
 internal struct WhitespaceLex: Lexeme {
-    fileprivate init(_ chars: inout StringFifo) {
+    fileprivate init(_ chars: inout Fifo<String>) {
         while chars.peek()?.isWhitespace ?? false {
             _ = chars.pop()
         }
@@ -25,7 +25,7 @@ internal struct WhitespaceLex: Lexeme {
 internal struct CommentLex: StringLexeme {
     var string_rep: String = ""
 
-    fileprivate init(_ chars: inout StringFifo) {
+    fileprivate init(_ chars: inout Fifo<String>) {
         var depth = 0
 
         while let c = chars.pop() {
@@ -44,7 +44,7 @@ internal struct CommentLex: StringLexeme {
 
 internal struct StringLex: StringLexeme {
     var string_rep: String = ""
-    fileprivate init(_ chars: inout StringFifo) {
+    fileprivate init(_ chars: inout Fifo<String>) {
         while let c = chars.pop() {
             if c == "\\" {
                 self.push(c)
@@ -61,7 +61,7 @@ internal struct StringLex: StringLexeme {
 internal struct WordLex: StringLexeme {
     var string_rep: String = ""
 
-    fileprivate init(firstChar: Character, _ chars: inout StringFifo) {
+    fileprivate init(firstChar: Character, _ chars: inout Fifo<String>) {
         self.push(firstChar)
         while chars.peek()?.isLetter ?? false {
             self.push(chars.pop()!)
@@ -75,7 +75,7 @@ internal struct NumberLex: StringLexeme {
         return Float(string_rep)!
     }
 
-    fileprivate init(firstChar: Character, _ chars: inout StringFifo) {
+    fileprivate init(firstChar: Character, _ chars: inout Fifo<String>) {
         self.push(firstChar)
 
         var accept_decimal_point = firstChar != "."
@@ -105,24 +105,11 @@ internal struct NumberLex: StringLexeme {
     }
 }
 
-private struct StringFifo {
-    private var intern: String
-    init(_ s: String) {
-        intern = String(s.reversed())
-    }
-    mutating func pop() -> Character? {
-        intern.popLast()
-    }
-    func peek() -> Character? {
-        intern.last
-    }
-}
-
 fileprivate func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
 
-private func next_lexeme(_ chars: inout StringFifo) -> Lexeme? {
+private func next_lexeme(_ chars: inout Fifo<String>) -> Lexeme? {
     guard let c = chars.pop() else { return nil }
 
     switch c {
@@ -150,7 +137,7 @@ private func next_lexeme(_ chars: inout StringFifo) -> Lexeme? {
 
 internal func lex(_ inp: String) -> [Lexeme] {
     var lexemes: [Lexeme] = []
-    var chars = StringFifo(inp)
+    var chars = Fifo<String>(inp)
 
     while let l = next_lexeme(&chars) {
         lexemes.append(l)
