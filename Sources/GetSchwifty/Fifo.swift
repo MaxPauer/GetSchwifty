@@ -17,6 +17,9 @@ internal struct Fifo<T: Fifoable> {
     mutating func pop() -> T.Element? {
         intern.popLast()
     }
+    mutating func drop() {
+        _ = pop()
+    }
     func peek() -> T.Element? {
         intern.last
     }

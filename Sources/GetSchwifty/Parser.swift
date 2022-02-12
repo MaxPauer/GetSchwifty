@@ -144,13 +144,13 @@ internal struct Parser {
             let lex = lexemes.peek()!
             switch lex {
             case .whitespace:
-                _ = lexemes.pop()
+                lexemes.drop()
                 continue
             case .newline:
                 try verifyEnd()
                 break
             case .word(let w):
-                _ = lexemes.pop()
+                lexemes.drop()
                 words.append(w)
             default:
                 throw UnexpectedLexemeError(got: lex, expected: AnyLexeme.word) // also whitespace and maybe newline

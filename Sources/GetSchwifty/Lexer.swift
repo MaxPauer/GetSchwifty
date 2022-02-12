@@ -59,7 +59,7 @@ internal enum Lexeme: Lexemeish, Equatable, CustomStringConvertible {
     init(whitespace chars: inout Fifo<String>) {
         while let c = chars.peek() {
             guard c.isWhitespace && !c.isNewline else { break }
-            _ = chars.pop()
+            chars.drop()
         }
         self = .whitespace
     }
