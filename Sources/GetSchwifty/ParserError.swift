@@ -25,3 +25,7 @@ internal struct UnexpectedLexemeError: PartialParserError {
         "encountered lexeme: \(got) while expecting: \(expected)"
     }
 }
+
+internal struct NotImplementedError: PartialParserError, Equatable {
+    var description: String = "This has not been implemented 🤷‍♀️"
+}

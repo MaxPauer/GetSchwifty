@@ -1,5 +1,7 @@
 internal protocol Expr {
     var newLines: UInt { get }
+    var isFinished: Bool { get }
+    mutating func append(_ nextExpr: Expr) throws -> Expr
 }
 
 internal protocol VariableName: Expr {
@@ -8,22 +10,58 @@ internal protocol VariableName: Expr {
 
 internal struct CommonVariableName: VariableName {
     var name: String
-    var newLines: UInt { 0 }
+    let newLines: UInt = 0
+    let isFinished: Bool = false
+
+    mutating func append(_ nextExpr: Expr) throws -> Expr {
+        throw NotImplementedError()
+    }
 }
 
 internal struct Newline: Expr {
-    var newLines: UInt { 1 }
+    let newLines: UInt = 1
+    let isFinished: Bool = false
+
+    mutating func append(_ nextExpr: Expr) throws -> Expr {
+        throw NotImplementedError()
+    }
 }
 
 internal struct Comment: Expr {
     var newLines: UInt
+    let isFinished: Bool = false
+
+    mutating func append(_ nextExpr: Expr) throws -> Expr {
+        throw NotImplementedError()
+    }
+}
+
+internal struct RootExpr: Expr {
+    let isFinished: Bool = false
+    let newLines: UInt = 0
+    var children: [Expr] = []
+
+    @discardableResult
+    mutating func append(_ nextExpr: Expr) throws -> Expr {
+        guard var lastExpr = children.last else {
+            children.append(nextExpr)
+            return self
+        }
+        if lastExpr.isFinished {
+            children.append(nextExpr)
+        } else {
+            _ = children.popLast()!
+            children.append(try lastExpr.append(nextExpr))
+        }
+        return self
+    }
 }
 
 typealias Lexemes = Fifo<[Lexeme]>
 
 internal struct Parser {
     var lines: UInt = 1
-    var exprs: [Expr] = []
+    var rootExpr = RootExpr()
 
     func drop_whitespace(_ lexemes: inout Lexemes) throws {
         guard let next = lexemes.pop() else {
@@ -77,20 +115,21 @@ internal struct Parser {
 
     init(lexemes: [Lexeme]) throws {
         var lexs = Lexemes(lexemes)
-        var expr: Expr?
+        var expr: Expr!
 
         while true {
             do {
-                expr = try next_expr(&lexs)
+                let e = try next_expr(&lexs)
+                guard e != nil else { break }
+                expr = e!
+                try rootExpr.append(expr)
             } catch let err as PartialParserError {
                 throw ParserError(onLine: lines, partialErr: err)
             } catch {
                 assertionFailure("unexpected Error")
             }
 
-            guard let e = expr else { break }
-            lines += e.newLines
-            exprs.append(e)
+            lines += expr.newLines
         }
     }
 }
