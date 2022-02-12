@@ -1,4 +1,6 @@
-internal protocol Expr {}
+internal protocol Expr {
+    var spanningLines: UInt { get }
+}
 
 internal protocol VariableName: Expr {
     var name: String { get }
@@ -6,10 +8,18 @@ internal protocol VariableName: Expr {
 
 internal struct CommonVariableName: VariableName {
     var name: String
+    var spanningLines: UInt { 0 }
+}
+
+internal struct Newline: Expr {
+    var spanningLines: UInt { 1 }
+}
+
+internal struct Comment: Expr {
+    var spanningLines: UInt
 }
 
 typealias Lexemes = Fifo<[Lexeme]>
-extension String: Error {}
 
 internal struct Parser {
     var lines: UInt = 1
@@ -17,17 +27,17 @@ internal struct Parser {
 
     func parse_common_variable(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr {
         guard let ws = lexemes.pop() else {
-            throw "UnexpectedEOFError(expected: .whitespace)"
+            throw UnexpectedEOFError(expected: .whitespace)
         }
         guard ws == .whitespace else {
-            throw "UnexpectedLexemeError(ws, expected: .whitespace)"
+            throw UnexpectedLexemeError(got: ws, expected: .whitespace)
         }
 
         guard let sw = lexemes.pop() else {
-            throw "UnexpectedEOFError(expected: .word)"
+            throw UnexpectedEOFError(expected: .word(""))
         }
         guard case .word(let secWord) = sw else {
-            throw "UnexpectedLexemeError(sw, expected: .word)"
+            throw UnexpectedLexemeError(got: sw, expected: .word(""))
         }
 
         let secondWord = secWord.lowercased()
@@ -40,27 +50,43 @@ internal struct Parser {
         case "a", "an", "the", "my", "your", "our":
             return try parse_common_variable(&lexemes, firstWord: first)
         default:
-            //throw "UnparsableWordError(word: firstWord)"
-            return nil
+            //TODO: replace with throw "UnparsableWordError(word: firstWord)"
+            return try next_expr(&lexemes)
         }
     }
 
-    init(lexemes: [Lexeme]) {
-        var lexs = Lexemes(lexemes)
+    func next_expr(_ lexemes: inout Lexemes) throws -> Expr? {
+        guard let l = lexemes.pop() else { return nil }
 
-        while let l = lexs.pop() {
-            switch l {
-            case .newline:
-                lines += 1
-            case .comment(_, let l):
-                lines += l
-            case .word(let w):
-                if let e = try? parse_word(&lexs, firstWord: w) {
-                    exprs.append(e)
-                }
-            default:
-                continue
+        switch l {
+        case .newline:
+            return Newline()
+        case .comment(_, let l):
+            return Comment(spanningLines: l)
+        case .word(let w):
+            return try parse_word(&lexemes, firstWord: w)
+        default:
+            // TODO: handle all and remove:
+            return try next_expr(&lexemes)
+        }
+    }
+
+    init(lexemes: [Lexeme]) throws {
+        var lexs = Lexemes(lexemes)
+        var expr: Expr?
+
+        while true {
+            do {
+                expr = try next_expr(&lexs)
+            } catch let err as PartialParserError {
+                throw ParserError(onLine: lines, partialErr: err)
+            } catch {
+                assertionFailure("unexpected Error")
             }
+
+            guard let e = expr else { break }
+            lines += e.spanningLines
+            exprs.append(e)
         }
     }
 }

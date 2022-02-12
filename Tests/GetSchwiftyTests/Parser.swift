@@ -4,7 +4,7 @@ import XCTest
 final class ParserTests: XCTestCase {
     func testCommonVariable() throws {
         let testParse = { (inp: String, exp: String) in
-            let p = Parser(lexemes: lex(inp))
+            let p = try! Parser(lexemes: lex(inp))
             XCTAssertEqual(p.exprs.count, 1)
             XCTAssertEqual((p.exprs[0] as! CommonVariableName).name, exp)
         }
@@ -20,7 +20,7 @@ final class ParserTests: XCTestCase {
     func testFizzBuzz() throws {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         let lexemes = lex(fizzbuzz)
-        let parser = Parser(lexemes: lexemes)
+        let parser = try! Parser(lexemes: lexemes)
         XCTAssertEqual(parser.lines, 26)
     }
 }
