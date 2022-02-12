@@ -1,6 +1,28 @@
-internal protocol Lexemeish {}
+internal protocol Lexemeish {
+    var prettyName: String { get }
+}
 
-internal enum Lexeme: Lexemeish, Equatable {
+internal enum AnyLexeme: Lexemeish, Equatable, CustomStringConvertible {
+    case comment
+    case string
+    case word
+    case number
+
+    var prettyName: String {
+        switch self {
+        case .string: return "String"
+        case .comment: return "Comment"
+        case .word: return "Identifier"
+        case .number: return "Number"
+        }
+    }
+
+    var description: String {
+        return "<\(self.prettyName)>"
+    }
+}
+
+internal enum Lexeme: Lexemeish, Equatable, CustomStringConvertible {
     case newline
     case delimiter
     case whitespace
@@ -8,6 +30,31 @@ internal enum Lexeme: Lexemeish, Equatable {
     case string(String)
     case word(String)
     case number(Float)
+
+    var prettyName: String {
+        switch self {
+        case .newline: return "Newline"
+        case .delimiter: return "ListDelimiter"
+        case .whitespace: return "Whitespace"
+        case .string(let s): return AnyLexeme.string.prettyName
+        case .comment(let c, _): return AnyLexeme.comment.prettyName
+        case .word(let w): return AnyLexeme.word.prettyName
+        case .number(let f): return AnyLexeme.number.prettyName
+        }
+    }
+
+    var description: String {
+        let p = self.prettyName
+        switch self {
+        case .newline: return "<\(p)>"
+        case .delimiter: return "<\(p)>"
+        case .whitespace: return "<\(p)>"
+        case .string(let s): return "<\(p): \"\(s)\">"
+        case .comment(let c, _): return "<\(p): (\(c))>"
+        case .word(let w): return "<\(p): \(w)>"
+        case .number(let f): return "<\(p): \(f)>"
+        }
+    }
 
     init(whitespace chars: inout Fifo<String>) {
         while let c = chars.peek() {

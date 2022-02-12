@@ -1,12 +1,5 @@
 internal protocol PartialParserError: Error, CustomStringConvertible {}
 
-internal enum AnyLexeme: Lexemeish, Equatable {
-    case comment
-    case string
-    case word
-    case number
-}
-
 public struct ParserError: Error, CustomStringConvertible {
     let onLine: UInt
     let partialErr: PartialParserError
@@ -20,7 +13,7 @@ internal struct UnexpectedEOFError: PartialParserError {
     let expected: Lexemeish
 
     var description: String {
-        "Unexpected end of file. Expecting: \(expected)"
+        "encountered end of file while expecting: \(expected)"
     }
 }
 
@@ -29,6 +22,6 @@ internal struct UnexpectedLexemeError: PartialParserError {
     let expected: Lexemeish
 
     var description: String {
-        "Unexpected lexeme encountered: \(got). Expecting: \(expected)"
+        "encountered lexeme: \(got) while expecting: \(expected)"
     }
 }
