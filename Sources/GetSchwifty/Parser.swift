@@ -103,6 +103,46 @@ internal struct Parser {
         return a
     }
 
+    func parseVariable(_ lexemes: inout Lexemes) throws -> VariableNameExpr {
+        try dropWhitespace(&lexemes)
+
+        guard let lex = lexemes.pop() else {
+            throw UnexpectedEOFError(expected: IdentifierLex.self)
+        }
+        guard let firstWord = lex as? IdentifierLex else {
+            throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self)
+        }
+
+        let first = firstWord.literal.lowercased()
+        switch first {
+        case "a", "an", "the", "my", "your", "our":
+            return try parseCommonVariable(&lexemes, firstWord: first)
+        default:
+            throw NotImplementedError()
+        }
+    }
+
+    func parseLetAssignmentExpr(_ lexemes: inout Lexemes) throws -> AssignmentExpr {
+        var a = AssignmentExpr()
+        a.lhs = try parseVariable(&lexemes)
+
+        try dropWhitespace(&lexemes)
+
+        guard let lexBe = lexemes.pop() else {
+            throw UnexpectedEOFError(expected: IdentifierLex.self)
+        }
+        guard let beId = lexBe as? IdentifierLex else {
+            throw UnexpectedLexemeError(got: lexBe, expected: IdentifierLex.self)
+        }
+        guard beId.literal.lowercased() == "be" else {
+            throw UnexpectedLexemeError(got: lexBe, expected: IdentifierLex.self) // ("be")
+        }
+
+        try dropWhitespace(&lexemes)
+
+        return a
+    }
+
     func parseIdentifier(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr? {
         let first = firstWord.lowercased()
         switch first {
@@ -112,6 +152,8 @@ internal struct Parser {
             return try parsePoeticNumberAssignmentExpr(&lexemes)
         case "say", "says", "said":
             return try parsePoeticStringAssignmentExpr(&lexemes)
+        case "let":
+            return try parseLetAssignmentExpr(&lexemes)
         default:
             //TODO: replace with throw "UnparsableWordError(word: firstWord)"
             return try nextExpr(&lexemes)
@@ -128,6 +170,10 @@ internal struct Parser {
             return CommentExpr(newLines: c.newLines)
         case let id as IdentifierLex:
             return try parseIdentifier(&lexemes, firstWord: id.literal)
+        case let str as StringLex:
+            return ValueExpr.string(str.literal)
+        case let num as NumberLex:
+            return ValueExpr.number(num.value)
         default:
             // TODO: handle all and remove:
             return try nextExpr(&lexemes)

@@ -90,6 +90,37 @@ final class ParserTests: XCTestCase {
         testParse("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
     }
 
+    func testLetAssignment() throws {
+        func testParse(_ inp: String, _ expVarName: String, _ expValue: Float) {
+            let l = lex(inp)
+            let p = try! Parser(lexemes: l)
+            let exprs = p.rootExpr.children
+            XCTAssertEqual(exprs.count, 1)
+            let ass = exprs[0] as! AssignmentExpr
+            XCTAssertEqual(ass.lhs!.name, expVarName)
+            let rhsVal = try! XCTUnwrap(ass.rhs! as? ValueExpr)
+            switch rhsVal {
+            case .number(let n): XCTAssert(expValue == n)
+            default: XCTFail()
+            }
+        }
+        func testParse(_ inp: String, _ expVarName: String, _ expValue: String) {
+            let l = lex(inp)
+            let p = try! Parser(lexemes: l)
+            let exprs = p.rootExpr.children
+            XCTAssertEqual(exprs.count, 1)
+            let ass = exprs[0] as! AssignmentExpr
+            XCTAssertEqual(ass.lhs!.name, expVarName)
+            let rhsVal = try! XCTUnwrap(ass.rhs! as? ValueExpr)
+            switch rhsVal {
+            case .string(let s): XCTAssert(expValue == s)
+            default: XCTFail()
+            }
+        }
+        testParse("let my life be \"GREAT\"", "my life", "GREAT")
+        testParse("let my life be 42.0", "my life", 42.0)
+    }
+
     func testFizzBuzz() throws {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         let lexemes = lex(fizzbuzz)
