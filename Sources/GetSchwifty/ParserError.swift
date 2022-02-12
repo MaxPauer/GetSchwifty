@@ -10,7 +10,7 @@ public struct ParserError: Error, CustomStringConvertible {
 }
 
 internal struct UnexpectedEOFError: PartialParserError {
-    let expected: Lexemeish
+    let expected: Lex.Type
 
     var description: String {
         "encountered end of file while expecting: \(expected)"
@@ -18,8 +18,8 @@ internal struct UnexpectedEOFError: PartialParserError {
 }
 
 internal struct UnexpectedLexemeError: PartialParserError {
-    let got: Lexeme
-    let expected: Lexemeish
+    let got: Lex
+    let expected: Lex.Type
 
     var description: String {
         "encountered lexeme: \(got) while expecting: \(expected)"

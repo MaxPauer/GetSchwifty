@@ -1,4 +1,4 @@
-typealias Lexemes = Fifo<[Lexeme]>
+typealias Lexemes = Fifo<[Lex]>
 
 internal struct Parser {
     var lines: UInt = 1
@@ -6,10 +6,10 @@ internal struct Parser {
 
     func dropWhitespace(_ lexemes: inout Lexemes) throws {
         guard let next = lexemes.pop() else {
-            throw UnexpectedEOFError(expected: Lexeme.whitespace)
+            throw UnexpectedEOFError(expected: WhitespaceLex.self)
         }
-        guard next == .whitespace else {
-            throw UnexpectedLexemeError(got: next, expected: Lexeme.whitespace)
+        guard next is WhitespaceLex else {
+            throw UnexpectedLexemeError(got: next, expected: WhitespaceLex.self)
         }
     }
 
@@ -17,13 +17,13 @@ internal struct Parser {
         try dropWhitespace(&lexemes)
 
         guard let sw = lexemes.pop() else {
-            throw UnexpectedEOFError(expected: AnyLexeme.word)
+            throw UnexpectedEOFError(expected: IdentifierLex.self)
         }
-        guard case .word(let secWord) = sw else {
-            throw UnexpectedLexemeError(got: sw, expected: AnyLexeme.word)
+        guard let secWord = sw as? IdentifierLex else {
+            throw UnexpectedLexemeError(got: sw, expected: IdentifierLex.self)
         }
 
-        let secondWord = secWord.lowercased()
+        let secondWord = secWord.literal.lowercased()
         return CommonVariableNameExpr(name: "\(firstWord) \(secondWord)")
     }
 
@@ -33,7 +33,7 @@ internal struct Parser {
         let mayEnd = { words.count > 0 }
         let verifyEnd = {
             guard mayEnd() else {
-                throw UnexpectedEOFError(expected: AnyLexeme.word)
+                throw UnexpectedEOFError(expected: IdentifierLex.self)
             }
         }
 
@@ -44,15 +44,15 @@ internal struct Parser {
             }
             let lex = lexemes.peek()!
             switch lex {
-            case .newline:
+            case is NewlineLex:
                 try verifyEnd()
                 break lexing
-            case .whitespace, .comment:
+            case is WhitespaceLex, is CommentLex:
                 break // nop
-            case .word(let w):
-                words.append(w)
+            case let id as IdentifierLex:
+                words.append(id.literal)
             default:
-                throw UnexpectedLexemeError(got: lex, expected: AnyLexeme.word) // also whitespace, comment, and maybe newline
+                throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // also whitespace, comment, and maybe newline
             }
 
             lexemes.drop()
@@ -73,22 +73,24 @@ internal struct Parser {
 
         lexing: while let lex = lexemes.peek() {
             switch lex {
-            case .newline:
+            case is NewlineLex:
                 break lexing
-            case .whitespace:
+            case is WhitespaceLex:
                 string += " "
-            case .comment:
+            case is CommentLex:
                 break // nop
-            case .word(let w):
-                string += w
+            case let id as IdentifierLex:
+                string += id.literal
             // case .apostrophe: // TODO
             //     string += "'"
-            case .delimiter:
+            case is DelimiterLex:
                 string += "," // TODO: or &
-            case .number(let f):
-                string += "\(f)" // TODO: original formatting
-            case .string(let s):
-                string += "\"\(s)\""
+            case let num as NumberLex:
+                string += "\(num.value)" // TODO: original formatting
+            case let str as StringLex:
+                string += "\"\(str.literal)\""
+            default:
+                assertionFailure("unexpected lexeme")
             }
 
             lexemes.drop()
@@ -128,19 +130,19 @@ internal struct Parser {
         guard let l = lexemes.pop() else { return nil }
 
         switch l {
-        case .newline:
+        case is NewlineLex:
             return NewlineExpr()
-        case .comment(_, let l):
-            return CommentExpr(newLines: l)
-        case .word(let w):
-            return try parseWord(&lexemes, firstWord: w)
+        case let c as CommentLex:
+            return CommentExpr(newLines: c.newLines)
+        case let id as IdentifierLex:
+            return try parseWord(&lexemes, firstWord: id.literal)
         default:
             // TODO: handle all and remove:
             return try nextExpr(&lexemes)
         }
     }
 
-    init(lexemes: [Lexeme]) throws {
+    init(lexemes: [Lex]) throws {
         var lexs = Lexemes(lexemes)
         var expr: Expr!
 

@@ -1,72 +1,49 @@
-internal protocol Lexemeish {
+internal protocol Lex: CustomStringConvertible {
     var prettyName: String { get }
+    var useLiteralDescription: Bool { get }
+    var literal: String { get }
 }
 
-internal enum AnyLexeme: Lexemeish, Equatable, CustomStringConvertible {
-    case comment
-    case string
-    case word
-    case number
-
-    var prettyName: String {
-        switch self {
-        case .string: return "String"
-        case .comment: return "Comment"
-        case .word: return "Identifier"
-        case .number: return "Number"
-        }
-    }
-
+extension Lex {
     var description: String {
-        return "<\(self.prettyName)>"
+        useLiteralDescription ? "<\(prettyName): \(literal)>" : "<\(prettyName)>"
     }
 }
 
-internal enum Lexeme: Lexemeish, Equatable, CustomStringConvertible {
-    case newline
-    case delimiter
-    case whitespace
-    case comment(String, UInt)
-    case string(String)
-    case word(String)
-    case number(Float)
+internal struct NewlineLex: Lex {
+    let prettyName = "Newline"
+    let useLiteralDescription = false
+    let literal = "\n"
+}
 
-    var prettyName: String {
-        switch self {
-        case .newline: return "Newline"
-        case .delimiter: return "ListDelimiter"
-        case .whitespace: return "Whitespace"
-        case .string: return AnyLexeme.string.prettyName
-        case .comment: return AnyLexeme.comment.prettyName
-        case .word: return AnyLexeme.word.prettyName
-        case .number: return AnyLexeme.number.prettyName
-        }
-    }
+internal struct DelimiterLex: Lex {
+    var prettyName = "Delimiter"
+    let useLiteralDescription = false
+    let literal = ","
+}
 
-    var description: String {
-        let p = self.prettyName
-        switch self {
-        case .newline: return "<\(p)>"
-        case .delimiter: return "<\(p)>"
-        case .whitespace: return "<\(p)>"
-        case .string(let s): return "<\(p): \"\(s)\">"
-        case .comment(let c, _): return "<\(p): (\(c))>"
-        case .word(let w): return "<\(p): \(w)>"
-        case .number(let f): return "<\(p): \(f)>"
-        }
-    }
+internal struct WhitespaceLex: Lex {
+    var prettyName = "Whitespace"
+    let useLiteralDescription = false
+    let literal = " "
 
-    init(whitespace chars: inout Fifo<String>) {
+    init(_ chars: inout Fifo<String>) {
         while let c = chars.peek() {
             guard c.isWhitespace && !c.isNewline else { break }
             chars.drop()
         }
-        self = .whitespace
     }
+}
 
-    init(comment chars: inout Fifo<String>) {
+internal struct CommentLex: Lex {
+    let prettyName = "Comment"
+    let useLiteralDescription = true
+    let literal: String
+    let newLines: UInt
+
+    init(_ chars: inout Fifo<String>) {
         var depth = 0
-        var newLines: UInt = 0
+        var nl: UInt = 0
         var rep = ""
 
         while let c = chars.pop() {
@@ -78,15 +55,22 @@ internal enum Lexeme: Lexemeish, Equatable, CustomStringConvertible {
                 }
                 depth -= 1
             } else if c.isNewline {
-                newLines += 1
+                nl += 1
             }
             rep.append(c)
         }
 
-        self = .comment(rep, newLines)
+        literal = rep
+        newLines = nl
     }
+}
 
-    init(string chars: inout Fifo<String>) {
+internal struct StringLex: Lex {
+    let prettyName = "String"
+    let useLiteralDescription = true
+    let literal: String
+
+    init(_ chars: inout Fifo<String>) {
         var rep = ""
         while let c = chars.pop() {
             if c == "\\" {
@@ -98,18 +82,31 @@ internal enum Lexeme: Lexemeish, Equatable, CustomStringConvertible {
             }
             rep.append(c)
         }
-        self = .string(rep)
+        literal = rep
     }
+}
 
-    init(word chars: inout Fifo<String>, firstChar: Character) {
+internal struct IdentifierLex: Lex {
+    let prettyName = "Identifier"
+    let useLiteralDescription = true
+    let literal: String
+
+    init(_ chars: inout Fifo<String>, firstChar: Character) {
         var rep = String(firstChar)
         while chars.peek()?.isLetter ?? false {
             rep.append(chars.pop()!)
         }
-        self = .word(rep)
+        literal = rep
     }
+}
 
-    init(number chars: inout Fifo<String>, firstChar: Character) {
+internal struct NumberLex: Lex {
+    let prettyName = "Number"
+    let useLiteralDescription = true
+    let value: Float
+    var literal: String { "\(value)" }
+
+    init(_ chars: inout Fifo<String>, firstChar: Character) {
         var rep = String(firstChar)
 
         var acceptDecimalPoint = firstChar != "."
@@ -135,7 +132,7 @@ internal enum Lexeme: Lexemeish, Equatable, CustomStringConvertible {
             rep.append(chars.pop()!)
         }
 
-        self = .number(Float(rep)!)
+        value = Float(rep)!
     }
 }
 
@@ -149,34 +146,34 @@ fileprivate func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
 
-private func nextLexeme(_ chars: inout Fifo<String>) -> Lexeme? {
+private func nextLexeme(_ chars: inout Fifo<String>) -> Lex? {
     guard let c = chars.pop() else { return nil }
 
     switch c {
     case "(":
-        return Lexeme(comment: &chars)
+        return CommentLex(&chars)
     case "\"":
-        return Lexeme(string: &chars)
+        return StringLex(&chars)
     case "\r":
         return nextLexeme(&chars)
     case \.isNewline:
-        return .newline
+        return NewlineLex()
     case ",", "&":
-        return .delimiter
+        return DelimiterLex()
     case \.isWhitespace:
-        return Lexeme(whitespace: &chars)
+        return WhitespaceLex(&chars)
     case \.isLetter:
-        return Lexeme(word: &chars, firstChar: c)
+        return IdentifierLex(&chars, firstChar: c)
     case \.isNumber, "+", "-", ".":
-        return Lexeme(number: &chars, firstChar: c)
+        return NumberLex(&chars, firstChar: c)
     default:
         assertionFailure("Found unlexable chars at end of input")
         return nil
     }
 }
 
-internal func lex(_ inp: String) -> [Lexeme] {
-    var lexemes: [Lexeme] = []
+internal func lex(_ inp: String) -> [Lex] {
+    var lexemes: [Lex] = []
     var chars = Fifo<String>(inp)
 
     while let l = nextLexeme(&chars) {

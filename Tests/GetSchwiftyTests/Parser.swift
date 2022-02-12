@@ -38,18 +38,28 @@ final class ParserTests: XCTestCase {
     }
 
     func testCommonVariableFailure() {
-        let testParse = { (inp: String, part: PartialParserError) in
+        let testParse = { (inp: String, err: PartialParserError.Type, got: Lex.Type?, exp: Lex.Type) in
             let l = lex(inp)
-            XCTAssertThrowsError(try Parser(lexemes: l)) { error in
-                XCTAssertEqual(error as! ParserError, ParserError(onLine: 1, partialErr: part))
+            XCTAssertThrowsError(try Parser(lexemes: l)) { (e: Error) in
+                let error = e as! ParserError
+                XCTAssert(type(of: error.partialErr) == err)
+                switch error.partialErr {
+                case let err as UnexpectedLexemeError:
+                    XCTAssert(err.expected == exp)
+                    XCTAssert(type(of: err.got) == got!)
+                case let err as UnexpectedEOFError:
+                    XCTAssert(err.expected == exp)
+                default:
+                    XCTFail("Unexpected Error type")
+                }
             }
         }
 
-        try! testParse("A\"field\"", UnexpectedLexemeError(got: .string("field"), expected:Lexeme.whitespace))
-        try! testParse("A,field", UnexpectedLexemeError(got: .delimiter, expected:Lexeme.whitespace))
-        try! testParse("A\nfield", UnexpectedLexemeError(got: .newline, expected:Lexeme.whitespace))
-        try! testParse("A ", UnexpectedEOFError(expected: AnyLexeme.word))
-        try! testParse("A \n", UnexpectedLexemeError(got: .newline, expected:AnyLexeme.word))
+        try! testParse("A\"field\"", UnexpectedLexemeError.self, StringLex.self, WhitespaceLex.self)
+        try! testParse("A,field", UnexpectedLexemeError.self, DelimiterLex.self, WhitespaceLex.self)
+        try! testParse("A\nfield", UnexpectedLexemeError.self, NewlineLex.self, WhitespaceLex.self)
+        try! testParse("A ", UnexpectedEOFError.self, nil, IdentifierLex.self)
+        try! testParse("A \n", UnexpectedLexemeError.self, NewlineLex.self, IdentifierLex.self)
     }
 
     func testPoeticNumberLiteral() throws {
