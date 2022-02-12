@@ -1,5 +1,5 @@
 internal protocol Expr {
-    var spanningLines: UInt { get }
+    var newLines: UInt { get }
 }
 
 internal protocol VariableName: Expr {
@@ -8,15 +8,15 @@ internal protocol VariableName: Expr {
 
 internal struct CommonVariableName: VariableName {
     var name: String
-    var spanningLines: UInt { 0 }
+    var newLines: UInt { 0 }
 }
 
 internal struct Newline: Expr {
-    var spanningLines: UInt { 1 }
+    var newLines: UInt { 1 }
 }
 
 internal struct Comment: Expr {
-    var spanningLines: UInt
+    var newLines: UInt
 }
 
 typealias Lexemes = Fifo<[Lexeme]>
@@ -62,7 +62,7 @@ internal struct Parser {
         case .newline:
             return Newline()
         case .comment(_, let l):
-            return Comment(spanningLines: l)
+            return Comment(newLines: l)
         case .word(let w):
             return try parse_word(&lexemes, firstWord: w)
         default:
@@ -85,7 +85,7 @@ internal struct Parser {
             }
 
             guard let e = expr else { break }
-            lines += e.spanningLines
+            lines += e.newLines
             exprs.append(e)
         }
     }

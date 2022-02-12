@@ -16,7 +16,7 @@ internal enum Lexeme: Equatable {
 
     init(comment chars: inout Fifo<String>) {
         var depth = 0
-        var lines: UInt = 1
+        var newLines: UInt = 0
         var rep = ""
 
         while let c = chars.pop() {
@@ -28,12 +28,12 @@ internal enum Lexeme: Equatable {
                 }
                 depth -= 1
             } else if c.isNewline {
-                lines += 1
+                newLines += 1
             }
             rep.append(c)
         }
 
-        self = .comment(rep, lines)
+        self = .comment(rep, newLines)
     }
 
     init(string chars: inout Fifo<String>) {

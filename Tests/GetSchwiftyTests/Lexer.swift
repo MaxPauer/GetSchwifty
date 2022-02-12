@@ -37,12 +37,12 @@ final class LexerTests: XCTestCase {
             XCTAssertEqual(lines, exp_lines)
         }
 
-        testLex("(hi)", "hi", 1)
-        testLex("(hi", "hi", 1)
-        testLex("(he(llo))", "he(llo)", 1)
-        testLex("(he(ll)o)", "he(ll)o", 1)
-        testLex("(he(\n)o)", "he(\n)o", 2)
-        testLex("(he(\n\r\n\r)o)", "he(\n\r\n\r)o", 3)
+        testLex("(hi)", "hi", 0)
+        testLex("(hi", "hi", 0)
+        testLex("(he(llo))", "he(llo)", 0)
+        testLex("(he(ll)o)", "he(ll)o", 0)
+        testLex("(he(\n)o)", "he(\n)o", 1)
+        testLex("(he(\n\r\n\r)o)", "he(\n\r\n\r)o", 2)
     }
 
     func testStrings() throws {
