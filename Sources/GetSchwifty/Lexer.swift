@@ -112,23 +112,23 @@ internal enum Lexeme: Lexemeish, Equatable, CustomStringConvertible {
     init(number chars: inout Fifo<String>, firstChar: Character) {
         var rep = String(firstChar)
 
-        var accept_decimal_point = firstChar != "."
-        var accept_exp = firstChar.isNumber
-        var accept_sign = false
+        var acceptDecimalPoint = firstChar != "."
+        var acceptExponent = firstChar.isNumber
+        var acceptSign = false
 
         while let c = chars.peek() {
             if c.isNumber {
-                accept_exp = true
-                accept_sign = false
-            } else if accept_decimal_point && c == "." {
-                accept_decimal_point = false
-                accept_exp = false
-            } else if accept_exp && c.lowercased() == "e" {
-                accept_decimal_point = false
-                accept_sign = true
-                accept_exp = false
-            } else if accept_sign && (c == "-" || c == "+") {
-                accept_sign = false
+                acceptExponent = true
+                acceptSign = false
+            } else if acceptDecimalPoint && c == "." {
+                acceptDecimalPoint = false
+                acceptExponent = false
+            } else if acceptExponent && c.lowercased() == "e" {
+                acceptDecimalPoint = false
+                acceptSign = true
+                acceptExponent = false
+            } else if acceptSign && (c == "-" || c == "+") {
+                acceptSign = false
             } else {
                 break
             }
@@ -149,7 +149,7 @@ fileprivate func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
 
-private func next_lexeme(_ chars: inout Fifo<String>) -> Lexeme? {
+private func nextLexeme(_ chars: inout Fifo<String>) -> Lexeme? {
     guard let c = chars.pop() else { return nil }
 
     switch c {
@@ -158,7 +158,7 @@ private func next_lexeme(_ chars: inout Fifo<String>) -> Lexeme? {
     case "\"":
         return Lexeme(string: &chars)
     case "\r":
-        return next_lexeme(&chars)
+        return nextLexeme(&chars)
     case \.isNewline:
         return .newline
     case ",", "&":
@@ -179,7 +179,7 @@ internal func lex(_ inp: String) -> [Lexeme] {
     var lexemes: [Lexeme] = []
     var chars = Fifo<String>(inp)
 
-    while let l = next_lexeme(&chars) {
+    while let l = nextLexeme(&chars) {
         lexemes.append(l)
     }
 

@@ -103,7 +103,7 @@ internal struct Parser {
     var lines: UInt = 1
     var rootExpr = RootExpr()
 
-    func drop_whitespace(_ lexemes: inout Lexemes) throws {
+    func dropWhitespace(_ lexemes: inout Lexemes) throws {
         guard let next = lexemes.pop() else {
             throw UnexpectedEOFError(expected: Lexeme.whitespace)
         }
@@ -112,8 +112,8 @@ internal struct Parser {
         }
     }
 
-    func parse_common_variable(_ lexemes: inout Lexemes, firstWord: String) throws -> VariableNameExpr {
-        try drop_whitespace(&lexemes)
+    func parseCommonVariable(_ lexemes: inout Lexemes, firstWord: String) throws -> VariableNameExpr {
+        try dropWhitespace(&lexemes)
 
         guard let sw = lexemes.pop() else {
             throw UnexpectedEOFError(expected: AnyLexeme.word)
@@ -126,8 +126,8 @@ internal struct Parser {
         return CommonVariableName(name: "\(firstWord) \(secondWord)")
     }
 
-    func parse_poetic_number(_ lexemes: inout Lexemes) throws -> ValueExpr {
-        try drop_whitespace(&lexemes)
+    func parsePoeticNumber(_ lexemes: inout Lexemes) throws -> ValueExpr {
+        try dropWhitespace(&lexemes)
         var words: [String] = []
         let mayEnd = { words.count > 0 }
         let verifyEnd = {
@@ -166,26 +166,26 @@ internal struct Parser {
         return .number(Float(number))
     }
 
-    func parse_poetic_number_assignment(_ lexemes: inout Lexemes) throws -> Assignment {
+    func parsePoeticNumberAssignment(_ lexemes: inout Lexemes) throws -> Assignment {
         var a = Assignment()
-        try a.append(parse_poetic_number(&lexemes))
+        try a.append(parsePoeticNumber(&lexemes))
         return a
     }
 
-    func parse_word(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr? {
+    func parseWord(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr? {
         let first = firstWord.lowercased()
         switch first {
         case "a", "an", "the", "my", "your", "our":
-            return try parse_common_variable(&lexemes, firstWord: first)
+            return try parseCommonVariable(&lexemes, firstWord: first)
         case "is", "are", "was", "were":
-            return try parse_poetic_number_assignment(&lexemes)
+            return try parsePoeticNumberAssignment(&lexemes)
         default:
             //TODO: replace with throw "UnparsableWordError(word: firstWord)"
-            return try next_expr(&lexemes)
+            return try nextExpr(&lexemes)
         }
     }
 
-    func next_expr(_ lexemes: inout Lexemes) throws -> Expr? {
+    func nextExpr(_ lexemes: inout Lexemes) throws -> Expr? {
         guard let l = lexemes.pop() else { return nil }
 
         switch l {
@@ -194,10 +194,10 @@ internal struct Parser {
         case .comment(_, let l):
             return Comment(newLines: l)
         case .word(let w):
-            return try parse_word(&lexemes, firstWord: w)
+            return try parseWord(&lexemes, firstWord: w)
         default:
             // TODO: handle all and remove:
-            return try next_expr(&lexemes)
+            return try nextExpr(&lexemes)
         }
     }
 
@@ -207,7 +207,7 @@ internal struct Parser {
 
         while true {
             do {
-                let e = try next_expr(&lexs)
+                let e = try nextExpr(&lexs)
                 guard e != nil else { break }
                 expr = e!
                 try rootExpr.append(expr)

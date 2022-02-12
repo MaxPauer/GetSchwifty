@@ -3,6 +3,6 @@ import XCTest
 
 final class GetSchwiftyTests: XCTestCase {
     func testExample() throws {
-        XCTAssertEqual(get_schwifty(""), "")
+        XCTAssertEqual(getSchwifty(""), "")
     }
 }

@@ -29,12 +29,12 @@ fileprivate struct S {
 
 final class LexerTests: XCTestCase {
     func testComments() throws {
-        let testLex = { (inp: String, exp: String, exp_lines: UInt) in
+        let testLex = { (inp: String, exp: String, expLines: UInt) in
             let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, 1)
-            let (string_rep, lines) = try! XCTUnwrap(lexemes[0].comment)
-            XCTAssertEqual(string_rep, exp)
-            XCTAssertEqual(lines, exp_lines)
+            let (stringRep, lines) = try! XCTUnwrap(lexemes[0].comment)
+            XCTAssertEqual(stringRep, exp)
+            XCTAssertEqual(lines, expLines)
         }
 
         testLex("(hi)", "hi", 0)
@@ -49,8 +49,8 @@ final class LexerTests: XCTestCase {
         let testLex = { (inp: String, exp: String) in
             let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count, 1)
-            let string_rep = try! XCTUnwrap(lexemes[0].string)
-            XCTAssertEqual(string_rep, exp)
+            let stringRep = try! XCTUnwrap(lexemes[0].string)
+            XCTAssertEqual(stringRep, exp)
         }
 
         testLex("\"hi\"", "hi")

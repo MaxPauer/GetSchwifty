@@ -1,3 +1,3 @@
-public func get_schwifty(_ in: String) -> String {
+public func getSchwifty(_ in: String) -> String {
     return ""
 }
