@@ -37,25 +37,25 @@ internal struct Parser {
             }
         }
 
-        while true {
+        lexing: while true {
             if lexemes.peek() == nil {
                 try verifyEnd()
-                break
+                break lexing
             }
             let lex = lexemes.peek()!
             switch lex {
-            case .whitespace:
-                lexemes.drop()
-                continue
             case .newline:
                 try verifyEnd()
-                break
+                break lexing
+            case .whitespace, .comment:
+                break // nop
             case .word(let w):
-                lexemes.drop()
                 words.append(w)
             default:
-                throw UnexpectedLexemeError(got: lex, expected: AnyLexeme.word) // also whitespace and maybe newline
+                throw UnexpectedLexemeError(got: lex, expected: AnyLexeme.word) // also whitespace, comment, and maybe newline
             }
+
+            lexemes.drop()
         }
 
         var number = 0
