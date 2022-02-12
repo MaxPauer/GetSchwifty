@@ -67,9 +67,45 @@ internal struct Parser {
         return .number(Float(number))
     }
 
+    func parsePoeticString(_ lexemes: inout Lexemes) throws -> ValueExpr {
+        try dropWhitespace(&lexemes)
+        var string = ""
+
+        lexing: while let lex = lexemes.peek() {
+            switch lex {
+            case .newline:
+                break lexing
+            case .whitespace:
+                string += " "
+            case .comment:
+                break // nop
+            case .word(let w):
+                string += w
+            // case .apostrophe: // TODO
+            //     string += "'"
+            case .delimiter:
+                string += "," // TODO: or &
+            case .number(let f):
+                string += "\(f)" // TODO: original formatting
+            case .string(let s):
+                string += "\"\(s)\""
+            }
+
+            lexemes.drop()
+        }
+
+        return .string(string)
+    }
+
     func parsePoeticNumberAssignmentExpr(_ lexemes: inout Lexemes) throws -> AssignmentExpr {
         var a = AssignmentExpr()
         try a.append(parsePoeticNumber(&lexemes))
+        return a
+    }
+
+    func parsePoeticStringAssignmentExpr(_ lexemes: inout Lexemes) throws -> AssignmentExpr {
+        var a = AssignmentExpr()
+        try a.append(parsePoeticString(&lexemes))
         return a
     }
 
@@ -80,6 +116,8 @@ internal struct Parser {
             return try parseCommonVariable(&lexemes, firstWord: first)
         case "is", "are", "was", "were":
             return try parsePoeticNumberAssignmentExpr(&lexemes)
+        case "say", "says", "said":
+            return try parsePoeticStringAssignmentExpr(&lexemes)
         default:
             //TODO: replace with throw "UnparsableWordError(word: firstWord)"
             return try nextExpr(&lexemes)

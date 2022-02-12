@@ -66,6 +66,20 @@ final class ParserTests: XCTestCase {
         testParse("My heaven is a halfpipe", "my heaven", 18.0)
     }
 
+    func testPoeticStringLiteral() throws {
+        let testParse = { (inp: String, expVarName: String, expVarValue: String) in
+            let l = lex(inp)
+            let p = try! Parser(lexemes: l)
+            let exprs = p.rootExpr.children
+            XCTAssertEqual(exprs.count, 1)
+            let ass = exprs[0] as! AssignmentExpr
+            XCTAssertEqual(ass.lhs!.name, expVarName)
+            let rhsVal = try! XCTUnwrap(ass.rhs!.string)
+            XCTAssertEqual(rhsVal, expVarValue)
+        }
+        testParse("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+    }
+
     func testFizzBuzz() throws {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         let lexemes = lex(fizzbuzz)
