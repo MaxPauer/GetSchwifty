@@ -4,17 +4,57 @@ internal protocol Expr {
     mutating func append(_ nextExpr: Expr) throws -> Expr
 }
 
-internal protocol VariableName: Expr {
+internal protocol VariableNameExpr: Expr {
     var name: String { get }
 }
 
-internal struct CommonVariableName: VariableName {
+extension VariableNameExpr {
+    mutating func append(_ nextExpr: Expr) throws -> Expr {
+        switch nextExpr {
+        case var e as Assignment:
+            e.lhs = self
+            return e
+        default:
+            throw UnexpectedExprError(got: nextExpr, expected: Assignment.self) // possibly others
+        }
+    }
+}
+
+internal struct CommonVariableName: VariableNameExpr {
     var name: String
     let newLines: UInt = 0
     let isFinished: Bool = false
+}
+
+internal enum ValueExpr: Expr {
+    case string(String)
+    case number(Float)
+
+    var newLines: UInt { 0 }
+    var isFinished: Bool { true }
 
     mutating func append(_ nextExpr: Expr) throws -> Expr {
-        throw NotImplementedError()
+        assertionFailure("appending to finished ValueExpr")
+        return self
+    }
+}
+
+internal struct Assignment: Expr {
+    var newLines: UInt = 0
+    var isFinished: Bool {
+        lhs != nil && rhs != nil
+    }
+    var lhs: VariableNameExpr?
+    var rhs: ValueExpr?
+
+    @discardableResult
+    mutating func append(_ nextExpr: Expr) throws -> Expr {
+        assert(rhs == nil, "appending to finished Assignment")
+        guard let expr = nextExpr as? ValueExpr else {
+            throw UnexpectedExprError(got: nextExpr, expected: ValueExpr.self)
+        }
+        rhs = expr
+        return self
     }
 }
 
@@ -72,7 +112,7 @@ internal struct Parser {
         }
     }
 
-    func parse_common_variable(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr {
+    func parse_common_variable(_ lexemes: inout Lexemes, firstWord: String) throws -> VariableNameExpr {
         try drop_whitespace(&lexemes)
 
         guard let sw = lexemes.pop() else {
@@ -86,11 +126,59 @@ internal struct Parser {
         return CommonVariableName(name: "\(firstWord) \(secondWord)")
     }
 
+    func parse_poetic_number(_ lexemes: inout Lexemes) throws -> ValueExpr {
+        try drop_whitespace(&lexemes)
+        var words: [String] = []
+        let mayEnd = { words.count > 0 }
+        let verifyEnd = {
+            guard mayEnd() else {
+                throw UnexpectedEOFError(expected: AnyLexeme.word)
+            }
+        }
+
+        while true {
+            if lexemes.peek() == nil {
+                try verifyEnd()
+                break
+            }
+            let lex = lexemes.peek()!
+            switch lex {
+            case .whitespace:
+                _ = lexemes.pop()
+                continue
+            case .newline:
+                try verifyEnd()
+                break
+            case .word(let w):
+                _ = lexemes.pop()
+                words.append(w)
+            default:
+                throw UnexpectedLexemeError(got: lex, expected: AnyLexeme.word) // also whitespace and maybe newline
+            }
+        }
+
+        var number = 0
+        for w in words {
+            number *= 10
+            number += (w.count % 10)
+        }
+
+        return .number(Float(number))
+    }
+
+    func parse_poetic_number_assignment(_ lexemes: inout Lexemes) throws -> Assignment {
+        var a = Assignment()
+        try a.append(parse_poetic_number(&lexemes))
+        return a
+    }
+
     func parse_word(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr? {
         let first = firstWord.lowercased()
         switch first {
         case "a", "an", "the", "my", "your", "our":
             return try parse_common_variable(&lexemes, firstWord: first)
+        case "is", "are", "was", "were":
+            return try parse_poetic_number_assignment(&lexemes)
         default:
             //TODO: replace with throw "UnparsableWordError(word: firstWord)"
             return try next_expr(&lexemes)

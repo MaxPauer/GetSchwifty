@@ -1,6 +1,17 @@
 import XCTest
 @testable import GetSchwifty
 
+fileprivate extension ValueExpr {
+    var string: String? {
+        guard case .string(let s) = self else { return nil }
+        return s
+    }
+    var number: Float? {
+        guard case .number(let f) = self else { return nil }
+        return f
+    }
+}
+
 extension ParserError: Equatable {
     public static func==(lhs: ParserError, rhs: ParserError) -> Bool {
         guard lhs.onLine == rhs.onLine else { return false }
@@ -39,6 +50,20 @@ final class ParserTests: XCTestCase {
         try! testParse("A\nfield", UnexpectedLexemeError(got: .newline, expected:Lexeme.whitespace))
         try! testParse("A ", UnexpectedEOFError(expected: AnyLexeme.word))
         try! testParse("A \n", UnexpectedLexemeError(got: .newline, expected:AnyLexeme.word))
+    }
+
+    func testPoeticNumberLiteral() throws {
+        let testParse = { (inp: String, expVarName: String, expVarValue: Float) in
+            let l = lex(inp)
+            let p = try! Parser(lexemes: l)
+            let exprs = p.rootExpr.children
+            XCTAssertEqual(exprs.count, 1)
+            let ass = exprs[0] as! Assignment
+            XCTAssertEqual(ass.lhs!.name, expVarName)
+            let rhsVal = try! XCTUnwrap(ass.rhs!.number)
+            XCTAssertEqual(rhsVal, expVarValue)
+        }
+        testParse("My heaven is a halfpipe", "my heaven", 18.0)
     }
 
     func testFizzBuzz() throws {

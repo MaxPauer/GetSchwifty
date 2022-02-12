@@ -29,3 +29,12 @@ internal struct UnexpectedLexemeError: PartialParserError {
 internal struct NotImplementedError: PartialParserError, Equatable {
     var description: String = "This has not been implemented 🤷‍♀️"
 }
+
+internal struct UnexpectedExprError: PartialParserError {
+    let got: Expr
+    let expected: Expr.Type
+
+    var description: String {
+        "encountered expression: \(got) while expecting: \(expected)"
+    }
+}
