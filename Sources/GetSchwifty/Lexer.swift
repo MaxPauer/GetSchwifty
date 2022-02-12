@@ -1,4 +1,6 @@
-internal enum Lexeme: Equatable {
+internal protocol Lexemeish {}
+
+internal enum Lexeme: Lexemeish, Equatable {
     case newline
     case delimiter
     case whitespace

@@ -27,10 +27,10 @@ internal struct Parser {
 
     func drop_whitespace(_ lexemes: inout Lexemes) throws {
         guard let next = lexemes.pop() else {
-            throw UnexpectedEOFError(expected: .whitespace)
+            throw UnexpectedEOFError(expected: Lexeme.whitespace)
         }
         guard next == .whitespace else {
-            throw UnexpectedLexemeError(got: next, expected: .whitespace)
+            throw UnexpectedLexemeError(got: next, expected: Lexeme.whitespace)
         }
     }
 
@@ -38,10 +38,10 @@ internal struct Parser {
         try drop_whitespace(&lexemes)
 
         guard let sw = lexemes.pop() else {
-            throw UnexpectedEOFError(expected: .word(""))
+            throw UnexpectedEOFError(expected: AnyLexeme.word)
         }
         guard case .word(let secWord) = sw else {
-            throw UnexpectedLexemeError(got: sw, expected: .word(""))
+            throw UnexpectedLexemeError(got: sw, expected: AnyLexeme.word)
         }
 
         let secondWord = secWord.lowercased()

@@ -35,11 +35,11 @@ final class ParserTests: XCTestCase {
             }
         }
 
-        try! testParse("A\"field\"", UnexpectedLexemeError(got: .string("field"), expected:.whitespace))
-        try! testParse("A,field", UnexpectedLexemeError(got: .delimiter, expected:.whitespace))
-        try! testParse("A\nfield", UnexpectedLexemeError(got: .newline, expected:.whitespace))
-        try! testParse("A ", UnexpectedEOFError(expected:.word("")))
-        try! testParse("A \n", UnexpectedLexemeError(got: .newline, expected:.word("")))
+        try! testParse("A\"field\"", UnexpectedLexemeError(got: .string("field"), expected:Lexeme.whitespace))
+        try! testParse("A,field", UnexpectedLexemeError(got: .delimiter, expected:Lexeme.whitespace))
+        try! testParse("A\nfield", UnexpectedLexemeError(got: .newline, expected:Lexeme.whitespace))
+        try! testParse("A ", UnexpectedEOFError(expected: AnyLexeme.word))
+        try! testParse("A \n", UnexpectedLexemeError(got: .newline, expected:AnyLexeme.word))
     }
 
     func testFizzBuzz() throws {
