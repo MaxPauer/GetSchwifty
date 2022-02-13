@@ -24,7 +24,7 @@ internal struct Parser {
         }
 
         let secondWord = secWord.literal.lowercased()
-        return CommonVariableNameExpr(name: "\(firstWord) \(secondWord)")
+        return VariableNameExpr(name: "\(firstWord) \(secondWord)")
     }
 
     func parsePoeticNumber(_ lexemes: inout Lexemes) throws -> ValueExpr {

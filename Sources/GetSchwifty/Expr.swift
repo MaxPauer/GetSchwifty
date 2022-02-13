@@ -4,11 +4,11 @@ internal protocol Expr {
     mutating func append(_ nextExpr: Expr) throws -> Expr
 }
 
-internal protocol VariableNameExpr: Expr {
-    var name: String { get }
-}
+internal struct VariableNameExpr: Expr {
+    var name: String
+    let newLines: UInt = 0
+    let isFinished: Bool = false
 
-extension VariableNameExpr {
     mutating func append(_ nextExpr: Expr) throws -> Expr {
         switch nextExpr {
         case var e as AssignmentExpr:
@@ -18,12 +18,6 @@ extension VariableNameExpr {
             throw UnexpectedExprError(got: nextExpr, expected: AssignmentExpr.self) // possibly others
         }
     }
-}
-
-internal struct CommonVariableNameExpr: VariableNameExpr {
-    var name: String
-    let newLines: UInt = 0
-    let isFinished: Bool = false
 }
 
 internal enum ValueExpr: Expr {
