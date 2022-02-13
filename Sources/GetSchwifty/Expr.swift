@@ -40,6 +40,25 @@ internal struct AssignmentExpr: Expr {
     }
 }
 
+internal struct InputExpr: Expr {
+    var newLines: UInt = 0
+    var rhs: Expr?
+
+    private(set) var isFinished: Bool = false
+
+    @discardableResult
+    mutating func append(_ nextExpr: Expr) throws -> Expr {
+        if nextExpr is NewlineExpr {
+            isFinished = true
+        } else if rhs == nil {
+            rhs = nextExpr
+        } else {
+            try rhs = rhs!.append(nextExpr)
+        }
+        return self
+    }
+}
+
 internal struct NewlineExpr: Expr {
     let newLines: UInt = 1
     let isFinished: Bool = false

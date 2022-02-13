@@ -154,7 +154,7 @@ internal struct Parser {
         case \.firstCharIsUpperCase:
             return try parseProperVariable(&lexemes, firstWord: first.lowercased())
         default:
-            throw NotImplementedError()
+            throw NotImplementedError() // TODO simple variable, pronouns
         }
     }
 
@@ -179,6 +179,32 @@ internal struct Parser {
         return a
     }
 
+    func parseInputExpr(_ lexemes: inout Lexemes) throws -> InputExpr {
+        var i = InputExpr()
+
+        lexing: while let lex = lexemes.peek() {
+            switch lex {
+            case is NewlineLex:
+                return i
+            case is WhitespaceLex, is CommentLex:
+                lexemes.drop()
+                break // nop
+            case let id as IdentifierLex:
+                guard id.literal.lowercased() == "to" else {
+                    throw UnexpectedLexemeError(got: id, expected: IdentifierLex.self) // ("to")
+                }
+
+                lexemes.drop()
+                i.rhs = try parseVariable(&lexemes)
+                break lexing
+            default:
+                throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // or NewLine, WS, Comment
+            }
+        }
+
+        return i
+    }
+
     func parseIdentifier(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr? {
         let first = firstWord.lowercased()
         switch first {
@@ -190,6 +216,8 @@ internal struct Parser {
             return try parsePoeticStringAssignmentExpr(&lexemes)
         case "let":
             return try parseLetAssignmentExpr(&lexemes)
+        case "listen":
+            return try parseInputExpr(&lexemes)
         default:
             //TODO: replace with throw "UnparsableWordError(word: firstWord)"
             return try nextExpr(&lexemes)

@@ -78,6 +78,21 @@ final class ParserTests: XCTestCase {
         let _: NumberExpr = assignParseTest("let my life be 42.0", "my life", 42.0)
     }
 
+    func testInput() throws {
+        let testParse = { (inp: String, expLocName: String?) in
+            let exprs = try! self.parse(inp)
+            XCTAssertEqual(exprs.count, 1)
+            let i = exprs[0] as! InputExpr
+            if let elc = expLocName {
+                XCTAssertEqual((i.rhs! as! VariableNameExpr).name, elc)
+            }
+        }
+
+        testParse("Listen", nil)
+        testParse("Listen ", nil)
+        testParse("Listen to my heart", "my heart")
+    }
+
     func testFizzBuzz() throws {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         XCTAssertThrowsError(try self.parse(fizzbuzz)) { error in
