@@ -37,15 +37,9 @@ internal struct Parser {
             }
         }
 
-        lexing: while true {
-            if lexemes.peek() == nil {
-                try verifyEnd()
-                break lexing
-            }
-            let lex = lexemes.peek()!
+        lexing: while let lex = lexemes.peek() {
             switch lex {
             case is NewlineLex:
-                try verifyEnd()
                 break lexing
             case is WhitespaceLex, is CommentLex:
                 break // nop
@@ -57,6 +51,7 @@ internal struct Parser {
 
             lexemes.drop()
         }
+        try verifyEnd()
 
         var number = 0
         for w in words {
