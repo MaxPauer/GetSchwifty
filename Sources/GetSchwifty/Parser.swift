@@ -66,7 +66,7 @@ internal struct Parser {
         return VariableNameExpr(name: words.joined(separator: " "))
     }
 
-    func parsePoeticNumber(_ lexemes: inout Lexemes) throws -> ValueExpr {
+    func parsePoeticNumber(_ lexemes: inout Lexemes) throws -> NumberExpr {
         try dropWhitespace(&lexemes)
         var words: [String] = []
         let mayEnd = { words.count > 0 }
@@ -98,10 +98,10 @@ internal struct Parser {
             number += (w.count % 10)
         }
 
-        return .number(Float(number))
+        return NumberExpr(literal: Float(number))
     }
 
-    func parsePoeticString(_ lexemes: inout Lexemes) throws -> ValueExpr {
+    func parsePoeticString(_ lexemes: inout Lexemes) throws -> StringExpr {
         try dropWhitespace(&lexemes)
         var string = ""
 
@@ -122,7 +122,7 @@ internal struct Parser {
             lexemes.drop()
         }
 
-        return .string(string)
+        return StringExpr(literal: string)
     }
 
     func parsePoeticNumberAssignmentExpr(_ lexemes: inout Lexemes) throws -> AssignmentExpr {
@@ -207,9 +207,9 @@ internal struct Parser {
         case let id as IdentifierLex:
             return try parseIdentifier(&lexemes, firstWord: id.literal)
         case let str as StringLex:
-            return ValueExpr.string(str.literal)
+            return StringExpr(literal: str.literal)
         case let num as NumberLex:
-            return ValueExpr.number(num.value)
+            return NumberExpr(literal: num.value)
         default:
             // TODO: handle all and remove:
             return try nextExpr(&lexemes)

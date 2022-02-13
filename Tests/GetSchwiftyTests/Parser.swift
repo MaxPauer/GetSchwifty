@@ -1,17 +1,6 @@
 import XCTest
 @testable import GetSchwifty
 
-fileprivate extension ValueExpr {
-    var string: String? {
-        guard case .string(let s) = self else { return nil }
-        return s
-    }
-    var number: Float? {
-        guard case .number(let f) = self else { return nil }
-        return f
-    }
-}
-
 extension ParserError: Equatable {
     public static func==(lhs: ParserError, rhs: ParserError) -> Bool {
         guard lhs.onLine == rhs.onLine else { return false }
@@ -66,55 +55,27 @@ final class ParserTests: XCTestCase {
         try! testParse("A \n", UnexpectedLexemeError.self, NewlineLex.self, IdentifierLex.self)
     }
 
+    func assignParseTest<U, V>(_ inp: String, _ expVarName: String, _ expValue: U) -> V where U: Equatable, V: LeafExpr, V.LiteralType == U {
+        let exprs = try! self.parse(inp)
+        XCTAssertEqual(exprs.count, 1)
+        let ass = exprs[0] as! AssignmentExpr
+        XCTAssertEqual(ass.lhs!.name, expVarName)
+        let rhs = try! XCTUnwrap(ass.rhs! as? V)
+        XCTAssertEqual(rhs.literal, expValue)
+        return rhs
+    }
+
     func testPoeticNumberLiteral() throws {
-        let testParse = { (inp: String, expVarName: String, expVarValue: Float) in
-            let exprs = try! self.parse(inp)
-            XCTAssertEqual(exprs.count, 1)
-            let ass = exprs[0] as! AssignmentExpr
-            XCTAssertEqual(ass.lhs!.name, expVarName)
-            let rhsVal = try! XCTUnwrap((ass.rhs! as? ValueExpr)?.number)
-            XCTAssertEqual(rhsVal, expVarValue)
-        }
-        testParse("My heaven is a halfpipe", "my heaven", 18.0)
+        let _: NumberExpr = assignParseTest("My heaven is a halfpipe", "my heaven", 18.0)
     }
 
     func testPoeticStringLiteral() throws {
-        let testParse = { (inp: String, expVarName: String, expVarValue: String) in
-            let exprs = try! self.parse(inp)
-            XCTAssertEqual(exprs.count, 1)
-            let ass = exprs[0] as! AssignmentExpr
-            XCTAssertEqual(ass.lhs!.name, expVarName)
-            let rhsVal = try! XCTUnwrap((ass.rhs! as? ValueExpr)?.string)
-            XCTAssertEqual(rhsVal, expVarValue)
-        }
-        testParse("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+        let _: StringExpr = assignParseTest("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
     }
 
     func testLetAssignment() throws {
-        func testParse(_ inp: String, _ expVarName: String, _ expValue: Float) {
-            let exprs = try! self.parse(inp)
-            XCTAssertEqual(exprs.count, 1)
-            let ass = exprs[0] as! AssignmentExpr
-            XCTAssertEqual(ass.lhs!.name, expVarName)
-            let rhsVal = try! XCTUnwrap(ass.rhs! as? ValueExpr)
-            switch rhsVal {
-            case .number(let n): XCTAssert(expValue == n)
-            default: XCTFail()
-            }
-        }
-        func testParse(_ inp: String, _ expVarName: String, _ expValue: String) {
-            let exprs = try! self.parse(inp)
-            XCTAssertEqual(exprs.count, 1)
-            let ass = exprs[0] as! AssignmentExpr
-            XCTAssertEqual(ass.lhs!.name, expVarName)
-            let rhsVal = try! XCTUnwrap(ass.rhs! as? ValueExpr)
-            switch rhsVal {
-            case .string(let s): XCTAssert(expValue == s)
-            default: XCTFail()
-            }
-        }
-        testParse("let my life be \"GREAT\"", "my life", "GREAT")
-        testParse("let my life be 42.0", "my life", 42.0)
+        let _: StringExpr = assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
+        let _: NumberExpr = assignParseTest("let my life be 42.0", "my life", 42.0)
     }
 
     func testFizzBuzz() throws {

@@ -20,19 +20,6 @@ internal struct VariableNameExpr: Expr {
     }
 }
 
-internal enum ValueExpr: Expr {
-    case string(String)
-    case number(Float)
-
-    var newLines: UInt { 0 }
-    var isFinished: Bool { true }
-
-    mutating func append(_ nextExpr: Expr) throws -> Expr {
-        assertionFailure("appending to finished ValueExpr")
-        return self
-    }
-}
-
 internal struct AssignmentExpr: Expr {
     var newLines: UInt = 0
     var lhs: VariableNameExpr?
@@ -60,6 +47,30 @@ internal struct NewlineExpr: Expr {
     mutating func append(_ nextExpr: Expr) throws -> Expr {
         throw NotImplementedError()
     }
+}
+
+internal protocol LeafExpr: Expr {
+    associatedtype LiteralType
+    var literal: LiteralType { get }
+}
+
+extension LeafExpr {
+    mutating func append(_ nextExpr: Expr) throws -> Expr {
+        assertionFailure("trying to append to LeafExpr")
+        return self
+    }
+}
+
+internal struct StringExpr: LeafExpr {
+    let newLines: UInt = 0
+    let isFinished: Bool = false
+    let literal: String
+}
+
+internal struct NumberExpr: LeafExpr {
+    let newLines: UInt = 0
+    let isFinished: Bool = false
+    let literal: Float
 }
 
 internal struct CommentExpr: Expr {
