@@ -66,16 +66,16 @@ final class ParserTests: XCTestCase {
     }
 
     func testPoeticNumberLiteral() throws {
-        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My heaven is a halfpipe\n", "my heaven", 18)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My heaven is a halfpipe", "my heaven", 18)
     }
 
     func testPoeticStringLiteral() throws {
-        let _: (StringExpr, PoeticStringAssignmentExpr) = assignParseTest("my father said to me A wealthy man had the things I wanted\n", "my father", "to me A wealthy man had the things I wanted")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = assignParseTest("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
     }
 
     func testLetAssignment() throws {
-        let _: (StringExpr, AssignmentExpr) = assignParseTest("let my life be \"GREAT\"\n", "my life", "GREAT")
-        let _: (NumberExpr, AssignmentExpr) = assignParseTest("let my life be 42.0\n", "my life", 42.0)
+        let _: (StringExpr, AssignmentExpr) = assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
+        let _: (NumberExpr, AssignmentExpr) = assignParseTest("let my life be 42.0", "my life", 42.0)
     }
 
     func testInput() throws {

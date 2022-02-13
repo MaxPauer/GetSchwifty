@@ -12,7 +12,7 @@ final class LexerTests: XCTestCase {
     func testComments() throws {
         let testLex = { (inp: String, exp: String, expLines: UInt) in
             let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, 1)
+            XCTAssertEqual(lexemes.count-1, 1)
             let c = try! XCTUnwrap(lexemes[0] as? CommentLex)
             XCTAssertEqual(c.literal, exp)
             XCTAssertEqual(c.range.end.line - c.range.start.line, expLines)
@@ -29,7 +29,7 @@ final class LexerTests: XCTestCase {
     func testStrings() throws {
         let testLex = { (inp: String, exp: String) in
             let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, 1)
+            XCTAssertEqual(lexemes.count-1, 1)
             let str = try! XCTUnwrap(lexemes[0] as? StringLex)
             XCTAssertEqual(str.literal, exp)
         }
@@ -49,8 +49,9 @@ final class LexerTests: XCTestCase {
             }
         }
 
+        testLex("", 0+1)
         testLex("\n", 1)
-        testLex("\r", 0)
+        testLex("\r", 0+1)
         testLex("\r\n", 1)
         testLex("\n\r\r\n", 2)
         testLex("\n\n\n\n", 4)
@@ -61,8 +62,8 @@ final class LexerTests: XCTestCase {
     func testWhitespace() throws {
         let testLex = { (inp: String, exp: Int) in
             let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, exp)
-            lexemes.forEach {
+            XCTAssertEqual(lexemes.count-1, exp)
+            lexemes.dropLast().forEach {
                 XCTAssert($0 is WhitespaceLex)
             }
         }
@@ -83,20 +84,20 @@ final class LexerTests: XCTestCase {
             }
         }
 
-        testLex("", 0)
-        testLex(" ", 1)
-        testLex("  ", 1)
+        testLex("", 0+1)
+        testLex(" ", 1+1)
+        testLex("  ", 1+1)
         testLex("  \n", 2)
-        testLex("\n ", 2)
-        testLex("  \n ", 3)
-        testLex("  \r\n\n ", 4)
+        testLex("\n ", 2+1)
+        testLex("  \n ", 3+1)
+        testLex("  \r\n\n ", 4+1)
         testLex("  \r\n\n \n", 5)
     }
 
     func testWords() throws {
         let testLex = { (inp: String, exp: [String]) in
             let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, exp.count*2-1)
+            XCTAssertEqual(lexemes.count-1, exp.count*2-1)
             for i in 1...exp.count {
                 let e = exp[i-1]
                 let id = try! XCTUnwrap(lexemes[i*2-2] as? IdentifierLex)
@@ -113,7 +114,7 @@ final class LexerTests: XCTestCase {
     func testNums() throws {
         let testLex = { (inp: String, exp: [Float]) in
             let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, exp.count)
+            XCTAssertEqual(lexemes.count-1, exp.count)
             for (e, l) in zip(exp, lexemes) {
                 let num = try! XCTUnwrap(l as? NumberLex)
                 XCTAssertEqual(e, num.value)
@@ -141,8 +142,8 @@ final class LexerTests: XCTestCase {
     func testDelimiter() throws {
         let testLex = { (inp: String, exp: Int) in
             let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, exp)
-            lexemes.forEach {
+            XCTAssertEqual(lexemes.count-1, exp)
+            lexemes.dropLast().forEach {
                 XCTAssert($0 is DelimiterLex)
             }
         }

@@ -262,5 +262,9 @@ internal func lex(_ inp: String) -> [Lex] {
         start = →l.range.end
     }
 
+    if !(lexemes.last is NewlineLex) {
+        lexemes.append(NewlineLex("\u{03}", start: start))
+    }
+
     return lexemes
 }
