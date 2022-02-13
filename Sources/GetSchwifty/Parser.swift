@@ -1,5 +1,15 @@
 typealias Lexemes = Fifo<[Lex]>
 
+fileprivate extension String {
+    var isCommonVariableIdentifier: Bool {
+        let l = self.lowercased()
+        return l == "a" || l == "an" || l == "the" || l == "my" || l == "your" || l == "our"
+    }
+    var firstCharIsUpperCase: Bool {
+        return self.first!.isUppercase
+    }
+}
+
 internal struct Parser {
     var lines: UInt = 1
     var rootExpr = RootExpr()
@@ -25,6 +35,35 @@ internal struct Parser {
 
         let secondWord = secWord.literal.lowercased()
         return VariableNameExpr(name: "\(firstWord) \(secondWord)")
+    }
+
+    func parseProperVariable(_ lexemes: inout Lexemes, firstWord: String) throws -> VariableNameExpr {
+        try dropWhitespace(&lexemes)
+        var words: [String] = [firstWord]
+        let mayEnd = { words.count > 1 }
+        let verifyEnd = {
+            guard mayEnd() else {
+                throw UnexpectedEOFError(expected: IdentifierLex.self)
+            }
+        }
+
+        lexing: while let lex = lexemes.peek() {
+            switch lex {
+            case is NewlineLex:
+                break lexing
+            case is WhitespaceLex, is CommentLex:
+                break // nop
+            case let id as IdentifierLex:
+                words.append(id.literal.lowercased())
+            default:
+                throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // also whitespace, comment, and maybe newline
+            }
+
+            lexemes.drop()
+        }
+
+        try verifyEnd()
+        return VariableNameExpr(name: words.joined(separator: " "))
     }
 
     func parsePoeticNumber(_ lexemes: inout Lexemes) throws -> ValueExpr {
@@ -108,10 +147,12 @@ internal struct Parser {
             throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self)
         }
 
-        let first = firstWord.literal.lowercased()
+        let first = firstWord.literal
         switch first {
-        case "a", "an", "the", "my", "your", "our":
-            return try parseCommonVariable(&lexemes, firstWord: first)
+        case \.isCommonVariableIdentifier:
+            return try parseCommonVariable(&lexemes, firstWord: first.lowercased())
+        case \.firstCharIsUpperCase:
+            return try parseProperVariable(&lexemes, firstWord: first.lowercased())
         default:
             throw NotImplementedError()
         }
@@ -141,7 +182,7 @@ internal struct Parser {
     func parseIdentifier(_ lexemes: inout Lexemes, firstWord: String) throws -> Expr? {
         let first = firstWord.lowercased()
         switch first {
-        case "a", "an", "the", "my", "your", "our":
+        case \.isCommonVariableIdentifier:
             return try parseCommonVariable(&lexemes, firstWord: first)
         case "is", "are", "was", "were":
             return try parsePoeticNumberAssignmentExpr(&lexemes)
