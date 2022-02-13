@@ -1,12 +1,10 @@
 internal protocol Expr {
-    var newLines: UInt { get }
     var isFinished: Bool { get }
     mutating func append(_ nextExpr: Expr) throws -> Expr
 }
 
 internal struct VariableNameExpr: Expr {
     var name: String
-    let newLines: UInt = 0
     let isFinished: Bool = false
 
     mutating func append(_ nextExpr: Expr) throws -> Expr {
@@ -21,7 +19,6 @@ internal struct VariableNameExpr: Expr {
 }
 
 internal struct AssignmentExpr: Expr {
-    var newLines: UInt = 0
     var lhs: VariableNameExpr?
     var rhs: Expr?
 
@@ -60,7 +57,6 @@ internal struct InputExpr: Expr {
 }
 
 internal struct NewlineExpr: Expr {
-    let newLines: UInt = 1
     let isFinished: Bool = false
 
     mutating func append(_ nextExpr: Expr) throws -> Expr {
@@ -81,19 +77,16 @@ extension LeafExpr {
 }
 
 internal struct StringExpr: LeafExpr {
-    let newLines: UInt = 0
     let isFinished: Bool = false
     let literal: String
 }
 
 internal struct NumberExpr: LeafExpr {
-    let newLines: UInt = 0
     let isFinished: Bool = false
     let literal: Float
 }
 
 internal struct CommentExpr: Expr {
-    var newLines: UInt
     let isFinished: Bool = false
 
     mutating func append(_ nextExpr: Expr) throws -> Expr {
@@ -103,7 +96,6 @@ internal struct CommentExpr: Expr {
 
 internal struct RootExpr: Expr {
     let isFinished: Bool = false
-    let newLines: UInt = 0
     var children: [Expr] = []
 
     @discardableResult

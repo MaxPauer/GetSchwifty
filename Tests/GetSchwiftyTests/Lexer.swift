@@ -15,7 +15,7 @@ final class LexerTests: XCTestCase {
             XCTAssertEqual(lexemes.count, 1)
             let c = try! XCTUnwrap(lexemes[0] as? CommentLex)
             XCTAssertEqual(c.literal, exp)
-            XCTAssertEqual(c.newLines, expLines)
+            XCTAssertEqual(c.range.end.line - c.range.start.line, expLines)
         }
 
         testLex("(hi)", "hi", 0)

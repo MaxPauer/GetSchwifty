@@ -11,7 +11,6 @@ fileprivate extension String {
 }
 
 internal struct Parser {
-    var lines: UInt = 1
     var rootExpr = RootExpr()
 
     func dropWhitespace(_ lexemes: inout Lexemes) throws {
@@ -230,8 +229,8 @@ internal struct Parser {
         switch l {
         case is NewlineLex:
             return NewlineExpr()
-        case let c as CommentLex:
-            return CommentExpr(newLines: c.newLines)
+        case is CommentLex:
+            return CommentExpr()
         case let id as IdentifierLex:
             return try parseIdentifier(&lexemes, firstWord: id.literal)
         case let str as StringLex:
@@ -255,12 +254,10 @@ internal struct Parser {
                 expr = e!
                 try rootExpr.append(expr)
             } catch let err as PartialParserError {
-                throw ParserError(onLine: lines, partialErr: err)
+                throw ParserError(onLine: 0, partialErr: err)
             } catch {
                 assertionFailure("unexpected Error")
             }
-
-            lines += expr.newLines
         }
     }
 }
