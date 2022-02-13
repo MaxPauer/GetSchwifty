@@ -20,11 +20,16 @@ extension ParserError: Equatable {
 }
 
 final class ParserTests: XCTestCase {
+    func parse(_ inp: String) throws -> [Expr] {
+        let p = try Parser(lexemes: lex(inp))
+        return p.rootExpr.children
+    }
+
     func testCommonVariable() throws {
         let testParse = { (inp: String, exp: [String]) in
-            let p = try! Parser(lexemes: lex(inp))
-            XCTAssertEqual(p.rootExpr.children.count, exp.count)
-            for (v, e) in zip(p.rootExpr.children, exp) {
+            let exprs = try! self.parse(inp)
+            XCTAssertEqual(exprs.count, exp.count)
+            for (v, e) in zip(exprs, exp) {
                 XCTAssertEqual((v as! VariableNameExpr).name, e)
             }
         }
@@ -39,8 +44,7 @@ final class ParserTests: XCTestCase {
 
     func testCommonVariableFailure() {
         let testParse = { (inp: String, err: PartialParserError.Type, got: Lex.Type?, exp: Lex.Type) in
-            let l = lex(inp)
-            XCTAssertThrowsError(try Parser(lexemes: l)) { (e: Error) in
+            XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
                 let error = e as! ParserError
                 XCTAssert(type(of: error.partialErr) == err)
                 switch error.partialErr {
@@ -64,9 +68,7 @@ final class ParserTests: XCTestCase {
 
     func testPoeticNumberLiteral() throws {
         let testParse = { (inp: String, expVarName: String, expVarValue: Float) in
-            let l = lex(inp)
-            let p = try! Parser(lexemes: l)
-            let exprs = p.rootExpr.children
+            let exprs = try! self.parse(inp)
             XCTAssertEqual(exprs.count, 1)
             let ass = exprs[0] as! AssignmentExpr
             XCTAssertEqual(ass.lhs!.name, expVarName)
@@ -78,9 +80,7 @@ final class ParserTests: XCTestCase {
 
     func testPoeticStringLiteral() throws {
         let testParse = { (inp: String, expVarName: String, expVarValue: String) in
-            let l = lex(inp)
-            let p = try! Parser(lexemes: l)
-            let exprs = p.rootExpr.children
+            let exprs = try! self.parse(inp)
             XCTAssertEqual(exprs.count, 1)
             let ass = exprs[0] as! AssignmentExpr
             XCTAssertEqual(ass.lhs!.name, expVarName)
@@ -92,9 +92,7 @@ final class ParserTests: XCTestCase {
 
     func testLetAssignment() throws {
         func testParse(_ inp: String, _ expVarName: String, _ expValue: Float) {
-            let l = lex(inp)
-            let p = try! Parser(lexemes: l)
-            let exprs = p.rootExpr.children
+            let exprs = try! self.parse(inp)
             XCTAssertEqual(exprs.count, 1)
             let ass = exprs[0] as! AssignmentExpr
             XCTAssertEqual(ass.lhs!.name, expVarName)
@@ -105,9 +103,7 @@ final class ParserTests: XCTestCase {
             }
         }
         func testParse(_ inp: String, _ expVarName: String, _ expValue: String) {
-            let l = lex(inp)
-            let p = try! Parser(lexemes: l)
-            let exprs = p.rootExpr.children
+            let exprs = try! self.parse(inp)
             XCTAssertEqual(exprs.count, 1)
             let ass = exprs[0] as! AssignmentExpr
             XCTAssertEqual(ass.lhs!.name, expVarName)
@@ -123,8 +119,7 @@ final class ParserTests: XCTestCase {
 
     func testFizzBuzz() throws {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
-        let lexemes = lex(fizzbuzz)
-        XCTAssertThrowsError(try Parser(lexemes: lexemes)) { error in
+        XCTAssertThrowsError(try self.parse(fizzbuzz)) { error in
             // let parser = try! Parser(lexemes: lexemes)
         }
         // XCTAssertEqual(parser.lines, 26)
