@@ -19,7 +19,7 @@ final class ParserTests: XCTestCase {
             let exprs = try! self.parse(inp)
             XCTAssertEqual(exprs.count, exp.count)
             for (v, e) in zip(exprs, exp) {
-                XCTAssertEqual((v as! VariableNameExpr).name, e)
+                XCTAssertEqual((v as! CommonVariableNameExpr).name, e)
             }
         }
 
@@ -31,51 +31,51 @@ final class ParserTests: XCTestCase {
         testParse("our SoCiEtY", ["our society"])
     }
 
-    func testCommonVariableFailure() {
-        let testParse = { (inp: String, err: PartialParserError.Type, got: Lex.Type?, exp: Lex.Type) in
-            XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
-                let error = e as! ParserError
-                XCTAssert(type(of: error.partialErr) == err)
-                switch error.partialErr {
-                case let err as UnexpectedLexemeError:
-                    XCTAssert(err.expected == exp)
-                    XCTAssert(type(of: err.got) == got!)
-                case let err as UnexpectedEOFError:
-                    XCTAssert(err.expected == exp)
-                default:
-                    XCTFail("Unexpected Error type")
-                }
-            }
-        }
+    // func testCommonVariableFailure() {
+    //     let testParse = { (inp: String, err: PartialParserError.Type, got: Lex.Type?, exp: Lex.Type) in
+    //         XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
+    //             let error = e as! ParserError
+    //             XCTAssert(type(of: error.partialErr) == err)
+    //             switch error.partialErr {
+    //             case let err as UnexpectedLexemeError:
+    //                 XCTAssert(err.expected == exp)
+    //                 XCTAssert(type(of: err.got) == got!)
+    //             case let err as UnexpectedEOFError:
+    //                 XCTAssert(err.expected == exp)
+    //             default:
+    //                 XCTFail("Unexpected Error type")
+    //             }
+    //         }
+    //     }
 
-        try! testParse("A\"field\"", UnexpectedLexemeError.self, StringLex.self, WhitespaceLex.self)
-        try! testParse("A,field", UnexpectedLexemeError.self, DelimiterLex.self, WhitespaceLex.self)
-        try! testParse("A\nfield", UnexpectedLexemeError.self, NewlineLex.self, WhitespaceLex.self)
-        try! testParse("A ", UnexpectedEOFError.self, nil, IdentifierLex.self)
-        try! testParse("A \n", UnexpectedLexemeError.self, NewlineLex.self, IdentifierLex.self)
-    }
+    //     try! testParse("A\"field\"", UnexpectedLexemeError.self, StringLex.self, WhitespaceLex.self)
+    //     try! testParse("A,field", UnexpectedLexemeError.self, DelimiterLex.self, WhitespaceLex.self)
+    //     try! testParse("A\nfield", UnexpectedLexemeError.self, NewlineLex.self, WhitespaceLex.self)
+    //     try! testParse("A ", UnexpectedEOFError.self, nil, IdentifierLex.self)
+    //     try! testParse("A \n", UnexpectedLexemeError.self, NewlineLex.self, IdentifierLex.self)
+    // }
 
-    func assignParseTest<U, V>(_ inp: String, _ expVarName: String, _ expValue: U) -> V where U: Equatable, V: LeafExpr, V.LiteralType == U {
+    func assignParseTest<U, V, W>(_ inp: String, _ expVarName: String, _ expValue: U) -> (V,W) where U: Equatable, V: LeafExpr, V.LiteralType == U, W: AnyAssignmentExpr {
         let exprs = try! self.parse(inp)
         XCTAssertEqual(exprs.count, 1)
-        let ass = exprs[0] as! AssignmentExpr
-        XCTAssertEqual(ass.lhs!.name, expVarName)
-        let rhs = try! XCTUnwrap(ass.rhs! as? V)
+        let ass = exprs[0] as! W
+        XCTAssertEqual((ass.target as! CommonVariableNameExpr).name, expVarName)
+        let rhs = try! XCTUnwrap(ass.value as? V)
         XCTAssertEqual(rhs.literal, expValue)
-        return rhs
+        return (rhs, ass)
     }
 
     func testPoeticNumberLiteral() throws {
-        let _: NumberExpr = assignParseTest("My heaven is a halfpipe", "my heaven", 18.0)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My heaven is a halfpipe\n", "my heaven", 18)
     }
 
     func testPoeticStringLiteral() throws {
-        let _: StringExpr = assignParseTest("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = assignParseTest("my father said to me A wealthy man had the things I wanted\n", "my father", "to me A wealthy man had the things I wanted")
     }
 
     func testLetAssignment() throws {
-        let _: StringExpr = assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
-        let _: NumberExpr = assignParseTest("let my life be 42.0", "my life", 42.0)
+        let _: (StringExpr, AssignmentExpr) = assignParseTest("let my life be \"GREAT\"\n", "my life", "GREAT")
+        let _: (NumberExpr, AssignmentExpr) = assignParseTest("let my life be 42.0\n", "my life", 42.0)
     }
 
     func testInput() throws {
@@ -84,7 +84,9 @@ final class ParserTests: XCTestCase {
             XCTAssertEqual(exprs.count, 1)
             let i = exprs[0] as! InputExpr
             if let elc = expLocName {
-                XCTAssertEqual((i.rhs! as! VariableNameExpr).name, elc)
+                XCTAssertEqual((i.target! as! CommonVariableNameExpr).name, elc)
+            } else {
+                XCTAssertNil(i.target)
             }
         }
 
