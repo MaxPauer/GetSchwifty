@@ -165,8 +165,8 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
             if hasContent {
                 _value += lex.literal
             }
-        case is CommentLex:
-            break // TODO: nop or interpret as (bla)?
+        case let comm as CommentLex:
+            _value += "(\(comm.literal))"
         case let str as StringLex:
             _value += "\"\(str.literal)\""
         default:
