@@ -1,13 +1,6 @@
 import XCTest
 @testable import GetSchwifty
 
-extension ParserError: Equatable {
-    public static func==(lhs: ParserError, rhs: ParserError) -> Bool {
-        guard lhs.onLine == rhs.onLine else { return false }
-        return lhs.partialErr.description == rhs.partialErr.description
-    }
-}
-
 final class ParserTests: XCTestCase {
     func parse(_ inp: String) throws -> [Expr] {
         let p = try Parser(lexemes: lex(inp))
@@ -31,29 +24,29 @@ final class ParserTests: XCTestCase {
         testParse("our SoCiEtY", ["our society"])
     }
 
-    // func testCommonVariableFailure() {
-    //     let testParse = { (inp: String, err: PartialParserError.Type, got: Lex.Type?, exp: Lex.Type) in
-    //         XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
-    //             let error = e as! ParserError
-    //             XCTAssert(type(of: error.partialErr) == err)
-    //             switch error.partialErr {
-    //             case let err as UnexpectedLexemeError:
-    //                 XCTAssert(err.expected == exp)
-    //                 XCTAssert(type(of: err.got) == got!)
-    //             case let err as UnexpectedEOFError:
-    //                 XCTAssert(err.expected == exp)
-    //             default:
-    //                 XCTFail("Unexpected Error type")
-    //             }
-    //         }
-    //     }
+    func testCommonVariableFailure() {
+        let testParse = { (inp: String, err: ParserError.Type, got: Lex.Type?, parsing: Expr.Type) in
+            XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
+                let error = e as! ParserError
+                XCTAssert(type(of: error) == err)
+                switch error {
+                case let err as UnexpectedLexemeError:
+                    XCTAssert(type(of: err.parsing) == parsing)
+                    XCTAssert(type(of: err.got) == got!)
+                case let err as UnexpectedEOLError:
+                    XCTAssert(type(of: err.parsing) == parsing)
+                default:
+                    XCTFail("Unexpected Error type")
+                }
+            }
+        }
 
-    //     try! testParse("A\"field\"", UnexpectedLexemeError.self, StringLex.self, WhitespaceLex.self)
-    //     try! testParse("A,field", UnexpectedLexemeError.self, DelimiterLex.self, WhitespaceLex.self)
-    //     try! testParse("A\nfield", UnexpectedLexemeError.self, NewlineLex.self, WhitespaceLex.self)
-    //     try! testParse("A ", UnexpectedEOFError.self, nil, IdentifierLex.self)
-    //     try! testParse("A \n", UnexpectedLexemeError.self, NewlineLex.self, IdentifierLex.self)
-    // }
+        try! testParse("A\"field\"", UnexpectedLexemeError.self, StringLex.self, CommonVariableNameExpr.self)
+        try! testParse("A,field", UnexpectedLexemeError.self, DelimiterLex.self, CommonVariableNameExpr.self)
+        try! testParse("A\nfield", UnexpectedEOLError.self, nil, CommonVariableNameExpr.self)
+        try! testParse("A ", UnexpectedEOLError.self, nil, CommonVariableNameExpr.self)
+        try! testParse("A \n", UnexpectedEOLError.self, nil, CommonVariableNameExpr.self)
+    }
 
     func assignParseTest<U, V, W>(_ inp: String, _ expVarName: String, _ expValue: U) -> (V,W) where U: Equatable, V: LeafExpr, V.LiteralType == U, W: AnyAssignmentExpr {
         let exprs = try! self.parse(inp)

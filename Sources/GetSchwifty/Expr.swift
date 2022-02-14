@@ -9,12 +9,24 @@ fileprivate extension String {
 }
 
 internal protocol Expr {
-    var isTerminated: Bool { get }
+    var isTerminated: Bool { get set }
+    var canTerminate: Bool { get }
     mutating func push(_ lex: Lex) throws -> Expr
 }
 
+extension Expr {
+    mutating func terminate(_ l: Lex) throws -> Expr {
+        guard canTerminate else {
+            throw UnexpectedEOLError(got: l, parsing: self)
+        }
+        isTerminated = true
+        return self
+    }
+}
+
 internal struct VirginExpr: Expr {
-    let isTerminated = false
+    var isTerminated = false
+    let canTerminate: Bool = true
 
     func fromIdentifier(_ id: IdentifierLex) -> Expr {
         let word = id.literal.lowercased()
@@ -33,7 +45,9 @@ internal struct VirginExpr: Expr {
 
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
-        case is WhitespaceLex, is NewlineLex, is CommentLex:
+        case is NewlineLex:
+            return try terminate(lex)
+        case is WhitespaceLex, is CommentLex:
             return self
         case let id as IdentifierLex:
             return fromIdentifier(id)
@@ -42,7 +56,7 @@ internal struct VirginExpr: Expr {
         case let num as NumberLex:
             return NumberExpr(literal: num.value)
         default:
-            throw NotImplementedError()
+            throw NotImplementedError(got: lex)
         }
     }
 }
@@ -51,6 +65,7 @@ internal struct CommonVariableNameExpr: Expr {
     let first: String
     var second: String?
     var isTerminated: Bool = false
+    var canTerminate: Bool { second != nil }
 
     var name: String { "\(first) \(second!)" }
 
@@ -67,23 +82,22 @@ internal struct CommonVariableNameExpr: Expr {
         case "say", "says", "said":
             return PoeticStringAssignmentExpr(target: self)
         default:
-            throw NotImplementedError() // more like: not an acceptable Idenfifier
+            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["is", "are", "was", "were", "say", "says", "said"]))
         }
     }
 
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
-            isTerminated = true
-            return self
+            return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             return self
         case let id as IdentifierLex:
             return try fromIdentifier(id)
-        case is NewlineLex:
-            throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // WS also ok...
+        case is NewlineLex, is StringLex, is NumberLex, is DelimiterLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
-            throw NotImplementedError()
+            throw NotImplementedError(got: lex)
         }
     }
 }
@@ -104,6 +118,8 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
         target = t
     }
 
+    var canTerminate: Bool { _value != 0 }
+
     mutating func addPoeticNumber(fromString s: String) {
         _value *= 10
         _value = _value + (s.count % 10)
@@ -114,15 +130,12 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
         case is WhitespaceLex, is CommentLex:
             break
         case is NewlineLex:
-            guard _value != 0 else {
-                throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // WS also OK
-            }
             value = NumberExpr(literal: Float(_value))
-            isTerminated = true
+            return try terminate(lex)
         case let id as IdentifierLex:
             addPoeticNumber(fromString: id.literal)
         default:
-            throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // WS also acceptable
+            throw UnexpectedLexemeError(got: lex, parsing: self)
         }
         return self
     }
@@ -138,18 +151,18 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
         target = t
     }
 
+    var canTerminate: Bool { !_value.isEmpty }
+
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
-            guard !_value.isEmpty else {
-                throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // WS and others also OK
-            }
             value = StringExpr(literal: _value)
-            isTerminated = true
+            return try terminate(lex)
         case is IdentifierLex, is ApostropheLex, is DelimiterLex, is NumberLex:
             _value += lex.literal
         case is WhitespaceLex:
-            if !_value.isEmpty {
+            let hasContent = canTerminate
+            if hasContent {
                 _value += lex.literal
             }
         case is CommentLex:
@@ -171,6 +184,7 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
 
     private(set) var expectingTarget: Bool
     var expectingValue: Bool { !expectingTarget }
+    var canTerminate: Bool { !(target is VirginExpr) && !(value is VirginExpr) }
 
     init(expectingTarget et: Bool) {
         expectingTarget = et
@@ -190,16 +204,13 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
-            guard !(target is VirginExpr) && !(value is VirginExpr) else {
-                throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // TODO: actually we expect whatever
-            }
-            isTerminated = true
+            return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             break
         case let id as IdentifierLex:
             if id.literal.lowercased() == "be" {
                 guard expectingTarget else {
-                    throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // TODO: actually we just did not expect this one
+                    throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["in", "into"]))
                 }
                 expectingTarget = false
             } else {
@@ -223,7 +234,7 @@ internal struct InputExpr: Expr {
 
     mutating func pushThrough(_ lex: Lex) throws {
         guard target != nil else {
-            throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // TODO: actually we expect whatever
+            throw UnexpectedLexemeError(got: lex, parsing: self)
         }
         target = try target!.push(lex)
     }
@@ -231,10 +242,7 @@ internal struct InputExpr: Expr {
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
-            guard canTerminate else {
-                throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // TODO: actually we expect whatever
-            }
-            isTerminated = true
+            return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             break
         case let id as IdentifierLex:
@@ -258,22 +266,28 @@ internal protocol LeafExpr: Expr {
 
 extension LeafExpr {
     mutating func push(_ lex: Lex) throws -> Expr {
-        throw UnexpectedLexemeError(got: lex, expected: IdentifierLex.self) // TODO oh boy...
+        guard lex is NewlineLex else {
+            throw LeafExprPushError(got: lex, leafExpr: self)
+        }
+        return try terminate(lex)
     }
 }
 
 internal struct StringExpr: LeafExpr {
-    let isTerminated: Bool = false
+    var isTerminated: Bool = false
+    var canTerminate: Bool = true
     let literal: String
 }
 
 internal struct NumberExpr: LeafExpr {
-    let isTerminated: Bool = false
+    var isTerminated: Bool = false
+    var canTerminate: Bool = true
     let literal: Float
 }
 
 internal struct RootExpr: Expr {
-    let isTerminated: Bool = false
+    var isTerminated: Bool = false
+    let canTerminate: Bool = false
     var children: [Expr] = [VirginExpr()]
 
     mutating func push(_ lex: Lex) throws -> Expr {

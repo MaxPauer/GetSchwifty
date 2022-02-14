@@ -1,40 +1,59 @@
-internal protocol PartialParserError: Error, CustomStringConvertible {}
-
-public struct ParserError: Error, CustomStringConvertible {
-    let onLine: UInt
-    let partialErr: PartialParserError
-
-    public var description: String {
-        "Parser error in expression starting on line \(onLine): \(partialErr)"
-    }
+internal protocol ParserError: Error, CustomStringConvertible {
+    var _description: String { get }
+    var got: Lex { get }
 }
 
-internal struct UnexpectedEOFError: PartialParserError {
-    let expected: Lex.Type
-
+extension ParserError {
     var description: String {
-        "encountered end of file while expecting: \(expected)"
+        let pos = got.range.start
+        return "Parser error on line \(pos.line):\(pos.char): \(_description)"
     }
 }
 
-internal struct UnexpectedLexemeError: PartialParserError {
+internal struct UnexpectedIdentifierError: ParserError {
     let got: Lex
-    let expected: Lex.Type
+    let parsing: Expr
+    let expecting: Set<String>
 
-    var description: String {
-        "encountered lexeme: \(got) while expecting: \(expected)"
+    var expectingDescr: String {
+        expecting.map {
+            "\"\($0)\""
+        }.joined(separator: " or ")
+    }
+
+    var _description: String {
+        "encountered unexpected lexeme: \(got) while parsing: \(parsing). Expecting \(expectingDescr)"
     }
 }
 
-internal struct NotImplementedError: PartialParserError, Equatable {
-    var description: String = "This has not been implemented 🤷‍♀️"
+internal struct UnexpectedLexemeError: ParserError {
+    let got: Lex
+    let parsing: Expr
+
+    var _description: String {
+        "encountered unexpected lexeme: \(got) while parsing: \(parsing)"
+    }
 }
 
-internal struct UnexpectedExprError: PartialParserError {
-    let got: Expr
-    let expected: Expr.Type
+internal struct UnexpectedEOLError: ParserError {
+    let got: Lex
+    let parsing: Expr
 
-    var description: String {
-        "encountered expression: \(got) while expecting: \(expected)"
+    var _description: String {
+        "encountered unexpected EOL while parsing: \(parsing)"
+    }
+}
+
+internal struct NotImplementedError: ParserError {
+    let got: Lex
+    var _description: String = "This has not been implemented 🤷‍♀️"
+}
+
+internal struct LeafExprPushError: ParserError {
+    let got: Lex
+    let leafExpr: Expr
+
+    var _description: String {
+        "trying to push lexeme \(got) onto \(leafExpr)"
     }
 }

@@ -7,8 +7,8 @@ internal struct Parser {
         while let l = lexs.pop() {
             do {
                 _ = try rootExpr.push(l)
-            } catch let err as PartialParserError {
-                throw ParserError(onLine: l.range.start.line, partialErr: err)
+            } catch let err as ParserError {
+                throw err
             } catch {
                 assertionFailure("unexpected Error")
             }
