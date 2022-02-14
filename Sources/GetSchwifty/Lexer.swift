@@ -240,6 +240,8 @@ private func nextLexeme(_ chars: inout Fifo<String>, start: LexPos) -> Lex? {
         return NewlineLex(c, start: start)
     case ",", "&":
         return DelimiterLex(c, start: start)
+    case "'":
+        return ApostropheLex(start: start)
     case \.isWhitespace:
         return WhitespaceLex(&chars, firstChar: c, start: start)
     case \.isLetter:
