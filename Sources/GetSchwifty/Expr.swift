@@ -94,7 +94,7 @@ internal struct CommonVariableNameExpr: Expr {
             return self
         case let id as IdentifierLex:
             return try fromIdentifier(id)
-        case is NewlineLex, is StringLex, is NumberLex, is DelimiterLex:
+        case is StringLex, is NumberLex, is DelimiterLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
             throw NotImplementedError(got: lex)
@@ -213,9 +213,9 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
                     throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["in", "into"]))
                 }
                 expectingTarget = false
-            } else {
-                try pushThrough(lex)
+                break
             }
+            fallthrough
         default:
             try pushThrough(lex)
         }
