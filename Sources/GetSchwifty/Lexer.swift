@@ -9,7 +9,7 @@ internal struct LexPos {
         LexPos(line: op.line, char: op.char+1)
     }
     static prefix func ↵(op: LexPos) -> LexPos {
-        LexPos(line: op.line+1, char: 1)
+        LexPos(line: op.line+1, char: 0)
     }
     static func -(end: LexPos, start: LexPos) -> LexRange {
         LexRange(start: start, end: end)
@@ -77,7 +77,7 @@ internal struct WhitespaceLex: Lex {
 
     init(_ chars: inout Fifo<String>, firstChar: Character, start: LexPos) {
         var l = String(firstChar)
-        var end = start
+        var end = →start
         while let c = chars.peek() {
             guard c.isWhitespace && !c.isNewline else { break }
             end = →end
@@ -96,12 +96,13 @@ internal struct CommentLex: Lex {
 
     init(_ chars: inout Fifo<String>, start: LexPos) {
         var depth = 0
-        var end = start
+        var end = →start
         var rep = ""
 
         while let c = chars.pop() {
             if c == ")" {
                 if depth == 0 {
+                    end = →end
                     break
                 }
                 depth -= 1
@@ -132,7 +133,7 @@ internal struct StringLex: Lex {
 
     init(_ chars: inout Fifo<String>, start: LexPos) {
         var rep = ""
-        var end = start
+        var end = →start
         while let c = chars.pop() {
             if c == "\"" {
                 end = →end
@@ -165,7 +166,7 @@ internal struct IdentifierLex: Lex {
 
     init(_ chars: inout Fifo<String>, firstChar: Character, start: LexPos) {
         var rep = String(firstChar)
-        var end = start
+        var end = →start
         while chars.peek()?.isLetter ?? false {
             end = →end
             rep.append(chars.pop()!)
@@ -184,7 +185,7 @@ internal struct NumberLex: Lex {
 
     init(_ chars: inout Fifo<String>, firstChar: Character, start: LexPos) {
         var rep = String(firstChar)
-        var end = start
+        var end = →start
 
         var acceptDecimalPoint = firstChar != "."
         var acceptExponent = firstChar.isNumber
@@ -257,11 +258,11 @@ private func nextLexeme(_ chars: inout Fifo<String>, start: LexPos) -> Lex? {
 internal func lex(_ inp: String) -> [Lex] {
     var chars = Fifo<String>(inp)
     var lexemes: [Lex] = []
-    var start = LexPos(line: 1, char: 1)
+    var start = LexPos(line: 1, char: 0)
 
     while let l = nextLexeme(&chars, start: start) {
         lexemes.append(l)
-        start = →l.range.end
+        start = l.range.end
     }
 
     if !(lexemes.last is NewlineLex) {

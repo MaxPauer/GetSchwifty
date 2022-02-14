@@ -8,6 +8,12 @@ fileprivate struct S {
     let s: String
 }
 
+extension LexPos: Equatable {
+    public static func ==(lhs: LexPos, rhs: LexPos) -> Bool {
+        lhs.line == rhs.line && lhs.char == rhs.char
+    }
+}
+
 final class LexerTests: XCTestCase {
     func testComments() throws {
         let testLex = { (inp: String, exp: String, expLines: UInt) in
@@ -153,6 +159,48 @@ final class LexerTests: XCTestCase {
         testLex("&,,", 3)
         testLex("&", 1)
         testLex(",&&,", 4)
+    }
+
+    func testRanges() throws {
+        let testLex = {(inp: String, exp: [(Lex.Type, (UInt,UInt), (UInt,UInt))]) in
+            let lexemes = lex(inp)
+            XCTAssertEqual(lexemes.count, exp.count)
+            for (l,e) in zip(lexemes, exp) {
+                let (t, start, end) = e
+                XCTAssert(type(of: l) == t)
+                var (line,char) = start
+                XCTAssertEqual(l.range.start, LexPos(line: line, char: char))
+                (line,char) = end
+                XCTAssertEqual(l.range.end, LexPos(line: line, char: char))
+            }
+        }
+
+        testLex("A  dream is 2.5 (that's\nsick)", [
+            (IdentifierLex.self, (1,0), (1,1)),
+            (WhitespaceLex.self, (1,1), (1,3)),
+            (IdentifierLex.self, (1,3), (1,8)),
+            (WhitespaceLex.self, (1,8), (1,9)),
+            (IdentifierLex.self, (1,9), (1,11)),
+            (WhitespaceLex.self, (1,11), (1,12)),
+            (NumberLex.self,     (1,12), (1,15)),
+            (WhitespaceLex.self, (1,15), (1,16)),
+            (CommentLex.self,    (1,16), (2,5)),
+            (NewlineLex.self,    (2,5), (3,0)),
+        ])
+
+        testLex("\n\"A\t\r\ndream\" isn't \"nice\"&cool", [
+            (NewlineLex.self,    (1,0), (2,0)),
+            (StringLex.self,    (2,0), (3,6)),
+            (WhitespaceLex.self, (3,6), (3,7)),
+            (IdentifierLex.self, (3,7), (3,10)),
+            (ApostropheLex.self, (3,10), (3,11)),
+            (IdentifierLex.self, (3,11), (3,12)),
+            (WhitespaceLex.self, (3,12), (3,13)),
+            (StringLex.self,     (3,13), (3,19)),
+            (DelimiterLex.self,  (3,19), (3,20)),
+            (IdentifierLex.self, (3,20), (3,24)),
+            (NewlineLex.self,    (3,24), (4,0)),
+        ])
     }
 
     func testFizzBuzz() throws {
