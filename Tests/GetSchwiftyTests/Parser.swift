@@ -60,6 +60,8 @@ final class ParserTests: XCTestCase {
 
     func testPoeticNumberLiteral() throws {
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My heaven is a halfpipe", "my heaven", 18)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My life's fucked", "my life", 6)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("Your lies're my death", "your lies", 25)
     }
 
     func testPoeticStringLiteral() throws {

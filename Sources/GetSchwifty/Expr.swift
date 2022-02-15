@@ -81,15 +81,21 @@ internal struct VirginExpr: Expr {
 internal struct VariableNameExpr: Expr {
     let name: String
     var isTerminated: Bool = false
-    let canTerminate: Bool = true
+    var expectingIsContraction: Bool = false
+    var canTerminate: Bool { !expectingIsContraction }
 
     mutating func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
         let word = id.literal.lowercased()
         switch word {
-        case "is", "are", "was", "were":
-            return PoeticNumberAssignmentExpr(target: self)
         case "say", "says", "said":
             return PoeticStringAssignmentExpr(target: self)
+        case "is", "are", "was", "were":
+            return PoeticNumberAssignmentExpr(target: self)
+        case "s", "re":
+            if expectingIsContraction {
+                return PoeticNumberAssignmentExpr(target: self)
+            }
+            fallthrough
         default:
             throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["is", "are", "was", "were", "say", "says", "said"]))
         }
@@ -106,7 +112,8 @@ internal struct VariableNameExpr: Expr {
         case is StringLex, is NumberLex, is DelimiterLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         case is ApostropheLex:
-            throw NotImplementedError(got: lex)
+            expectingIsContraction = true
+            return self
         default:
             assertionFailure("unhandled lexeme")
             return self
