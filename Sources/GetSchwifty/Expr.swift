@@ -41,6 +41,16 @@ internal struct VirginExpr: Expr {
             return InputExpr()
         case "say", "shout", "whisper", "scream":
             return OutputExpr()
+        case "empty", "silent", "silence":
+            return StringExpr(literal: "")
+        case "true", "right", "yes", "ok":
+            return BoolExpr(literal: true)
+        case "false", "wrong", "no", "lies":
+            return BoolExpr(literal: false)
+        case "null", "nothing", "nobody", "nowhere", "gone":
+            return NullExpr()
+        case "mysterious":
+            return MysteriousExpr()
         default:
             //TODO: replace with simple variable
             return self
@@ -323,6 +333,7 @@ internal protocol LeafExpr: Expr {
 }
 
 extension LeafExpr {
+    var canTerminate: Bool { true }
     mutating func push(_ lex: Lex) throws -> Expr {
         guard lex is NewlineLex else {
             throw LeafExprPushError(got: lex, leafExpr: self)
@@ -333,14 +344,27 @@ extension LeafExpr {
 
 internal struct StringExpr: LeafExpr {
     var isTerminated: Bool = false
-    var canTerminate: Bool = true
     let literal: String
 }
 
 internal struct NumberExpr: LeafExpr {
     var isTerminated: Bool = false
-    var canTerminate: Bool = true
     let literal: Float
+}
+
+internal struct BoolExpr: LeafExpr {
+    var isTerminated: Bool = false
+    let literal: Bool
+}
+
+internal struct NullExpr: LeafExpr {
+    var isTerminated: Bool = false
+    let literal: Int? = nil
+}
+
+internal struct MysteriousExpr: LeafExpr {
+    var isTerminated: Bool = false
+    let literal: Int? = nil
 }
 
 internal struct RootExpr: Expr {
