@@ -78,21 +78,13 @@ internal struct VirginExpr: Expr {
     }
 }
 
-internal struct CommonVariableNameExpr: Expr {
-    let first: String
-    var second: String?
+internal struct VariableNameExpr: Expr {
+    let name: String
     var isTerminated: Bool = false
-    var canTerminate: Bool { second != nil }
-
-    var name: String { "\(first) \(second!)" }
+    let canTerminate: Bool = true
 
     mutating func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
         let word = id.literal.lowercased()
-        if second == nil {
-            second = word
-            return self
-        }
-
         switch word {
         case "is", "are", "was", "were":
             return PoeticNumberAssignmentExpr(target: self)
@@ -115,6 +107,33 @@ internal struct CommonVariableNameExpr: Expr {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         case is ApostropheLex:
             throw NotImplementedError(got: lex)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
+    }
+}
+
+internal struct CommonVariableNameExpr: Expr {
+    let first: String
+    var isTerminated: Bool = false
+    let canTerminate: Bool = false
+
+    mutating func fromIdentifier(_ id: IdentifierLex) -> Expr {
+        let word = id.literal.lowercased()
+        return VariableNameExpr(name: "\(first) \(word)")
+    }
+
+    mutating func push(_ lex: Lex) throws -> Expr {
+        switch lex {
+        case is NewlineLex:
+            return try terminate(lex)
+        case is WhitespaceLex, is CommentLex:
+            return self
+        case let id as IdentifierLex:
+            return fromIdentifier(id)
+        case is StringLex, is NumberLex, is DelimiterLex, is ApostropheLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
             assertionFailure("unhandled lexeme")
             return self

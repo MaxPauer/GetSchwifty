@@ -12,7 +12,7 @@ final class ParserTests: XCTestCase {
             let exprs = try! self.parse(inp)
             XCTAssertEqual(exprs.count, exp.count)
             for (v, e) in zip(exprs, exp) {
-                XCTAssertEqual((v as! CommonVariableNameExpr).name, e)
+                XCTAssertEqual((v as! VariableNameExpr).name, e)
             }
         }
 
@@ -52,7 +52,7 @@ final class ParserTests: XCTestCase {
         let exprs = try! self.parse(inp)
         XCTAssertEqual(exprs.count, 1)
         let ass = exprs[0] as! W
-        XCTAssertEqual((ass.target as! CommonVariableNameExpr).name, expVarName)
+        XCTAssertEqual((ass.target as! VariableNameExpr).name, expVarName)
         let rhs = try! XCTUnwrap(ass.value as? V)
         XCTAssertEqual(rhs.literal, expValue)
         return (rhs, ass)
@@ -82,7 +82,7 @@ final class ParserTests: XCTestCase {
             XCTAssertEqual(exprs.count, 1)
             let i = exprs[0] as! InputExpr
             if let elc = expLocName {
-                XCTAssertEqual((i.target! as! CommonVariableNameExpr).name, elc)
+                XCTAssertEqual((i.target! as! VariableNameExpr).name, elc)
             } else {
                 XCTAssertNil(i.target)
             }
@@ -98,7 +98,7 @@ final class ParserTests: XCTestCase {
             let exprs = try! self.parse(inp)
             XCTAssertEqual(exprs.count, 1)
             let o = try XCTUnwrap(exprs[0] as? OutputExpr)
-            XCTAssertEqual((o.target as! CommonVariableNameExpr).name, expLocName)
+            XCTAssertEqual((o.target as! VariableNameExpr).name, expLocName)
         }
 
         try testParse("Shout my name", "my name")
