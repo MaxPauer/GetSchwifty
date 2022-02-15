@@ -39,6 +39,8 @@ internal struct VirginExpr: Expr {
             return AssignmentExpr(expectingValue: true)
         case "listen":
             return InputExpr()
+        case "say", "shout", "whisper", "scream":
+            return OutputExpr()
         default:
             //TODO: replace with simple variable
             return self
@@ -278,6 +280,34 @@ internal struct InputExpr: Expr {
                 try pushThrough(lex)
             }
         case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
+            try pushThrough(lex)
+        default:
+            assertionFailure("unhandled lexeme")
+        }
+
+        return self
+    }
+}
+
+internal struct OutputExpr: Expr {
+    var isTerminated: Bool = false
+    var target: Expr = VirginExpr()
+
+    var canTerminate: Bool {
+        !(target is VirginExpr)
+    }
+
+    mutating func pushThrough(_ lex: Lex) throws {
+        target = try target.push(lex)
+    }
+
+    mutating func push(_ lex: Lex) throws -> Expr {
+        switch lex {
+        case is NewlineLex:
+            return try terminate(lex)
+        case is WhitespaceLex, is CommentLex:
+            break
+        case is IdentifierLex, is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
         default:
             assertionFailure("unhandled lexeme")

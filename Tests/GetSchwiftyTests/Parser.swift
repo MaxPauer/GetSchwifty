@@ -93,6 +93,20 @@ final class ParserTests: XCTestCase {
         testParse("Listen to my heart", "my heart")
     }
 
+    func testOutput() throws {
+        let testParse = { (inp: String, expLocName: String) in
+            let exprs = try! self.parse(inp)
+            XCTAssertEqual(exprs.count, 1)
+            let o = try XCTUnwrap(exprs[0] as? OutputExpr)
+            XCTAssertEqual((o.target as! CommonVariableNameExpr).name, expLocName)
+        }
+
+        try testParse("Shout my name", "my name")
+        try testParse("whisper my name", "my name")
+        try testParse("scream my name", "my name")
+        try testParse("say my name", "my name") // Heisenberg
+    }
+
     func testFizzBuzz() throws {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         XCTAssertThrowsError(try self.parse(fizzbuzz)) { error in
