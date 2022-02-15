@@ -1,16 +1,26 @@
 internal protocol ParserError: Error, CustomStringConvertible {
     var _description: String { get }
-    var got: Lex { get }
+    var parsing: Expr { get }
+    var range: LexRange { get }
 }
 
 extension ParserError {
     var description: String {
-        let pos = got.range.start
+        let pos = range.start
         return "Parser error on line \(pos.line):\(pos.char): \(_description)"
     }
 }
 
-internal struct UnexpectedIdentifierError: ParserError {
+internal protocol LexemeError: ParserError {
+    var got: Lex { get }
+
+}
+
+extension LexemeError {
+    var range: LexRange { got.range }
+}
+
+internal struct UnexpectedIdentifierError: LexemeError {
     let got: Lex
     let parsing: Expr
     let expecting: Set<String>
@@ -26,7 +36,7 @@ internal struct UnexpectedIdentifierError: ParserError {
     }
 }
 
-internal struct UnexpectedLexemeError: ParserError {
+internal struct UnexpectedLexemeError: LexemeError {
     let got: Lex
     let parsing: Expr
 
@@ -35,8 +45,18 @@ internal struct UnexpectedLexemeError: ParserError {
     }
 }
 
+internal struct UnexpectedExprError<Expecting>: ParserError {
+    let got: Expr
+    let range: LexRange
+    let parsing: Expr
+
+    var _description: String {
+        "encountered unexpected expression: \(got) while parsing: \(parsing), expecting: \(Expecting.self)"
+    }
+}
+
 internal struct UnexpectedEOLError: ParserError {
-    let got: Lex
+    let range: LexRange
     let parsing: Expr
 
     var _description: String {
@@ -44,16 +64,11 @@ internal struct UnexpectedEOLError: ParserError {
     }
 }
 
-internal struct NotImplementedError: ParserError {
+internal struct LeafExprPushError: LexemeError {
     let got: Lex
-    var _description: String = "This has not been implemented 🤷‍♀️"
-}
-
-internal struct LeafExprPushError: ParserError {
-    let got: Lex
-    let leafExpr: Expr
+    let parsing: Expr
 
     var _description: String {
-        "trying to push lexeme \(got) onto \(leafExpr)"
+        "trying to push lexeme \(got) onto \(parsing)"
     }
 }

@@ -17,7 +17,7 @@ internal protocol Expr {
 extension Expr {
     mutating func terminate(_ l: Lex) throws -> Expr {
         guard canTerminate else {
-            throw UnexpectedEOLError(got: l, parsing: self)
+            throw UnexpectedEOLError(range: l.range, parsing: self)
         }
         isTerminated = true
         return self
@@ -78,7 +78,9 @@ internal struct VirginExpr: Expr {
     }
 }
 
-internal struct VariableNameExpr: Expr {
+internal protocol LocationExpr: Expr {}
+
+internal struct VariableNameExpr: LocationExpr {
     let name: String
     var isTerminated: Bool = false
     var expectingIsContraction: Bool = false
@@ -121,7 +123,7 @@ internal struct VariableNameExpr: Expr {
     }
 }
 
-internal struct CommonVariableNameExpr: Expr {
+internal struct CommonVariableNameExpr: LocationExpr {
     let first: String
     var isTerminated: Bool = false
     let canTerminate: Bool = false
@@ -301,6 +303,9 @@ internal struct InputExpr: Expr {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         }
         target = try target!.push(lex)
+        guard target is VirginExpr || target is LocationExpr else {
+            throw UnexpectedExprError<LocationExpr>(got: target!, range:lex.range, parsing: self)
+        }
     }
 
     mutating func push(_ lex: Lex) throws -> Expr {
@@ -367,7 +372,7 @@ extension LeafExpr {
         case is CommentLex, is WhitespaceLex, is ApostropheLex:
             return self
         case is StringLex, is NumberLex, is DelimiterLex:
-            throw LeafExprPushError(got: lex, leafExpr: self)
+            throw LeafExprPushError(got: lex, parsing: self)
         default:
             assertionFailure("unhandled lexeme")
             return self
