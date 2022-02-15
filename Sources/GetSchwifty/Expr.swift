@@ -55,8 +55,11 @@ internal struct VirginExpr: Expr {
             return StringExpr(literal: str.literal)
         case let num as NumberLex:
             return NumberExpr(literal: num.value)
+        case is ApostropheLex, is DelimiterLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
-            throw NotImplementedError(got: lex)
+            assertionFailure("unhandled lexeme")
+            return self
         }
     }
 }
@@ -96,8 +99,11 @@ internal struct CommonVariableNameExpr: Expr {
             return try fromIdentifier(id)
         case is StringLex, is NumberLex, is DelimiterLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
+        case is ApostropheLex:
             throw NotImplementedError(got: lex)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
         }
     }
 }
@@ -134,8 +140,10 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
             return try terminate(lex)
         case let id as IdentifierLex:
             addPoeticNumber(fromString: id.literal)
-        default:
+        case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
+        default:
+            assertionFailure("unhandled lexeme")
         }
         return self
     }
@@ -170,7 +178,7 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
         case let str as StringLex:
             _value += "\"\(str.literal)\""
         default:
-            assertionFailure("unexpected lexeme")
+            assertionFailure("unhandled lexeme")
         }
 
         return self
@@ -216,8 +224,10 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
                 break
             }
             fallthrough
-        default:
+        case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
+        default:
+            assertionFailure("unhandled lexeme")
         }
 
         return self
@@ -251,8 +261,10 @@ internal struct InputExpr: Expr {
             } else {
                 try pushThrough(lex)
             }
-        default:
+        case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
+        default:
+            assertionFailure("unhandled lexeme")
         }
 
         return self
