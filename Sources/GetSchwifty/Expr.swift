@@ -35,6 +35,8 @@ internal struct VirginExpr: Expr {
             return CommonVariableNameExpr(first: word)
         case "let":
             return AssignmentExpr(expectingTarget: true)
+        case "put":
+            return AssignmentExpr(expectingValue: true)
         case "listen":
             return InputExpr()
         default:
@@ -191,7 +193,14 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
     var value: Expr = VirginExpr()
 
     private(set) var expectingTarget: Bool
-    var expectingValue: Bool { !expectingTarget }
+    private(set) var expectingValue: Bool {
+        get {
+            !expectingTarget
+        } set {
+            expectingTarget = !newValue
+        }
+    }
+
     var canTerminate: Bool { !(target is VirginExpr) && !(value is VirginExpr) }
 
     init(expectingTarget et: Bool) {
@@ -216,11 +225,18 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
         case is WhitespaceLex, is CommentLex:
             break
         case let id as IdentifierLex:
-            if id.literal.lowercased() == "be" {
+            let lit = id.literal.lowercased()
+            if lit == "be" {
                 guard expectingTarget else {
                     throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["in", "into"]))
                 }
                 expectingTarget = false
+                break
+            } else if lit == "in" || lit == "into" {
+                guard expectingValue else {
+                    throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["be"]))
+                }
+                expectingValue = false
                 break
             }
             fallthrough

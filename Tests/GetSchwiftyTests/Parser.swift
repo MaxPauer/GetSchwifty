@@ -71,6 +71,11 @@ final class ParserTests: XCTestCase {
         let _: (NumberExpr, AssignmentExpr) = assignParseTest("let my life be 42.0", "my life", 42.0)
     }
 
+    func testPutAssignment() throws {
+        let _: (NumberExpr, AssignmentExpr) = assignParseTest("put 42 in my life", "my life", 42.0)
+        let _: (StringExpr, AssignmentExpr) = assignParseTest("put \"squirrels\" into my pants", "my pants", "squirrels")
+    }
+
     func testInput() throws {
         let testParse = { (inp: String, expLocName: String?) in
             let exprs = try! self.parse(inp)
