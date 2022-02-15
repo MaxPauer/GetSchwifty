@@ -61,7 +61,7 @@ internal struct VirginExpr: Expr {
         switch lex {
         case is NewlineLex:
             return try terminate(lex)
-        case is WhitespaceLex, is CommentLex:
+        case is WhitespaceLex, is CommentLex, is ApostropheLex:
             return self
         case let id as IdentifierLex:
             return fromIdentifier(id)
@@ -69,7 +69,7 @@ internal struct VirginExpr: Expr {
             return StringExpr(literal: str.literal)
         case let num as NumberLex:
             return NumberExpr(literal: num.value)
-        case is ApostropheLex, is DelimiterLex:
+        case is DelimiterLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
             assertionFailure("unhandled lexeme")
@@ -361,10 +361,17 @@ internal protocol LeafExpr: Expr {
 extension LeafExpr {
     var canTerminate: Bool { true }
     mutating func push(_ lex: Lex) throws -> Expr {
-        guard lex is NewlineLex else {
+        switch lex {
+        case is NewlineLex:
+            return try terminate(lex)
+        case is CommentLex, is WhitespaceLex, is ApostropheLex:
+            return self
+        case is StringLex, is NumberLex, is DelimiterLex:
             throw LeafExprPushError(got: lex, leafExpr: self)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
         }
-        return try terminate(lex)
     }
 }
 
