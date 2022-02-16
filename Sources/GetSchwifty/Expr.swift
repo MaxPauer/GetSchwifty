@@ -11,6 +11,7 @@ internal protocol Expr {
 }
 
 extension Expr {
+    @discardableResult
     mutating func terminate(_ l: Lex) throws -> Expr {
         guard canTerminate else {
             throw UnexpectedEOLError(range: l.range, parsing: self)
@@ -47,9 +48,11 @@ internal struct VanillaExpr: Expr {
             return NullExpr()
         case String.mysteriousIdentifiers:
             return MysteriousExpr()
+
+        case \.firstCharIsUpperCase:
+            return ProperVariableNameExpr(first: word)
         default:
-            //TODO: replace with simple variable
-            return self
+            return VariableNameExpr(name: word)
         }
     }
 
@@ -81,6 +84,10 @@ internal struct VariableNameExpr: LocationExpr {
     var isTerminated: Bool = false
     var expectingIsContraction: Bool = false
     var canTerminate: Bool { !expectingIsContraction }
+
+    init(name n: String) {
+        name = n.lowercased()
+    }
 
     func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
         let word = id.literal
@@ -125,11 +132,11 @@ internal struct CommonVariableNameExpr: LocationExpr {
     let canTerminate: Bool = false
 
     init(first f: String) {
-        first = f.lowercased()
+        first = f
     }
 
     func fromIdentifier(_ id: IdentifierLex) -> Expr {
-        let word = id.literal.lowercased()
+        let word = id.literal
         return VariableNameExpr(name: "\(first) \(word)")
     }
 
@@ -142,6 +149,54 @@ internal struct CommonVariableNameExpr: LocationExpr {
         case let id as IdentifierLex:
             return fromIdentifier(id)
         case is StringLex, is NumberLex, is DelimiterLex, is ApostropheLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
+    }
+}
+
+internal struct ProperVariableNameExpr: LocationExpr {
+    private(set) var words: [String]
+    var isTerminated: Bool = false
+    let canTerminate: Bool = true
+
+    init(first: String) {
+        words = [first]
+    }
+
+    func finalize() -> VariableNameExpr {
+        VariableNameExpr(name: words.joined(separator: " "))
+    }
+
+    func pushToFinalVariable(_ lex: Lex) throws -> Expr {
+        var newMe = finalize()
+        return try newMe.push(lex)
+    }
+
+    mutating func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
+        let word = id.literal
+        if word.firstCharIsUpperCase {
+            words.append(word)
+            return self
+        } else {
+            return try pushToFinalVariable(id)
+        }
+    }
+
+    mutating func push(_ lex: Lex) throws -> Expr {
+        switch lex {
+        case is NewlineLex:
+            try terminate(lex)
+            return finalize()
+        case is WhitespaceLex, is CommentLex:
+            return self
+        case let id as IdentifierLex:
+            return try fromIdentifier(id)
+        case is DelimiterLex, is ApostropheLex:
+            return try pushToFinalVariable(lex)
+        case is StringLex, is NumberLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
             assertionFailure("unhandled lexeme")
