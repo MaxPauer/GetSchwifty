@@ -26,6 +26,14 @@ final class ParserTests: XCTestCase {
         try testParse("Doctor", "doctor")
     }
 
+    func testPronouns() throws {
+        for inp in ["it", "he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"] {
+            let exprs = try XCTUnwrap(self.parse(inp))
+            XCTAssertEqual(exprs.count, 1)
+            _ = try XCTUnwrap(exprs[0] as? PronounExpr)
+        }
+    }
+
     func errorTest<E>(_ inp: String,_ got: Lex.Type, _ expr: Expr.Type) -> E where E: LexemeError {
         var error: E!
         XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
@@ -150,7 +158,8 @@ final class ParserTests: XCTestCase {
         let _: VariableNameExpr = try testParse("whisper my name")
         let _: VariableNameExpr = try testParse("scream my name")
         let _: VariableNameExpr = try testParse("say my name") // Heisenberg
-        let _: BoolExpr = try testParse("shout yes")
+        let _: BoolExpr = try testParse("whisper yes")
+        let _: PronounExpr = try testParse("shout it")
     }
 
     func testOutputFailure() throws {
