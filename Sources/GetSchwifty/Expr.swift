@@ -48,6 +48,8 @@ internal struct VanillaExpr: Expr {
             return NullExpr()
         case String.mysteriousIdentifiers:
             return MysteriousExpr()
+        case String.pronounIdentifiers:
+            return PronounExpr()
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExpr(first: word)
@@ -77,17 +79,14 @@ internal struct VanillaExpr: Expr {
     }
 }
 
-internal protocol LocationExpr: Expr {}
+internal protocol PartialLocationExpr: Expr {}
 
-internal struct VariableNameExpr: LocationExpr {
-    let name: String
-    var isTerminated: Bool = false
-    var expectingIsContraction: Bool = false
+internal protocol LocationExpr: PartialLocationExpr {
+    var expectingIsContraction: Bool { get set }
+}
+
+extension LocationExpr {
     var canTerminate: Bool { !expectingIsContraction }
-
-    init(name n: String) {
-        name = n.lowercased()
-    }
 
     func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
         let word = id.literal
@@ -126,7 +125,22 @@ internal struct VariableNameExpr: LocationExpr {
     }
 }
 
-internal struct CommonVariableNameExpr: LocationExpr {
+internal struct PronounExpr: LocationExpr {
+    var isTerminated: Bool = false
+    var expectingIsContraction: Bool = false
+}
+
+internal struct VariableNameExpr: LocationExpr {
+    let name: String
+    var isTerminated: Bool = false
+    var expectingIsContraction: Bool = false
+
+    init(name n: String) {
+        name = n.lowercased()
+    }
+}
+
+internal struct CommonVariableNameExpr: PartialLocationExpr {
     let first: String
     var isTerminated: Bool = false
     let canTerminate: Bool = false
@@ -157,7 +171,7 @@ internal struct CommonVariableNameExpr: LocationExpr {
     }
 }
 
-internal struct ProperVariableNameExpr: LocationExpr {
+internal struct ProperVariableNameExpr: PartialLocationExpr {
     private(set) var words: [String]
     var isTerminated: Bool = false
     let canTerminate: Bool = true
@@ -353,7 +367,7 @@ internal struct InputExpr: Expr {
     var target: Expr?
 
     var canTerminate: Bool {
-        target == nil || !(target is VanillaExpr)
+        target == nil || target is LocationExpr
     }
 
     mutating func pushThrough(_ lex: Lex) throws {
@@ -361,8 +375,8 @@ internal struct InputExpr: Expr {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         }
         target = try target!.push(lex)
-        guard target is VanillaExpr || target is LocationExpr else {
-            throw UnexpectedExprError<LocationExpr>(got: target!, range:lex.range, parsing: self)
+        guard target is VanillaExpr || target is PartialLocationExpr else {
+            throw UnexpectedExprError<PartialLocationExpr>(got: target!, range:lex.range, parsing: self)
         }
     }
 

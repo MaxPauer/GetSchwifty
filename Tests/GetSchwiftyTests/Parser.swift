@@ -131,7 +131,7 @@ final class ParserTests: XCTestCase {
     }
 
     func testInputFailure() throws {
-        let _: UnexpectedExprError<LocationExpr> = errorTest("listen to true", BoolExpr.self, InputExpr.self)
+        let _: UnexpectedExprError<PartialLocationExpr> = errorTest("listen to true", BoolExpr.self, InputExpr.self)
         let _: UnexpectedEOLError = errorTest("listen to", InputExpr.self)
     }
 
