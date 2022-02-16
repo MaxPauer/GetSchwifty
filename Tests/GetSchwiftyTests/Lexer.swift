@@ -123,12 +123,12 @@ final class LexerTests: XCTestCase {
     }
 
     func testNums() throws {
-        let testLex = { (inp: String, exp: [Float]) in
+        let testLex = { (inp: String, exp: [Double]) in
             let lexemes = lex(inp)
             XCTAssertEqual(lexemes.count-1, exp.count)
             for (e, l) in zip(exp, lexemes) {
                 let num = try! XCTUnwrap(l as? NumberLex)
-                XCTAssertEqual(e, Float(num.literal)!)
+                XCTAssertEqual(e, Double(num.literal)!)
             }
         }
 

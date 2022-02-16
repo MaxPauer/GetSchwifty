@@ -260,7 +260,7 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
         case is WhitespaceLex, is CommentLex:
             break
         case is NewlineLex:
-            value = NumberExpr(literal: Float(_value))
+            value = NumberExpr(literal: Double(_value))
             return try terminate(lex)
         case let id as IdentifierLex:
             addPoeticNumber(fromString: id.literal)
@@ -482,16 +482,16 @@ internal struct StringExpr: LeafExpr {
 
 internal struct NumberExpr: LeafExpr {
     var isTerminated: Bool = false
-    let literal: Float
+    let literal: Double
     var prettyName: String { "Numberic Value (=\"\(literal)\")" }
 
     init(from l: NumberLex, in e: Expr) throws {
-        guard let f = Float(l.literal) else {
+        guard let f = Double(l.literal) else {
             throw UnparsableNumberLexemeError(got: l, parsing: e)
         }
         literal = f
     }
-    init(literal f: Float) {
+    init(literal f: Double) {
         literal = f
     }
 }
