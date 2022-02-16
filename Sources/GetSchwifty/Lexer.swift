@@ -223,7 +223,7 @@ fileprivate extension Character {
     }
 }
 
-internal func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
+fileprivate func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
 

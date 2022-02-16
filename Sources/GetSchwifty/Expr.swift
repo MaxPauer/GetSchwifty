@@ -1,8 +1,4 @@
 fileprivate extension String {
-    var isCommonVariableIdentifier: Bool {
-        let l = self.lowercased()
-        return l == "a" || l == "an" || l == "the" || l == "my" || l == "your" || l == "our"
-    }
     var firstCharIsUpperCase: Bool {
         return self.first!.isUppercase
     }
@@ -29,27 +25,27 @@ internal struct VirginExpr: Expr {
     let canTerminate: Bool = true
 
     func fromIdentifier(_ id: IdentifierLex) -> Expr {
-        let word = id.literal.lowercased()
+        let word = id.literal
         switch word {
-        case \.isCommonVariableIdentifier:
+        case String.commonVariableIdentifiers:
             return CommonVariableNameExpr(first: word)
-        case "let":
+        case String.letAssignIdentifiers:
             return AssignmentExpr(expectingTarget: true)
-        case "put":
+        case String.putAssignIdentifiers:
             return AssignmentExpr(expectingValue: true)
-        case "listen":
+        case String.listenInputIdentifiers:
             return InputExpr()
-        case "say", "shout", "whisper", "scream":
+        case String.sayOutputIdentifiers:
             return OutputExpr()
-        case "empty", "silent", "silence":
+        case String.emptyStringIdentifiers:
             return StringExpr(literal: "")
-        case "true", "right", "yes", "ok":
+        case String.trueIdentifiers:
             return BoolExpr(literal: true)
-        case "false", "wrong", "no", "lies":
+        case String.falseIdentifiers:
             return BoolExpr(literal: false)
-        case "null", "nothing", "nobody", "nowhere", "gone":
+        case String.nullIdentifiers:
             return NullExpr()
-        case "mysterious":
+        case String.mysteriousIdentifiers:
             return MysteriousExpr()
         default:
             //TODO: replace with simple variable
@@ -86,20 +82,20 @@ internal struct VariableNameExpr: LocationExpr {
     var expectingIsContraction: Bool = false
     var canTerminate: Bool { !expectingIsContraction }
 
-    mutating func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
-        let word = id.literal.lowercased()
+    func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
+        let word = id.literal
         switch word {
-        case "say", "says", "said":
+        case String.sayPoeticStringIdentifiers:
             return PoeticStringAssignmentExpr(target: self)
-        case "is", "are", "was", "were":
+        case String.poeticNumberIdentifiers:
             return PoeticNumberAssignmentExpr(target: self)
-        case "s", "re":
+        case String.isContractionIdentifiers:
             if expectingIsContraction {
                 return PoeticNumberAssignmentExpr(target: self)
             }
             fallthrough
         default:
-            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["is", "are", "was", "were", "say", "says", "said"]))
+            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(String.poeticNumberIdentifiers ∪ String.sayPoeticStringIdentifiers))
         }
     }
 
@@ -128,7 +124,11 @@ internal struct CommonVariableNameExpr: LocationExpr {
     var isTerminated: Bool = false
     let canTerminate: Bool = false
 
-    mutating func fromIdentifier(_ id: IdentifierLex) -> Expr {
+    init(first f: String) {
+        first = f.lowercased()
+    }
+
+    func fromIdentifier(_ id: IdentifierLex) -> Expr {
         let word = id.literal.lowercased()
         return VariableNameExpr(name: "\(first) \(word)")
     }
@@ -258,6 +258,23 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
         }
     }
 
+    mutating func fromIdentifier(_ id: IdentifierLex) throws {
+        switch id.literal {
+        case String.assignBeIdentifiers:
+            guard expectingTarget else {
+                throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.assignIntoIdentifiers)
+            }
+            expectingTarget = false
+        case String.assignIntoIdentifiers:
+            guard expectingValue else {
+                throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.assignBeIdentifiers)
+            }
+            expectingValue = false
+        default:
+            try pushThrough(id)
+        }
+    }
+
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
@@ -265,21 +282,7 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
         case is WhitespaceLex, is CommentLex:
             break
         case let id as IdentifierLex:
-            let lit = id.literal.lowercased()
-            if lit == "be" {
-                guard expectingTarget else {
-                    throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["in", "into"]))
-                }
-                expectingTarget = false
-                break
-            } else if lit == "in" || lit == "into" {
-                guard expectingValue else {
-                    throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(["be"]))
-                }
-                expectingValue = false
-                break
-            }
-            fallthrough
+            try fromIdentifier(id)
         case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
         default:
@@ -308,6 +311,15 @@ internal struct InputExpr: Expr {
         }
     }
 
+    mutating func fromIdentifier(_ id: IdentifierLex) throws {
+        switch id.literal {
+        case String.toIdentifiers:
+            target = VirginExpr()
+        default:
+            try pushThrough(id)
+        }
+    }
+
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
@@ -315,11 +327,7 @@ internal struct InputExpr: Expr {
         case is WhitespaceLex, is CommentLex:
             break
         case let id as IdentifierLex:
-            if id.literal.lowercased() == "to" {
-                target = VirginExpr()
-            } else {
-                try pushThrough(lex)
-            }
+            try fromIdentifier(id)
         case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
         default:
