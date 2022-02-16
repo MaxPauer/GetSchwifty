@@ -42,8 +42,13 @@ final class LexerTests: XCTestCase {
 
         testLex("\"hi\"", "hi")
         testLex("\"hi", "hi")
-        testLex("\"he\\\"ll\\\"o", "he\\\"ll\\\"o")
-        testLex("\"he\\\"ll\\o", "he\\\"ll\\o")
+        testLex("\"he\\\"ll\\\"o", "he\"ll\"o")
+        testLex("\"he\\\"ll\\o", "he\"ll\\o")
+        testLex("\"\\r\\n\\t\"", "\r\n\t")
+        testLex("\"hi\\", "hi\\")
+        testLex("\"hi\\", "hi\\")
+        testLex("\"hi\\\"", "hi\"")
+        testLex("\"hi\\a\"", "hi\\a")
     }
 
     func testNewlines() throws {

@@ -140,12 +140,25 @@ internal struct StringLex: Lex {
                 break
             }
 
-            rep.append(c)
             if c == "\\" {
-                rep.append(chars.pop()!)
-                end = →(→end)
-                continue
-            } else if c.isNewline {
+                if let escapee = chars.pop() {
+                    end = →(→end)
+                    switch escapee {
+                    case "n": rep.append("\n")
+                    case "r": rep.append("\r")
+                    case "t": rep.append("\t")
+                    case "\\": rep.append("\\")
+                    case "\"": rep.append("\"")
+                    default:
+                        rep.append(c)
+                        rep.append(escapee)
+                    }
+                    continue
+                }
+            }
+
+            rep.append(c)
+            if c.isNewline {
                 end = ↵end
                 continue
             } else {
