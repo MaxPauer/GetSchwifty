@@ -4,9 +4,10 @@ fileprivate extension String {
     }
 }
 
-internal protocol Expr {
+internal protocol Expr: CustomStringConvertible {
     var isTerminated: Bool { get set }
     var canTerminate: Bool { get }
+    var prettyName: String { get }
     mutating func push(_ lex: Lex) throws -> Expr
 }
 
@@ -19,11 +20,16 @@ extension Expr {
         isTerminated = true
         return self
     }
+
+    var description: String {
+        "[\(prettyName) Expression]"
+    }
 }
 
 internal struct VanillaExpr: Expr {
     var isTerminated = false
     let canTerminate: Bool = true
+    let prettyName: String = "Vanilla"
 
     func fromIdentifier(_ id: IdentifierLex) -> Expr {
         let word = id.literal
@@ -128,12 +134,14 @@ extension LocationExpr {
 internal struct PronounExpr: LocationExpr {
     var isTerminated: Bool = false
     var expectingIsContraction: Bool = false
+    let prettyName: String = "Pronoun"
 }
 
 internal struct VariableNameExpr: LocationExpr {
     let name: String
     var isTerminated: Bool = false
     var expectingIsContraction: Bool = false
+    var prettyName: String { "Variable Name (=\(name))" }
 
     init(name n: String) {
         name = n.lowercased()
@@ -144,6 +152,7 @@ internal struct CommonVariableNameExpr: PartialLocationExpr {
     let first: String
     var isTerminated: Bool = false
     let canTerminate: Bool = false
+    var prettyName: String { "Variable Name (unfinished=\(first) …)" }
 
     init(first f: String) {
         first = f
@@ -175,13 +184,16 @@ internal struct ProperVariableNameExpr: PartialLocationExpr {
     private(set) var words: [String]
     var isTerminated: Bool = false
     let canTerminate: Bool = true
+    var prettyName: String { "Variable Name (unfinished=\(name) …)" }
 
     init(first: String) {
         words = [first]
     }
 
+    private var name: String { words.joined(separator: " ") }
+
     func finalize() -> VariableNameExpr {
-        VariableNameExpr(name: words.joined(separator: " "))
+        VariableNameExpr(name: name)
     }
 
     func pushToFinalVariable(_ lex: Lex) throws -> Expr {
@@ -230,6 +242,7 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
     var target: Expr
     private var _value: Int = 0
     var value: NumberExpr?
+    let prettyName: String = "Poetic Number Assignment"
 
     init(target t: Expr) {
         target = t
@@ -265,6 +278,7 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
     var target: Expr
     private var _value: String = ""
     var value: StringExpr?
+    let prettyName: String = "Poetic String Assignment"
 
     init(target t: Expr) {
         target = t
@@ -300,6 +314,7 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
     var isTerminated: Bool = false
     var target: Expr = VanillaExpr()
     var value: Expr = VanillaExpr()
+    let prettyName: String = "Assignment"
 
     private(set) var expectingTarget: Bool
     private(set) var expectingValue: Bool {
@@ -365,6 +380,7 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
 internal struct InputExpr: Expr {
     var isTerminated: Bool = false
     var target: Expr?
+    let prettyName: String = "Input"
 
     var canTerminate: Bool {
         target == nil || target is LocationExpr
@@ -410,6 +426,7 @@ internal struct InputExpr: Expr {
 internal struct OutputExpr: Expr {
     var isTerminated: Bool = false
     var target: Expr = VanillaExpr()
+    let prettyName: String = "Output"
 
     var canTerminate: Bool {
         !(target is VanillaExpr)
@@ -460,11 +477,13 @@ extension LeafExpr {
 internal struct StringExpr: LeafExpr {
     var isTerminated: Bool = false
     let literal: String
+    var prettyName: String { "String (=\"\(literal)\")" }
 }
 
 internal struct NumberExpr: LeafExpr {
     var isTerminated: Bool = false
     let literal: Float
+    var prettyName: String { "Numberic Value (=\"\(literal)\")" }
 
     init(from l: NumberLex, in e: Expr) throws {
         guard let f = Float(l.literal) else {
@@ -480,22 +499,26 @@ internal struct NumberExpr: LeafExpr {
 internal struct BoolExpr: LeafExpr {
     var isTerminated: Bool = false
     let literal: Bool
+    var prettyName: String { "Boolean Value (=\"\(literal)\")" }
 }
 
 internal struct NullExpr: LeafExpr {
     var isTerminated: Bool = false
     let literal: Int? = nil
+    let prettyName: String = "Null Value"
 }
 
 internal struct MysteriousExpr: LeafExpr {
     var isTerminated: Bool = false
     let literal: Int? = nil
+    let prettyName: String = "Mysterious Value"
 }
 
 internal struct RootExpr: Expr {
     var isTerminated: Bool = false
     let canTerminate: Bool = false
     var children: [Expr] = [VanillaExpr()]
+    let prettyName: String = "Root"
 
     mutating func push(_ lex: Lex) throws -> Expr {
         var lastExpr = children.last!

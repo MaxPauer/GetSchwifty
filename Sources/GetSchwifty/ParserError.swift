@@ -27,7 +27,7 @@ internal struct UnexpectedIdentifierError: LexemeError {
 
     var expectingDescr: String {
         expecting.map {
-            "\"\($0)\""
+            "<\($0)>"
         }.joined(separator: " or ")
     }
 

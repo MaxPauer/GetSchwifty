@@ -23,20 +23,20 @@ internal struct LexRange {
 
 internal protocol Lex: CustomStringConvertible {
     var prettyName: String { get }
-    var useLiteralDescription: Bool { get }
+    var prettyLiteral: String? { get }
     var literal: String { get }
     var range: LexRange { get }
 }
 
 extension Lex {
     var description: String {
-        useLiteralDescription ? "<\(prettyName): \(literal)>" : "<\(prettyName)>"
+        prettyLiteral != nil ? "<\(prettyName): \(prettyLiteral!)>" : "<\(prettyName)>"
     }
 }
 
 internal struct NewlineLex: Lex {
     let prettyName = "Newline"
-    let useLiteralDescription = false
+    let prettyLiteral: String? = nil
     let literal: String
     let range: LexRange
 
@@ -48,7 +48,7 @@ internal struct NewlineLex: Lex {
 
 internal struct DelimiterLex: Lex {
     let prettyName = "Delimiter"
-    let useLiteralDescription = false
+    let prettyLiteral: String? = nil
     let literal: String
     let range: LexRange
 
@@ -60,7 +60,7 @@ internal struct DelimiterLex: Lex {
 
 internal struct ApostropheLex: Lex {
     let prettyName = "Apostrophe"
-    let useLiteralDescription = false
+    let prettyLiteral: String? = nil
     let literal = "'"
     let range: LexRange
 
@@ -71,7 +71,7 @@ internal struct ApostropheLex: Lex {
 
 internal struct WhitespaceLex: Lex {
     let prettyName = "Whitespace"
-    let useLiteralDescription = false
+    let prettyLiteral: String? = nil
     let literal: String
     let range: LexRange
 
@@ -90,7 +90,7 @@ internal struct WhitespaceLex: Lex {
 
 internal struct CommentLex: Lex {
     let prettyName = "Comment"
-    let useLiteralDescription = true
+    var prettyLiteral: String? { "(\(literal))" }
     let literal: String
     let range: LexRange
 
@@ -127,7 +127,7 @@ internal struct CommentLex: Lex {
 
 internal struct StringLex: Lex {
     let prettyName = "String"
-    let useLiteralDescription = true
+    var prettyLiteral: String? { "\"\(literal)\"" }
     let literal: String
     let range: LexRange
 
@@ -173,7 +173,7 @@ internal struct StringLex: Lex {
 
 internal struct IdentifierLex: Lex {
     let prettyName = "Identifier"
-    let useLiteralDescription = true
+    var prettyLiteral: String? { literal }
     let literal: String
     let range: LexRange
 
@@ -191,7 +191,7 @@ internal struct IdentifierLex: Lex {
 
 internal struct NumberLex: Lex {
     let prettyName = "Number"
-    let useLiteralDescription = true
+    var prettyLiteral: String? { literal }
     var literal: String
     let range: LexRange
 
