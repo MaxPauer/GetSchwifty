@@ -7,21 +7,23 @@ final class ParserTests: XCTestCase {
         return p.rootExpr.children
     }
 
-    func testCommonVariable() throws {
-        let testParse = { (inp: String, exp: [String]) in
+    func testVariableNames() throws {
+        func testParse(_ inp: String, _ exp: String) throws {
             let exprs = try! self.parse(inp)
-            XCTAssertEqual(exprs.count, exp.count)
-            for (v, e) in zip(exprs, exp) {
-                XCTAssertEqual((v as! VariableNameExpr).name, e)
-            }
+            XCTAssertEqual(exprs.count, 1)
+            let v = try XCTUnwrap(exprs[0] as? VariableNameExpr)
+            XCTAssertEqual(v.name, exp)
         }
 
-        testParse("A horse", ["a horse"])
-        testParse("An  elf", ["an elf"])
-        testParse("THE HOUSE", ["the house"])
-        testParse("My\tlife", ["my life"])
-        testParse("your Heart", ["your heart"])
-        testParse("our SoCiEtY", ["our society"])
+        try testParse("A horse", "a horse")
+        try testParse("An  elf", "an elf")
+        try testParse("THE HOUSE", "the house")
+        try testParse("My\tlife", "my life")
+        try testParse("your Heart", "your heart")
+        try testParse("our SoCiEtY", "our society")
+        try testParse("Doctor Feelgood", "doctor feelgood")
+        try testParse("Distance In Km", "distance in km")
+        try testParse("Doctor", "doctor")
     }
 
     func errorTest<E>(_ inp: String,_ got: Lex.Type, _ expr: Expr.Type) -> E where E: LexemeError {
@@ -77,7 +79,7 @@ final class ParserTests: XCTestCase {
     }
 
     func testPoeticNumberLiteral() throws {
-        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My heaven is a halfpipe", "my heaven", 18)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("heaven is a halfpipe", "heaven", 18)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My life's fucked", "my life", 6)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My life's gone", "my life", 4)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("Your lies're my death", "your lies", 25)
