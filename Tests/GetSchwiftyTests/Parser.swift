@@ -94,8 +94,8 @@ final class ParserTests: XCTestCase {
     }
 
     func testPoeticStringLiteralFailure() throws {
-        let _: UnexpectedEOLError = errorTest("my father said", PoeticNumberAssignmentExpr.self)
-        let _: UnexpectedEOLError = errorTest("my father said ", PoeticNumberAssignmentExpr.self)
+        let _: UnexpectedEOLError = errorTest("my father said", PoeticStringAssignmentExpr.self)
+        let _: UnexpectedEOLError = errorTest("my father said ", PoeticStringAssignmentExpr.self)
     }
 
     func testLetAssignment() throws {
