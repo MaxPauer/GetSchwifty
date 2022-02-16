@@ -20,7 +20,7 @@ extension Expr {
     }
 }
 
-internal struct VirginExpr: Expr {
+internal struct VanillaExpr: Expr {
     var isTerminated = false
     let canTerminate: Bool = true
 
@@ -229,8 +229,8 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
 
 internal struct AssignmentExpr: AnyAssignmentExpr {
     var isTerminated: Bool = false
-    var target: Expr = VirginExpr()
-    var value: Expr = VirginExpr()
+    var target: Expr = VanillaExpr()
+    var value: Expr = VanillaExpr()
 
     private(set) var expectingTarget: Bool
     private(set) var expectingValue: Bool {
@@ -241,7 +241,7 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
         }
     }
 
-    var canTerminate: Bool { !(target is VirginExpr) && !(value is VirginExpr) }
+    var canTerminate: Bool { !(target is VanillaExpr) && !(value is VanillaExpr) }
 
     init(expectingTarget et: Bool) {
         expectingTarget = et
@@ -298,7 +298,7 @@ internal struct InputExpr: Expr {
     var target: Expr?
 
     var canTerminate: Bool {
-        target == nil || !(target is VirginExpr)
+        target == nil || !(target is VanillaExpr)
     }
 
     mutating func pushThrough(_ lex: Lex) throws {
@@ -306,7 +306,7 @@ internal struct InputExpr: Expr {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         }
         target = try target!.push(lex)
-        guard target is VirginExpr || target is LocationExpr else {
+        guard target is VanillaExpr || target is LocationExpr else {
             throw UnexpectedExprError<LocationExpr>(got: target!, range:lex.range, parsing: self)
         }
     }
@@ -314,7 +314,7 @@ internal struct InputExpr: Expr {
     mutating func fromIdentifier(_ id: IdentifierLex) throws {
         switch id.literal {
         case String.toIdentifiers:
-            target = VirginExpr()
+            target = VanillaExpr()
         default:
             try pushThrough(id)
         }
@@ -340,10 +340,10 @@ internal struct InputExpr: Expr {
 
 internal struct OutputExpr: Expr {
     var isTerminated: Bool = false
-    var target: Expr = VirginExpr()
+    var target: Expr = VanillaExpr()
 
     var canTerminate: Bool {
-        !(target is VirginExpr)
+        !(target is VanillaExpr)
     }
 
     mutating func pushThrough(_ lex: Lex) throws {
@@ -426,14 +426,14 @@ internal struct MysteriousExpr: LeafExpr {
 internal struct RootExpr: Expr {
     var isTerminated: Bool = false
     let canTerminate: Bool = false
-    var children: [Expr] = [VirginExpr()]
+    var children: [Expr] = [VanillaExpr()]
 
     mutating func push(_ lex: Lex) throws -> Expr {
         var lastExpr = children.last!
         if !lastExpr.isTerminated {
             _ = children.popLast()
         } else {
-            lastExpr = VirginExpr()
+            lastExpr = VanillaExpr()
         }
         children.append(try lastExpr.push(lex))
         return self
