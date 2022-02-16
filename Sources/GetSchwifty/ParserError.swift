@@ -45,6 +45,15 @@ internal struct UnexpectedLexemeError: LexemeError {
     }
 }
 
+internal struct UnparsableNumberLexemeError: LexemeError {
+    let got: Lex
+    let parsing: Expr
+
+    var _description: String {
+        "encountered unparsable number lexeme: \(got) while parsing: \(parsing)"
+    }
+}
+
 internal struct UnexpectedExprError<Expecting>: ParserError {
     let got: Expr
     let range: LexRange

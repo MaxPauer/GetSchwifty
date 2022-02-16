@@ -128,7 +128,7 @@ final class LexerTests: XCTestCase {
             XCTAssertEqual(lexemes.count-1, exp.count)
             for (e, l) in zip(exp, lexemes) {
                 let num = try! XCTUnwrap(l as? NumberLex)
-                XCTAssertEqual(e, num.value)
+                XCTAssertEqual(e, Float(num.literal)!)
             }
         }
 

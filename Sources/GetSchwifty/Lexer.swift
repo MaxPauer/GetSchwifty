@@ -192,7 +192,6 @@ internal struct IdentifierLex: Lex {
 internal struct NumberLex: Lex {
     let prettyName = "Number"
     let useLiteralDescription = true
-    let value: Float
     var literal: String
     let range: LexRange
 
@@ -226,7 +225,6 @@ internal struct NumberLex: Lex {
 
         range = end-start
         literal = rep
-        value = Float(rep)!
     }
 }
 

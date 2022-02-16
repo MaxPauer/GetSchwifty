@@ -64,7 +64,7 @@ internal struct VirginExpr: Expr {
         case let str as StringLex:
             return StringExpr(literal: str.literal)
         case let num as NumberLex:
-            return NumberExpr(literal: num.value)
+            return try NumberExpr(from: num, in: self)
         case is DelimiterLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
@@ -396,6 +396,16 @@ internal struct StringExpr: LeafExpr {
 internal struct NumberExpr: LeafExpr {
     var isTerminated: Bool = false
     let literal: Float
+
+    init(from l: NumberLex, in e: Expr) throws {
+        guard let f = Float(l.literal) else {
+            throw UnparsableNumberLexemeError(got: l, parsing: e)
+        }
+        literal = f
+    }
+    init(literal f: Float) {
+        literal = f
+    }
 }
 
 internal struct BoolExpr: LeafExpr {
