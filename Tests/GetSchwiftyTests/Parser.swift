@@ -136,17 +136,19 @@ final class ParserTests: XCTestCase {
     }
 
     func testOutput() throws {
-        let testParse = { (inp: String, expLocName: String) in
-            let exprs = try! self.parse(inp)
+        func testParse<T>(_ inp: String) throws -> T {
+            let exprs = try self.parse(inp)
             XCTAssertEqual(exprs.count, 1)
             let o = try XCTUnwrap(exprs[0] as? OutputExpr)
-            XCTAssertEqual((o.target as! VariableNameExpr).name, expLocName)
+            let t = try XCTUnwrap(o.target as? T)
+            return t
         }
 
-        try testParse("Shout my name", "my name")
-        try testParse("whisper my name", "my name")
-        try testParse("scream my name", "my name")
-        try testParse("say my name", "my name") // Heisenberg
+        let _: VariableNameExpr = try testParse("Shout my name")
+        let _: VariableNameExpr = try testParse("whisper my name")
+        let _: VariableNameExpr = try testParse("scream my name")
+        let _: VariableNameExpr = try testParse("say my name") // Heisenberg
+        let _: BoolExpr = try testParse("shout yes")
     }
 
     func testOutputFailure() throws {
