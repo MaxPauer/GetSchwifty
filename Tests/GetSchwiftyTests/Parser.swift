@@ -111,11 +111,16 @@ final class ParserTests: XCTestCase {
     func testLetAssignment() throws {
         let _: (StringExpr, AssignmentExpr) = assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
         let _: (NumberExpr, AssignmentExpr) = assignParseTest("let my life be 42.0", "my life", 42.0)
+        let _: (BoolExpr, AssignmentExpr) = assignParseTest("let The Devil be right", "the devil", true)
+        let _: (BoolExpr, AssignmentExpr) = assignParseTest("let The Devil be wrong", "the devil", false)
+        let _: (NullExpr, AssignmentExpr) = assignParseTest("let hate be nothing", "hate", nil)
+        let _: (MysteriousExpr, AssignmentExpr) = assignParseTest("let dragons be mysterious", "dragons", nil)
     }
 
     func testPutAssignment() throws {
         let _: (NumberExpr, AssignmentExpr) = assignParseTest("put 42 in my life", "my life", 42.0)
         let _: (StringExpr, AssignmentExpr) = assignParseTest("put \"squirrels\" into my pants", "my pants", "squirrels")
+        let _: (StringExpr, AssignmentExpr) = assignParseTest("put silence into my pants", "my pants", "")
     }
 
     func testLetPutAssignmentFailure() throws {
