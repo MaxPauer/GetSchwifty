@@ -58,6 +58,9 @@ internal extension String {
     static var pronounIdentifiers: Set<String> {
         Set(["it", "he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"])
     }
+    static var indexingIdentifiers: Set<String> {
+        Set(["at"])
+    }
 }
 
 internal func ~=(pattern: Set<String>, value: String) -> Bool {

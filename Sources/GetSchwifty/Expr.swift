@@ -85,13 +85,13 @@ internal struct VanillaExpr: Expr {
     }
 }
 
-internal protocol PartialLocationExpr: Expr {}
+internal protocol LocationExpr: Expr {}
 
-internal protocol LocationExpr: PartialLocationExpr {
+internal protocol FinalizedLocationExpr: LocationExpr {
     var expectingIsContraction: Bool { get set }
 }
 
-extension LocationExpr {
+extension FinalizedLocationExpr {
     var canTerminate: Bool { !expectingIsContraction }
 
     func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
@@ -101,6 +101,8 @@ extension LocationExpr {
             return PoeticStringAssignmentExpr(target: self)
         case String.poeticNumberIdentifiers:
             return PoeticNumberAssignmentExpr(target: self)
+        case String.indexingIdentifiers:
+            return IndexingLocationExpr(target: self)
         case String.isContractionIdentifiers:
             if expectingIsContraction {
                 return PoeticNumberAssignmentExpr(target: self)
@@ -131,13 +133,13 @@ extension LocationExpr {
     }
 }
 
-internal struct PronounExpr: LocationExpr {
+internal struct PronounExpr: FinalizedLocationExpr {
     var isTerminated: Bool = false
     var expectingIsContraction: Bool = false
     let prettyName: String = "Pronoun"
 }
 
-internal struct VariableNameExpr: LocationExpr {
+internal struct VariableNameExpr: FinalizedLocationExpr {
     let name: String
     var isTerminated: Bool = false
     var expectingIsContraction: Bool = false
@@ -148,7 +150,36 @@ internal struct VariableNameExpr: LocationExpr {
     }
 }
 
-internal struct CommonVariableNameExpr: PartialLocationExpr {
+internal struct IndexingLocationExpr: LocationExpr {
+    let target: LocationExpr
+    var index: Expr = VanillaExpr()
+    var isTerminated: Bool = false
+    var prettyName: String { "Indexing (=\(target)[\(index)])" }
+
+    var canTerminate: Bool { !(index is VanillaExpr) }
+
+    mutating func pushThrough(_ lex: Lex) throws {
+        index = try index.push(lex)
+    }
+
+    mutating func push(_ lex: Lex) throws -> Expr {
+        switch lex {
+        case is NewlineLex:
+            try pushThrough(lex)
+            return try terminate(lex)
+        case is WhitespaceLex, is CommentLex:
+            return self
+        case is IdentifierLex, is StringLex, is NumberLex, is DelimiterLex, is ApostropheLex:
+            try pushThrough(lex)
+            return self
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
+    }
+}
+
+internal struct CommonVariableNameExpr: LocationExpr {
     let first: String
     var isTerminated: Bool = false
     let canTerminate: Bool = false
@@ -180,7 +211,7 @@ internal struct CommonVariableNameExpr: PartialLocationExpr {
     }
 }
 
-internal struct ProperVariableNameExpr: PartialLocationExpr {
+internal struct ProperVariableNameExpr: LocationExpr {
     private(set) var words: [String]
     var isTerminated: Bool = false
     let canTerminate: Bool = true
@@ -245,6 +276,7 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
     let prettyName: String = "Poetic Number Assignment"
 
     init(target t: Expr) {
+        // TODO check is LocationExpr
         target = t
     }
 
@@ -281,6 +313,7 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
     let prettyName: String = "Poetic String Assignment"
 
     init(target t: Expr) {
+        // TODO check is LocationExpr
         target = t
     }
 
@@ -362,6 +395,7 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
+            try pushThrough(lex)
             return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             break
@@ -383,7 +417,7 @@ internal struct InputExpr: Expr {
     let prettyName: String = "Input"
 
     var canTerminate: Bool {
-        target == nil || target is LocationExpr
+        target == nil || !(target is VanillaExpr)
     }
 
     mutating func pushThrough(_ lex: Lex) throws {
@@ -391,8 +425,8 @@ internal struct InputExpr: Expr {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         }
         target = try target!.push(lex)
-        guard target is VanillaExpr || target is PartialLocationExpr else {
-            throw UnexpectedExprError<PartialLocationExpr>(got: target!, range:lex.range, parsing: self)
+        guard target is VanillaExpr || target is LocationExpr else {
+            throw UnexpectedExprError<LocationExpr>(got: target!, range:lex.range, parsing: self)
         }
     }
 
@@ -408,6 +442,9 @@ internal struct InputExpr: Expr {
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
+            if target != nil {
+                try pushThrough(lex)
+            }
             return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             break
@@ -439,6 +476,7 @@ internal struct OutputExpr: Expr {
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
+            try pushThrough(lex)
             return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             break
