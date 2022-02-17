@@ -76,21 +76,31 @@ final class ParserTests: XCTestCase {
         let _: UnexpectedEOLError = errorTest("A \n", CommonVariableNameExpr.self)
     }
 
-    func assignParseTest<U, V, W>(_ inp: String, _ expVarName: String, _ expValue: U) -> (V,W) where U: Equatable, V: LeafExpr, V.LiteralType == U, W: AnyAssignmentExpr {
-        let exprs = try! self.parse(inp)
+    func assignParseTest<U, V, W>(_ inp: String, _ expVarName: String, _ expValue: U) throws -> (V,W) where U: Equatable, V: LeafExpr, V.LiteralType == U, W: AnyAssignmentExpr {
+        let exprs = try XCTUnwrap(self.parse(inp))
         XCTAssertEqual(exprs.count, 1)
         let ass = exprs[0] as! W
         XCTAssertEqual((ass.target as! VariableNameExpr).name, expVarName)
-        let rhs = try! XCTUnwrap(ass.value as? V)
+        let rhs = try XCTUnwrap(ass.value as? V)
         XCTAssertEqual(rhs.literal, expValue)
         return (rhs, ass)
     }
 
     func testPoeticNumberLiteral() throws {
-        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("heaven is a halfpipe", "heaven", 18)
-        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My life's fucked", "my life", 6)
-        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("My life's gone", "my life", 4)
-        let _: (NumberExpr, PoeticNumberAssignmentExpr) = assignParseTest("Your lies're my death", "your lies", 25)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a halfpipe", "heaven", 18)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked", "my life", 6)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's gone", "my life", 4)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("Your lies're my death", "your lies", 25)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("Your lies're my death's death", "your lies", 265)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked''", "my life", 6)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked'd", "my life", 7)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked''d", "my life", 7)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked'd'd", "my life", 8)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a halfhalfpipe", "heaven", 12)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a ha'lfhalfpipe", "heaven", 12)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a half'halfpipe", "heaven", 12)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a halfhalfpi'pe", "heaven", 12)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a half'halfpi'pe", "heaven", 12)
     }
 
     func testPoeticNumberLiteralFailure() throws {
@@ -100,7 +110,7 @@ final class ParserTests: XCTestCase {
     }
 
     func testPoeticStringLiteral() throws {
-        let _: (StringExpr, PoeticStringAssignmentExpr) = assignParseTest("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
     }
 
     func testPoeticStringLiteralFailure() throws {
@@ -109,18 +119,18 @@ final class ParserTests: XCTestCase {
     }
 
     func testLetAssignment() throws {
-        let _: (StringExpr, AssignmentExpr) = assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
-        let _: (NumberExpr, AssignmentExpr) = assignParseTest("let my life be 42.0", "my life", 42.0)
-        let _: (BoolExpr, AssignmentExpr) = assignParseTest("let The Devil be right", "the devil", true)
-        let _: (BoolExpr, AssignmentExpr) = assignParseTest("let The Devil be wrong", "the devil", false)
-        let _: (NullExpr, AssignmentExpr) = assignParseTest("let hate be nothing", "hate", nil)
-        let _: (MysteriousExpr, AssignmentExpr) = assignParseTest("let dragons be mysterious", "dragons", nil)
+        let _: (StringExpr, AssignmentExpr) = try assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
+        let _: (NumberExpr, AssignmentExpr) = try assignParseTest("let my life be 42.0", "my life", 42.0)
+        let _: (BoolExpr, AssignmentExpr) = try assignParseTest("let The Devil be right", "the devil", true)
+        let _: (BoolExpr, AssignmentExpr) = try assignParseTest("let The Devil be wrong", "the devil", false)
+        let _: (NullExpr, AssignmentExpr) = try assignParseTest("let hate be nothing", "hate", nil)
+        let _: (MysteriousExpr, AssignmentExpr) = try assignParseTest("let dragons be mysterious", "dragons", nil)
     }
 
     func testPutAssignment() throws {
-        let _: (NumberExpr, AssignmentExpr) = assignParseTest("put 42 in my life", "my life", 42.0)
-        let _: (StringExpr, AssignmentExpr) = assignParseTest("put \"squirrels\" into my pants", "my pants", "squirrels")
-        let _: (StringExpr, AssignmentExpr) = assignParseTest("put silence into my pants", "my pants", "")
+        let _: (NumberExpr, AssignmentExpr) = try assignParseTest("put 42 in my life", "my life", 42.0)
+        let _: (StringExpr, AssignmentExpr) = try assignParseTest("put \"squirrels\" into my pants", "my pants", "squirrels")
+        let _: (StringExpr, AssignmentExpr) = try assignParseTest("put silence into my pants", "my pants", "")
     }
 
     func testLetPutAssignmentFailure() throws {

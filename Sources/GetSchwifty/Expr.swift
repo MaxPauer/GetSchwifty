@@ -271,7 +271,8 @@ internal protocol AnyAssignmentExpr: Expr {
 internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
     var isTerminated: Bool = false
     var target: Expr
-    private var _value: Int = 0
+    private var digits: [Int] = []
+    private var continueDigit = false
     var value: NumberExpr?
     let prettyName: String = "Poetic Number Assignment"
 
@@ -280,11 +281,26 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
         target = t
     }
 
-    var canTerminate: Bool { _value != 0 }
+    var canTerminate: Bool { digits.count > 0 }
 
     mutating func addPoeticNumber(fromString s: String) {
-        _value *= 10
-        _value = _value + (s.count % 10)
+        var newDigit: Int!
+        if continueDigit {
+            newDigit = ((digits.popLast() ?? 0) + s.count) % 10
+            continueDigit = false
+        } else {
+            newDigit = s.count % 10
+        }
+        digits.append(newDigit)
+    }
+
+    func calcValue() -> Double {
+        var v = 0
+        for digit in digits {
+            v *= 10
+            v += digit
+        }
+        return Double(v)
     }
 
     mutating func push(_ lex: Lex) throws -> Expr {
@@ -292,11 +308,14 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
         case is WhitespaceLex, is CommentLex:
             break
         case is NewlineLex:
-            value = NumberExpr(literal: Double(_value))
+            value = NumberExpr(literal: calcValue())
             return try terminate(lex)
         case let id as IdentifierLex:
             addPoeticNumber(fromString: id.literal)
-        case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
+        case is ApostropheLex:
+            continueDigit = true
+        break
+        case is StringLex, is DelimiterLex, is NumberLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
             assertionFailure("unhandled lexeme")
