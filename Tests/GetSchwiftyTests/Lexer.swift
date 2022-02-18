@@ -209,7 +209,7 @@ final class LexerTests: XCTestCase {
             (StringLex.self,    (2,0), (3,6)),
             (WhitespaceLex.self, (3,6), (3,7)),
             (IdentifierLex.self, (3,7), (3,10)),
-            (ApostropheLex.self, (3,10), (3,11)),
+            (ContractionLex.self, (3,10), (3,11)),
             (IdentifierLex.self, (3,11), (3,12)),
             (WhitespaceLex.self, (3,12), (3,13)),
             (StringLex.self,     (3,13), (3,19)),

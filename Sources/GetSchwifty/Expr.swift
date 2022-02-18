@@ -68,7 +68,7 @@ internal struct VanillaExpr: Expr {
         switch lex {
         case is NewlineLex:
             return try terminate(lex)
-        case is WhitespaceLex, is CommentLex, is ApostropheLex:
+        case is WhitespaceLex, is CommentLex, is ContractionLex:
             return self
         case let id as IdentifierLex:
             return fromIdentifier(id)
@@ -123,7 +123,7 @@ extension FinalizedLocationExpr {
             return try fromIdentifier(id)
         case is StringLex, is NumberLex, is DelimiterLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
-        case is ApostropheLex:
+        case is ContractionLex:
             expectingIsContraction = true
             return self
         default:
@@ -169,7 +169,7 @@ internal struct IndexingLocationExpr: LocationExpr {
             return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             return self
-        case is IdentifierLex, is StringLex, is NumberLex, is DelimiterLex, is ApostropheLex:
+        case is IdentifierLex, is StringLex, is NumberLex, is DelimiterLex, is ContractionLex:
             try pushThrough(lex)
             return self
         default:
@@ -202,7 +202,7 @@ internal struct CommonVariableNameExpr: LocationExpr {
             return self
         case let id as IdentifierLex:
             return fromIdentifier(id)
-        case is StringLex, is NumberLex, is DelimiterLex, is ApostropheLex:
+        case is StringLex, is NumberLex, is DelimiterLex, is ContractionLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
             assertionFailure("unhandled lexeme")
@@ -251,7 +251,7 @@ internal struct ProperVariableNameExpr: LocationExpr {
             return self
         case let id as IdentifierLex:
             return try fromIdentifier(id)
-        case is DelimiterLex, is ApostropheLex:
+        case is DelimiterLex, is ContractionLex:
             return try pushToFinalVariable(lex)
         case is StringLex, is NumberLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
@@ -312,7 +312,7 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
             return try terminate(lex)
         case let id as IdentifierLex:
             addPoeticNumber(fromString: id.literal)
-        case is ApostropheLex:
+        case is ContractionLex:
             continueDigit = true
         break
         case is StringLex, is DelimiterLex, is NumberLex:
@@ -343,7 +343,7 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
         case is NewlineLex:
             value = StringExpr(literal: _value)
             return try terminate(lex)
-        case is IdentifierLex, is ApostropheLex, is DelimiterLex, is NumberLex:
+        case is IdentifierLex, is ContractionLex, is DelimiterLex, is NumberLex:
             _value += lex.literal
         case is WhitespaceLex:
             let hasContent = canTerminate
@@ -420,7 +420,7 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
             break
         case let id as IdentifierLex:
             try fromIdentifier(id)
-        case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
+        case is StringLex, is ContractionLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
         default:
             assertionFailure("unhandled lexeme")
@@ -469,7 +469,7 @@ internal struct InputExpr: Expr {
             break
         case let id as IdentifierLex:
             try fromIdentifier(id)
-        case is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
+        case is StringLex, is ContractionLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
         default:
             assertionFailure("unhandled lexeme")
@@ -499,7 +499,7 @@ internal struct OutputExpr: Expr {
             return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             break
-        case is IdentifierLex, is StringLex, is ApostropheLex, is DelimiterLex, is NumberLex:
+        case is IdentifierLex, is StringLex, is ContractionLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
         default:
             assertionFailure("unhandled lexeme")
@@ -520,7 +520,7 @@ extension LeafExpr {
         switch lex {
         case is NewlineLex:
             return try terminate(lex)
-        case is CommentLex, is WhitespaceLex, is ApostropheLex:
+        case is CommentLex, is WhitespaceLex, is ContractionLex:
             return self
         case is StringLex, is NumberLex, is DelimiterLex:
             throw LeafExprPushError(got: lex, parsing: self)

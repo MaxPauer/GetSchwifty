@@ -62,8 +62,8 @@ internal struct DelimiterLex: Lex {
     }
 }
 
-internal struct ApostropheLex: Lex {
-    let prettyName = "Apostrophe"
+internal struct ContractionLex: Lex {
+    let prettyName = "Contraction"
     let prettyLiteral: String? = nil
     let literal = "'"
     let range: LexRange
@@ -257,7 +257,7 @@ private func nextLexeme(_ chars: inout Fifo<String>, start: LexPos) -> Lex? {
     case ",", "&":
         return DelimiterLex(c, start: start)
     case "'":
-        return ApostropheLex(start: start)
+        return ContractionLex(start: start)
     case \.isWhitespace:
         return WhitespaceLex(&chars, firstChar: c, start: start)
     case \.isLetter:
