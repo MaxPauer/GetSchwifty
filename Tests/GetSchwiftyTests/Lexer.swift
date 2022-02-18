@@ -17,47 +17,53 @@ extension LexPos: Equatable {
 final class LexerTests: XCTestCase {
     func testComments() throws {
         let testLex = { (inp: String, exp: String, expLines: UInt) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count-1, 1)
-            let c = try! XCTUnwrap(lexemes[0] as? CommentLex)
-            XCTAssertEqual(c.literal, exp)
+            var lexemes = LexIterator(input: inp)
+            let c = try XCTUnwrap(lexemes.next() as? CommentLex)
             XCTAssertEqual(c.range.end.line - c.range.start.line, expLines)
+
+            _ = try XCTUnwrap(lexemes.next() as? NewlineLex)
+            XCTAssertNil(lexemes.next())
+            XCTAssertEqual(c.literal, exp)
         }
 
-        testLex("(hi)", "hi", 0)
-        testLex("(hi", "hi", 0)
-        testLex("(he(llo))", "he(llo)", 0)
-        testLex("(he(ll)o)", "he(ll)o", 0)
-        testLex("(he(\n)o)", "he(\n)o", 1)
-        testLex("(he(\n\r\n\r)o)", "he(\n\r\n\r)o", 2)
+        try testLex("(hi)", "hi", 0)
+        try testLex("(hi", "hi", 0)
+        try testLex("(he(llo))", "he(llo)", 0)
+        try testLex("(he(ll)o)", "he(ll)o", 0)
+        try testLex("(he(\n)o)", "he(\n)o", 1)
+        try testLex("(he(\n\r\n\r)o)", "he(\n\r\n\r)o", 2)
     }
 
     func testStrings() throws {
         let testLex = { (inp: String, exp: String) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count-1, 1)
-            let str = try! XCTUnwrap(lexemes[0] as? StringLex)
+            var lexemes = LexIterator(input: inp)
+            let str = try XCTUnwrap(lexemes.next() as? StringLex)
             XCTAssertEqual(str.literal, exp)
+
+            _ = try XCTUnwrap(lexemes.next() as? NewlineLex)
+            XCTAssertNil(lexemes.next())
         }
 
-        testLex("\"hi\"", "hi")
-        testLex("\"hi", "hi")
-        testLex("\"he\\\"ll\\\"o", "he\"ll\"o")
-        testLex("\"he\\\"ll\\o", "he\"ll\\o")
-        testLex("\"\\r\\n\\t\"", "\r\n\t")
-        testLex("\"hi\\", "hi\\")
-        testLex("\"hi\\", "hi\\")
-        testLex("\"hi\\\"", "hi\"")
-        testLex("\"hi\\a\"", "hi\\a")
+        try testLex("\"hi\"", "hi")
+        try testLex("\"hi", "hi")
+        try testLex("\"he\\\"ll\\\"o", "he\"ll\"o")
+        try testLex("\"he\\\"ll\\o", "he\"ll\\o")
+        try testLex("\"\\r\\n\\t\"", "\r\n\t")
+        try testLex("\"hi\\", "hi\\")
+        try testLex("\"hi\\", "hi\\")
+        try testLex("\"hi\\\"", "hi\"")
+        try testLex("\"hi\\a\"", "hi\\a")
     }
 
     func testNewlines() throws {
         let testLex = { (inp: String, exp: Int) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, exp)
+            let lexemes = LexIterator(input: inp)
+            var count = 0
             lexemes.forEach {
+                count += 1
                 XCTAssert($0 is NewlineLex)
             }
+            XCTAssertEqual(count, exp)
         }
 
         testLex("", 0+1)
@@ -72,9 +78,10 @@ final class LexerTests: XCTestCase {
 
     func testWhitespace() throws {
         let testLex = { (inp: String, exp: Int) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count-1, exp)
-            lexemes.dropLast().forEach {
+            let lexemes = LexIterator(input: inp)
+            let lexs = Array(lexemes)
+            XCTAssertEqual(lexs.count-1, exp)
+            lexs.dropLast().forEach {
                 XCTAssert($0 is WhitespaceLex)
             }
         }
@@ -88,11 +95,13 @@ final class LexerTests: XCTestCase {
 
     func testWhitespaceAndNewline() throws {
         let testLex = { (inp: String, exp: Int) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, exp)
+            let lexemes = LexIterator(input: inp)
+            var count = 0
             lexemes.forEach {
+                count += 1
                 XCTAssert($0 is WhitespaceLex || $0 is NewlineLex)
             }
+            XCTAssertEqual(count, exp)
         }
 
         testLex("", 0+1)
@@ -107,29 +116,31 @@ final class LexerTests: XCTestCase {
 
     func testWords() throws {
         let testLex = { (inp: String, exp: [String]) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count-1, exp.count*2-1)
-            for i in 1...exp.count {
-                let e = exp[i-1]
-                let id = try! XCTUnwrap(lexemes[i*2-2] as? IdentifierLex)
-                XCTAssert(exp.count == i || lexemes[i*2-1] is WhitespaceLex)
+            var lexemes = LexIterator(input: inp)
+            for e in exp {
+                let id = try XCTUnwrap(lexemes.next() as? IdentifierLex)
+                XCTAssert(e == exp.last || lexemes.next() is WhitespaceLex)
                 XCTAssertEqual(e, id.literal)
             }
+            XCTAssert(lexemes.next() is NewlineLex)
+            XCTAssertNil(lexemes.next())
         }
 
-        testLex("hello", ["hello"])
-        testLex("hello darkness", ["hello", "darkness"])
-        testLex("hello darkness my old friend", ["hello", "darkness", "my", "old", "friend"])
+        try testLex("hello", ["hello"])
+        try testLex("hello darkness", ["hello", "darkness"])
+        try testLex("hello darkness my old friend", ["hello", "darkness", "my", "old", "friend"])
     }
 
     func testNums() throws {
         let testLex = { (inp: String, exp: [Double]) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count-1, exp.count)
-            for (e, l) in zip(exp, lexemes) {
+            var lexemes = LexIterator(input: inp)
+            for e in exp {
+                let l = lexemes.next()
                 let num = try! XCTUnwrap(l as? NumberLex)
                 XCTAssertEqual(e, Double(num.literal)!)
             }
+            XCTAssert(lexemes.next() is NewlineLex)
+            XCTAssertNil(lexemes.next())
         }
 
         testLex("0", [0])
@@ -152,11 +163,12 @@ final class LexerTests: XCTestCase {
 
     func testDelimiter() throws {
         let testLex = { (inp: String, exp: Int) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count-1, exp)
-            lexemes.dropLast().forEach {
-                XCTAssert($0 is DelimiterLex)
+            var lexemes = LexIterator(input: inp)
+            for _ in 1...exp {
+                XCTAssert(lexemes.next() is DelimiterLex)
             }
+            XCTAssert(lexemes.next() is NewlineLex)
+            XCTAssertNil(lexemes.next())
         }
 
         testLex(",", 1)
@@ -168,8 +180,7 @@ final class LexerTests: XCTestCase {
 
     func testRanges() throws {
         let testLex = {(inp: String, exp: [(Lex.Type, (UInt,UInt), (UInt,UInt))]) in
-            let lexemes = lex(inp)
-            XCTAssertEqual(lexemes.count, exp.count)
+            let lexemes = LexIterator(input: inp)
             for (l,e) in zip(lexemes, exp) {
                 let (t, start, end) = e
                 XCTAssert(type(of: l) == t)
@@ -210,7 +221,7 @@ final class LexerTests: XCTestCase {
 
     func testFizzBuzz() throws {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
-        let lexemes = lex(fizzbuzz)
+        let lexemes = LexIterator(input: fizzbuzz)
 
         let expected: [Any] = [
             "Midnight", WS(), "takes", WS(), "your", WS(), "heart", WS(), "and", WS(), "your", WS(), "soul", NL(),
@@ -240,8 +251,9 @@ final class LexerTests: XCTestCase {
             "Whisper", WS(), "my", WS(), "world", NL()
         ]
 
-        XCTAssertEqual(lexemes.count, expected.count)
-        for (lex, e) in zip(lexemes, expected) {
+        var count = 0
+        for (lex, e) in zip (lexemes, expected) {
+            count += 1
             switch lex {
             case let id as IdentifierLex: XCTAssertEqual(id.literal, e as! String)
             case let str as StringLex:    XCTAssertEqual(str.literal, (e as! S).s)
@@ -251,5 +263,6 @@ final class LexerTests: XCTestCase {
             default:                      XCTFail()
             }
         }
+        XCTAssertEqual(count, expected.count)
     }
 }

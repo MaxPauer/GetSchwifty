@@ -44,6 +44,10 @@ internal struct NewlineLex: Lex {
         literal = String(c)
         range = (↵start)-start
     }
+
+    init(EOF start: LexPos) {
+        self.init("\u{03}", start: start)
+    }
 }
 
 internal struct DelimiterLex: Lex {
@@ -266,19 +270,25 @@ private func nextLexeme(_ chars: inout Fifo<String>, start: LexPos) -> Lex? {
     }
 }
 
-internal func lex(_ inp: String) -> [Lex] {
-    var chars = Fifo<String>(inp)
-    var lexemes: [Lex] = []
-    var start = LexPos(line: 1, char: 0)
+internal struct LexIterator: Sequence, IteratorProtocol {
+    var chars: Fifo<String>
+    var start: LexPos
+    var lineTerminated = false
 
-    while let l = nextLexeme(&chars, start: start) {
-        lexemes.append(l)
-        start = l.range.end
+    init(input inp: String) {
+        chars = Fifo<String>(inp)
+        start = LexPos(line: 1, char: 0)
     }
 
-    if !(lexemes.last is NewlineLex) {
-        lexemes.append(NewlineLex("\u{03}", start: start))
+    mutating func next() -> Lex? {
+        if let current = nextLexeme(&chars, start: start) {
+            start = current.range.end
+            lineTerminated = current is NewlineLex
+            return current
+        } else if !lineTerminated {
+            lineTerminated = true
+            return NewlineLex(EOF: start)
+        }
+        return nil
     }
-
-    return lexemes
 }

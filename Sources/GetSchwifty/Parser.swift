@@ -1,10 +1,8 @@
 internal struct Parser {
     var rootExpr = RootExpr()
 
-    init(lexemes: [Lex]) throws {
-        var lexs = Fifo<[Lex]>(lexemes)
-
-        while let l = lexs.pop() {
+    init(lexemes lexs: LexIterator) throws {
+        for l in lexs {
             do {
                 _ = try rootExpr.push(l)
             } catch let err as ParserError {

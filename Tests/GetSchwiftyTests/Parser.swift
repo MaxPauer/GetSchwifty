@@ -3,7 +3,7 @@ import XCTest
 
 final class ParserTests: XCTestCase {
     func parse(_ inp: String) throws -> [Expr] {
-        let p = try Parser(lexemes: lex(inp))
+        let p = try Parser(lexemes: LexIterator(input: inp))
         return p.rootExpr.children
     }
 
