@@ -2,17 +2,16 @@ import XCTest
 @testable import GetSchwifty
 
 final class ParserTests: XCTestCase {
-    func parse(_ inp: String) throws -> [Expr] {
-        let p = try Parser(lexemes: LexIterator(input: inp))
-        return p.rootExpr.children
+    func parse(_ inp: String) throws -> Parser {
+        return Parser(lexemes: LexIterator(input: inp))
     }
 
     func testVariableNames() throws {
         func testParse(_ inp: String, _ exp: String) throws {
-            let exprs = try! self.parse(inp)
-            XCTAssertEqual(exprs.count, 1)
-            let v = try XCTUnwrap(exprs[0] as? VariableNameExpr)
+            var p = try XCTUnwrap(self.parse(inp))
+            let v = try XCTUnwrap(try p.next() as? VariableNameExpr)
             XCTAssertEqual(v.name, exp)
+            XCTAssertNil(try p.next())
         }
 
         try testParse("A horse", "a horse")
@@ -28,15 +27,20 @@ final class ParserTests: XCTestCase {
 
     func testPronouns() throws {
         for inp in ["it", "he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"] {
-            let exprs = try XCTUnwrap(self.parse(inp))
-            XCTAssertEqual(exprs.count, 1)
-            _ = try XCTUnwrap(exprs[0] as? PronounExpr)
+            var p = try XCTUnwrap(self.parse(inp))
+            _ = try XCTUnwrap(try p.next() as? PronounExpr)
+            XCTAssertNil(try p.next())
         }
+    }
+
+    func parseDiscardAll(_ p: Parser) throws {
+        var p = p
+        while let _ = try p.next() {}
     }
 
     func errorTest<E>(_ inp: String,_ got: Lex.Type, _ expr: Expr.Type) -> E where E: LexemeError {
         var error: E!
-        XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
+        XCTAssertThrowsError(try parseDiscardAll(self.parse(inp))) { (e: Error) in
             error = try! XCTUnwrap(e as? E)
             XCTAssert(type(of: error.got) == got)
             XCTAssert(type(of: error.parsing) == expr)
@@ -46,7 +50,7 @@ final class ParserTests: XCTestCase {
 
     func errorTest(_ inp: String, _ expr: Expr.Type) -> UnexpectedEOLError {
         var error: UnexpectedEOLError!
-        XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
+        XCTAssertThrowsError(try parseDiscardAll(self.parse(inp))) { (e: Error) in
             error = try! XCTUnwrap(e as? UnexpectedEOLError)
             XCTAssert(type(of: error.parsing) == expr)
         }
@@ -59,14 +63,13 @@ final class ParserTests: XCTestCase {
 
     func errorTest<Expecting>(_ inp: String, _ got: Expr.Type, _ expr: Expr.Type) -> UnexpectedExprError<Expecting> {
         var error: UnexpectedExprError<Expecting>!
-        XCTAssertThrowsError(try self.parse(inp)) { (e: Error) in
+        XCTAssertThrowsError(try parseDiscardAll(self.parse(inp))) { (e: Error) in
             error = try! XCTUnwrap(e as? UnexpectedExprError<Expecting>)
             XCTAssert(type(of: error.got) == got)
             XCTAssert(type(of: error.parsing) == expr)
         }
         return error
     }
-
 
     func testCommonVariableFailure() throws {
         let _: UnexpectedLexemeError = errorTest("A\"field\"", StringLex.self, CommonVariableNameExpr.self)
@@ -77,9 +80,9 @@ final class ParserTests: XCTestCase {
     }
 
     func assignParseTest<U, V, W>(_ inp: String, _ expVarName: String, _ expValue: U) throws -> (V,W) where U: Equatable, V: LeafExpr, V.LiteralType == U, W: AnyAssignmentExpr {
-        let exprs = try XCTUnwrap(self.parse(inp))
-        XCTAssertEqual(exprs.count, 1)
-        let ass = exprs[0] as! W
+        var p = try XCTUnwrap(self.parse(inp))
+        let ass = try p.next() as! W
+        XCTAssertNil(try p.next())
         XCTAssertEqual((ass.target as! VariableNameExpr).name, expVarName)
         let rhs = try XCTUnwrap(ass.value as? V)
         XCTAssertEqual(rhs.literal, expValue)
@@ -140,19 +143,19 @@ final class ParserTests: XCTestCase {
 
     func testInput() throws {
         let testParse = { (inp: String, expLocName: String?) in
-            let exprs = try! self.parse(inp)
-            XCTAssertEqual(exprs.count, 1)
-            let i = exprs[0] as! InputExpr
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(try p.next() as? InputExpr)
+            XCTAssertNil(try p.next())
             if let elc = expLocName {
-                XCTAssertEqual((i.target! as! VariableNameExpr).name, elc)
+                XCTAssertEqual(try XCTUnwrap(i.target as? VariableNameExpr).name, elc)
             } else {
                 XCTAssertNil(i.target)
             }
         }
 
-        testParse("Listen", nil)
-        testParse("Listen ", nil)
-        testParse("Listen to my heart", "my heart")
+        try testParse("Listen", nil)
+        try testParse("Listen ", nil)
+        try testParse("Listen to my heart", "my heart")
     }
 
     func testInputFailure() throws {
@@ -162,10 +165,10 @@ final class ParserTests: XCTestCase {
 
     func testOutput() throws {
         func testParse<T>(_ inp: String) throws -> T {
-            let exprs = try self.parse(inp)
-            XCTAssertEqual(exprs.count, 1)
-            let o = try XCTUnwrap(exprs[0] as? OutputExpr)
+            var p = try XCTUnwrap(self.parse(inp))
+            let o = try XCTUnwrap(p.next() as? OutputExpr)
             let t = try XCTUnwrap(o.target as? T)
+            XCTAssertNil(try p.next())
             return t
         }
 
@@ -185,8 +188,9 @@ final class ParserTests: XCTestCase {
 
     func testFizzBuzz() throws {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
-        XCTAssertThrowsError(try self.parse(fizzbuzz)) { error in
-            // let parser = try! Parser(lexemes: lexemes)
+        XCTAssertThrowsError(try parseDiscardAll(self.parse(fizzbuzz))) { error in
+            let e = try! XCTUnwrap(error as? UnexpectedIdentifierError)
+            XCTAssertEqual(e.got.range.start, LexPos(line: 1, char: 9))
         }
         // XCTAssertEqual(parser.lines, 26)
     }

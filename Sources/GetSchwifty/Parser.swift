@@ -1,15 +1,25 @@
 internal struct Parser {
-    var rootExpr = RootExpr()
+    var lexemes: LexIterator
+    var currentExpr: Expr?
 
-    init(lexemes lexs: LexIterator) throws {
-        for l in lexs {
+    mutating func next() throws -> Expr? {
+        while let l = lexemes.next() {
+            currentExpr = currentExpr ?? VanillaExpr()
+
             do {
-                _ = try rootExpr.push(l)
+                currentExpr = try currentExpr!.push(l)
             } catch let err as ParserError {
                 throw err
             } catch {
                 assertionFailure("unexpected Error")
             }
+
+            if currentExpr!.isTerminated {
+                defer { currentExpr = nil }
+                return currentExpr
+            }
         }
+        defer { currentExpr = nil }
+        return currentExpr
     }
 }
