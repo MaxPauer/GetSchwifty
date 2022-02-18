@@ -2,6 +2,11 @@ internal struct Parser {
     var lexemes: LexIterator
     var currentExpr: Expr?
 
+    mutating func flushCurrentExpr() -> Expr? {
+        defer { currentExpr = nil }
+        return currentExpr
+    }
+
     mutating func next() throws -> Expr? {
         while let l = lexemes.next() {
             currentExpr = currentExpr ?? VanillaExpr()
@@ -15,11 +20,10 @@ internal struct Parser {
             }
 
             if currentExpr!.isTerminated {
-                defer { currentExpr = nil }
-                return currentExpr
+                return flushCurrentExpr()
             }
         }
-        defer { currentExpr = nil }
-        return currentExpr
+
+        return flushCurrentExpr()
     }
 }
