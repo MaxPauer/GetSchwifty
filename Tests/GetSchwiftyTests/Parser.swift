@@ -120,15 +120,14 @@ final class ParserTests: XCTestCase {
     }
 
     func testPoeticStringLiteral() throws {
-        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
-        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
-        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
-        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
-    }
-
-    func testPoeticStringLiteralFailure() throws {
-        let _: UnexpectedEOLError = errorTest("my father said", PoeticStringAssignmentExpr.self)
-        let _: UnexpectedEOLError = errorTest("my father said ", PoeticStringAssignmentExpr.self)
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("(when i was 17) my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("Mother says good \"night\" good(fright)\t good124.5e2", "mother", "good \"night\" good(fright)\t good124.5e2")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("Father say \\ lala 'sick hui'  ", "father", "\\ lala 'sick hui'  ")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("brother say ", "brother", "")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said", "my father", "")
     }
 
     func testLetAssignment() throws {

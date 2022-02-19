@@ -1,18 +1,20 @@
 fileprivate extension ContractionLex {
     var isIsContraction: Bool { String.isContractionIdentifiers.contains(prettyLiteral!) }
 
-    func toIdentifierLex() -> IdentifierLex {
+    func toSimpleLex() -> Lex {
         if isIsContraction {
             return IdentifierLex(literal: prettyLiteral!, range: range)
+        } else if literal.isEmpty {
+            return WhitespaceLex(literal: prettyLiteral!, range: range)
         }
-        return IdentifierLex(literal: literal, range: range.end-(→range.start))
+        return IdentifierLex(literal: literal, prettyLiteral: prettyLiteral!, range: range.end-(→range.start))
     }
 
     func contract(_ lhs: Lex?) -> [Lex] {
         guard let lhs = lhs else {
-            return [toIdentifierLex()] }
+            return [toSimpleLex()] }
         guard lhs is IdentifierLex && !isIsContraction else {
-            return [lhs, toIdentifierLex()] }
+            return [lhs, toSimpleLex()] }
         return [IdentifierLex(literal: lhs.literal + literal, prettyLiteral: lhs.prettyLiteral! + prettyLiteral!, range: range.end-lhs.range.start)]
     }
 }

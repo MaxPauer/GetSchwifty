@@ -319,7 +319,7 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
 internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
     var isTerminated: Bool = false
     var target: Expr
-    private var _value: String = ""
+    private var _value: String?
     var value: StringExpr?
     let prettyName: String = "Poetic String Assignment"
 
@@ -328,21 +328,27 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
         target = t
     }
 
-    var canTerminate: Bool { !_value.isEmpty }
+    mutating func append(_ s: String) {
+        guard _value != nil else { _value = s; return }
+        _value! += s
+    }
+
+    let canTerminate: Bool = true
 
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
-            value = StringExpr(literal: _value)
+            value = StringExpr(literal: _value ?? "")
             return try terminate(lex)
         case is DelimiterLex, is NumberLex:
-            _value += lex.literal
+            append(lex.literal)
         case is IdentifierLex, is CommentLex, is StringLex:
-            _value += lex.prettyLiteral!
+            append(lex.prettyLiteral!)
         case is WhitespaceLex:
-            let hasContent = canTerminate
-            if hasContent {
-                _value += lex.literal
+            if _value == nil {
+                _value = ""
+            } else {
+                append(lex.literal)
             }
         default:
             assertionFailure("unhandled lexeme")

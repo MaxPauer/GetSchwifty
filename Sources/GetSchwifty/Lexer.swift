@@ -97,6 +97,11 @@ internal struct WhitespaceLex: Lex {
         literal = l
         range = end-start
     }
+
+    init(literal l: String, range r: LexRange) {
+        literal = l
+        range = r
+    }
 }
 
 internal struct CommentLex: Lex {
