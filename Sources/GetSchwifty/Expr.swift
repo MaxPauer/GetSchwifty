@@ -276,18 +276,11 @@ internal class ProperVariableNameExpr: LocationExpr {
     }
 }
 
-internal protocol AnyAssignmentExpr: Expr {
-    associatedtype ValueType
-    var target: Expr { get }
-    var value: ValueType { get }
-}
-
-internal class PoeticNumberAssignmentExpr: AnyAssignmentExpr {
+internal class PoeticNumberAssignmentExpr: Expr {
     var isTerminated: Bool = false
     var target: Expr
-    private var _value = 0
+    private var value = 0
     private var digit: Int? = nil
-    var value: NumberExpr?
     let prettyName: String = "Poetic Number Assignment"
 
     init(target t: Expr) {
@@ -295,7 +288,7 @@ internal class PoeticNumberAssignmentExpr: AnyAssignmentExpr {
         target = t
     }
 
-    var canTerminate: Bool { _value > 0 }
+    var canTerminate: Bool { value > 0 }
 
     func addToPoeticDigit(from id: IdentifierLex) {
         let n = id.poeticNumeralValue
@@ -304,8 +297,8 @@ internal class PoeticNumberAssignmentExpr: AnyAssignmentExpr {
 
     func pushPoeticDigit() {
         if let n = digit {
-            _value *= 10
-            _value += n % 10
+            value *= 10
+            value += n % 10
             digit = nil
         }
     }
@@ -317,8 +310,8 @@ internal class PoeticNumberAssignmentExpr: AnyAssignmentExpr {
             return self
         case is NewlineLex:
             pushPoeticDigit()
-            value = NumberExpr(literal: Double(_value))
-            return try terminate(lex)
+            try terminate(lex)
+            return AssignmentExpr(target: target, value: NumberExpr(literal: Double(value)))
         case let id as IdentifierLex:
             addToPoeticDigit(from: id)
         break
@@ -331,11 +324,10 @@ internal class PoeticNumberAssignmentExpr: AnyAssignmentExpr {
     }
 }
 
-internal class PoeticStringAssignmentExpr: AnyAssignmentExpr {
+internal class PoeticStringAssignmentExpr: Expr {
     var isTerminated: Bool = false
     var target: Expr
-    private var _value: String?
-    var value: StringExpr?
+    private var value: String?
     let prettyName: String = "Poetic String Assignment"
 
     init(target t: Expr) {
@@ -344,8 +336,8 @@ internal class PoeticStringAssignmentExpr: AnyAssignmentExpr {
     }
 
     func append(_ s: String) {
-        guard _value != nil else { _value = s; return }
-        _value! += s
+        guard value != nil else { value = s; return }
+        value! += s
     }
 
     let canTerminate: Bool = true
@@ -353,15 +345,15 @@ internal class PoeticStringAssignmentExpr: AnyAssignmentExpr {
     func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is NewlineLex:
-            value = StringExpr(literal: _value ?? "")
-            return try terminate(lex)
+            try terminate(lex)
+            return AssignmentExpr(target: target, value: StringExpr(literal: value ?? ""))
         case is DelimiterLex, is NumberLex:
             append(lex.literal)
         case is IdentifierLex, is CommentLex, is StringLex:
             append(lex.prettyLiteral!)
         case is WhitespaceLex:
-            if _value == nil {
-                _value = ""
+            if value == nil {
+                value = ""
             } else {
                 append(lex.literal)
             }
@@ -373,7 +365,7 @@ internal class PoeticStringAssignmentExpr: AnyAssignmentExpr {
     }
 }
 
-internal class AssignmentExpr: AnyAssignmentExpr {
+internal class AssignmentExpr: Expr {
     var isTerminated: Bool = false
     lazy var target: Expr = VanillaExpr(parent: self)
     lazy var value: Expr = VanillaExpr(parent: self)
@@ -389,6 +381,13 @@ internal class AssignmentExpr: AnyAssignmentExpr {
     }
 
     var canTerminate: Bool { !(target is VanillaExpr) && !(value is VanillaExpr) }
+
+    init(target t: Expr, value v: Expr) {
+        expectingTarget = false
+        target = t
+        value = v
+        isTerminated = true
+    }
 
     init(expectingTarget et: Bool) {
         expectingTarget = et
