@@ -3,7 +3,7 @@ import XCTest
 
 final class ParserTests: XCTestCase {
     func parse(_ inp: String) throws -> Parser {
-        return Parser(lexemes: LexIterator(input: inp))
+        return Parser(input: inp)
     }
 
     func testVariableNames() throws {

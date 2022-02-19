@@ -2,7 +2,8 @@ internal struct Parser {
     var lexemes: LexContractor
     var currentExpr: Expr?
 
-    init(lexemes l: LexIterator) {
+    init(input inp: String) {
+        let l = LexIterator(input: inp)
         lexemes = LexContractor(lexemes: l)
     }
 
