@@ -281,8 +281,7 @@ private func nextLexeme(_ chars: inout Fifo<String>, start: LexPos) -> Lex? {
     case \.isNumber, "+", "-", ".":
         return NumberLex(&chars, firstChar: c, start: start)
     default:
-        assertionFailure("Found unlexable chars at end of input")
-        return nil
+        return WhitespaceLex(&chars, firstChar: c, start: start)
     }
 }
 
