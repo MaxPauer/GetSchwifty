@@ -74,6 +74,10 @@ internal class VanillaExpr: Expr {
             return MysteriousExpr()
         case String.pronounIdentifiers:
             return PronounExpr()
+        case String.buildIdentifiers:
+            return CrementExpr(forIncrement: true)
+        case String.knockIdentifiers:
+            return CrementExpr(forDecrement: true)
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExpr(first: word)
@@ -429,6 +433,64 @@ internal class AssignmentExpr: AnyAssignmentExpr {
         case let id as IdentifierLex:
             try fromIdentifier(id)
         case is StringLex, is DelimiterLex, is NumberLex:
+            try pushThrough(lex)
+        default:
+            assertionFailure("unhandled lexeme")
+        }
+
+        return self
+    }
+}
+
+internal class CrementExpr: Expr {
+    var isTerminated: Bool = false
+    var canTerminate: Bool { !(target is VanillaExpr) }
+    var targetFinished: Bool = false
+    var isIncrement: Bool
+    var isDecrement: Bool { !isIncrement }
+    var value: Int = 0
+    lazy var target: Expr = VanillaExpr(parent: self)
+    let prettyName: String = "In-/Decrement"
+
+    init(forIncrement inc: Bool) {
+        isIncrement = inc
+    }
+    init(forDecrement dec: Bool) {
+        isIncrement = !dec
+    }
+
+    func pushThrough(_ lex: Lex) throws {
+        guard !targetFinished else { throw UnexpectedLexemeError(got: lex, parsing: self) }
+        target = try target.push(lex)
+    }
+
+    func fromIdentifier(_ id: IdentifierLex) throws {
+        switch id.literal {
+        case String.upIdentifiers:
+            guard isIncrement else { throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.downIdentifiers ) }
+            targetFinished = true
+            value += 1
+        case String.downIdentifiers:
+            guard isDecrement else { throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.upIdentifiers ) }
+            targetFinished = true
+            value -= 1
+        default:
+            try pushThrough(id)
+        }
+    }
+
+    func push(_ lex: Lex) throws -> Expr {
+        switch lex {
+        case is NewlineLex:
+            return try terminate(lex)
+        case is WhitespaceLex, is CommentLex:
+            break
+        case let id as IdentifierLex:
+            try fromIdentifier(id)
+        case is StringLex, is NumberLex:
+            try pushThrough(lex)
+        case is DelimiterLex:
+            guard !targetFinished else { break }
             try pushThrough(lex)
         default:
             assertionFailure("unhandled lexeme")

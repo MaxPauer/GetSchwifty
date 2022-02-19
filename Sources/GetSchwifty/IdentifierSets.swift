@@ -61,6 +61,18 @@ internal extension String {
     static var indexingIdentifiers: Set<String> {
         Set(["at"])
     }
+    static var buildIdentifiers: Set<String> {
+        Set(["build"])
+    }
+    static var upIdentifiers: Set<String> {
+        Set(["up"])
+    }
+    static var knockIdentifiers: Set<String> {
+        Set(["knock"])
+    }
+    static var downIdentifiers: Set<String> {
+        Set(["down"])
+    }
 }
 
 internal func ~=(pattern: Set<String>, value: String) -> Bool {

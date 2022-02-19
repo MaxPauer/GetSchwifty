@@ -128,6 +128,26 @@ final class ParserTests: XCTestCase {
         let _: PronounExpr = try testParse("shout it")
     }
 
+    func testIncDecrement() throws {
+        func testParse<T>(_ inp: String, _ value: Int) throws -> T {
+            var p = try XCTUnwrap(self.parse(inp))
+            let o = try XCTUnwrap(p.next() as? CrementExpr)
+            let t = try XCTUnwrap(o.target as? T)
+            XCTAssertEqual(o.value, value)
+            return t
+        }
+
+        let _: VariableNameExpr = try testParse("build me", 0)
+        let _: VariableNameExpr = try testParse("build me up", 1)
+        let _: VariableNameExpr = try testParse("build me up up", 2)
+        let _: VariableNameExpr = try testParse("build me up up, up & up", 4)
+
+        let _: PronounExpr = try testParse("knock him", 0)
+        let _: PronounExpr = try testParse("knock him down", -1)
+        let _: PronounExpr = try testParse("knock him down, down", -2)
+        let _: IndexingLocationExpr = try testParse("knock him at 0 down,down down", -3)
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)
