@@ -38,9 +38,19 @@ extension Lex {
 
 internal struct NewlineLex: Lex {
     let prettyName = "Newline"
-    let prettyLiteral: String? = nil
     let literal: String
     let range: LexRange
+
+    var prettyLiteral: String? {
+        String(literal.map {
+            switch $0 {
+            case "\r": return "␍"
+            case "\n": return "␊"
+            case "\u{03}": return "␃"
+            default: return $0
+            }
+        })
+    }
 
     fileprivate init(_ c: Character, start: LexPos) {
         literal = String(c)
@@ -83,10 +93,20 @@ internal struct ContractionLex: Lex {
 }
 
 internal struct WhitespaceLex: Lex {
-    let prettyName = "Whitespace"
-    let prettyLiteral: String? = nil
+    let prettyName = "\"Whitespace\""
     let literal: String
     let range: LexRange
+
+    var prettyLiteral: String? {
+        String(literal.map {
+            switch $0 {
+            case " ": return "␣"
+            case "\t": return "→"
+            case \.isWhitespace: return "⋅"
+            default: return $0
+            }
+        })
+    }
 
     fileprivate init(_ chars: inout StringFifo, firstChar: Character, start: LexPos) {
         var l = String(firstChar)
