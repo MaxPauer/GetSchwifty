@@ -66,29 +66,26 @@ internal struct DLinkedList<T> {
     }
 }
 
-internal protocol Fifoable: BidirectionalCollection {
-    associatedtype Element
-    init(_: ReversedCollection<Self>)
-    func reversed() -> ReversedCollection<Self>
-    mutating func popLast() -> Element?
-    var last: Element? { get }
-}
+internal struct Fifo<T: IteratorProtocol> {
+    private var iter: T
+    private var ll: DLinkedList<T.Element>
 
-extension String: Fifoable {}
-extension Array: Fifoable {}
-
-internal struct Fifo<T: Fifoable> {
-    private var intern: T
     init(_ t: T) {
-        intern = T(t.reversed())
+        iter = t
+        ll = DLinkedList()
+        ll.pushBack(iter.next())
     }
+
     mutating func pop() -> T.Element? {
-        intern.popLast()
+        ll.pushBack(iter.next())
+        return ll.popFront()
     }
+
     mutating func drop() {
-        _ = pop()
+        _ = ll.popFront()
     }
+
     func peek() -> T.Element? {
-        intern.last
+        ll.peekFront()
     }
 }

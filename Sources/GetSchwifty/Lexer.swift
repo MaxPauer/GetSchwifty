@@ -1,6 +1,8 @@
 prefix operator ↵
 prefix operator →
 
+fileprivate typealias StringFifo = Fifo<String.Iterator>
+
 internal struct LexPos {
     let line: UInt
     let char: UInt
@@ -40,7 +42,7 @@ internal struct NewlineLex: Lex {
     let literal: String
     let range: LexRange
 
-    init(_ c: Character, start: LexPos) {
+    fileprivate init(_ c: Character, start: LexPos) {
         literal = String(c)
         range = (↵start)-start
     }
@@ -68,7 +70,7 @@ internal struct ContractionLex: Lex {
     let literal: String
     let range: LexRange
 
-    init(_ chars: inout Fifo<String>, start: LexPos) {
+    fileprivate init(_ chars: inout StringFifo, start: LexPos) {
         var rep = ""
         var end = →start
         while chars.peek()?.isLetter ?? false {
@@ -86,7 +88,7 @@ internal struct WhitespaceLex: Lex {
     let literal: String
     let range: LexRange
 
-    init(_ chars: inout Fifo<String>, firstChar: Character, start: LexPos) {
+    fileprivate init(_ chars: inout StringFifo, firstChar: Character, start: LexPos) {
         var l = String(firstChar)
         var end = →start
         while let c = chars.peek() {
@@ -110,7 +112,7 @@ internal struct CommentLex: Lex {
     let literal: String
     let range: LexRange
 
-    init(_ chars: inout Fifo<String>, start: LexPos) {
+    fileprivate init(_ chars: inout StringFifo, start: LexPos) {
         var depth = 0
         var end = →start
         var rep = ""
@@ -147,7 +149,7 @@ internal struct StringLex: Lex {
     let literal: String
     let range: LexRange
 
-    init(_ chars: inout Fifo<String>, start: LexPos) {
+    fileprivate init(_ chars: inout StringFifo, start: LexPos) {
         var rep = ""
         var end = →start
         while let c = chars.pop() {
@@ -193,7 +195,7 @@ internal struct IdentifierLex: Lex {
     let literal: String
     let range: LexRange
 
-    init(_ chars: inout Fifo<String>, firstChar: Character, start: LexPos) {
+    fileprivate init(_ chars: inout StringFifo, firstChar: Character, start: LexPos) {
         var rep = String(firstChar)
         var end = →start
         while chars.peek()?.isLetter ?? false {
@@ -220,7 +222,7 @@ internal struct NumberLex: Lex {
     var literal: String
     let range: LexRange
 
-    init(_ chars: inout Fifo<String>, firstChar: Character, start: LexPos) {
+    fileprivate init(_ chars: inout StringFifo, firstChar: Character, start: LexPos) {
         var rep = String(firstChar)
         var end = →start
 
@@ -263,7 +265,7 @@ internal func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
 
-private func nextLexeme(_ chars: inout Fifo<String>, start: LexPos) -> Lex? {
+private func nextLexeme(_ chars: inout StringFifo, start: LexPos) -> Lex? {
     guard let c = chars.pop() else { return nil }
 
     switch c {
@@ -291,12 +293,12 @@ private func nextLexeme(_ chars: inout Fifo<String>, start: LexPos) -> Lex? {
 }
 
 internal struct LexIterator: Sequence, IteratorProtocol {
-    var chars: Fifo<String>
+    private var chars: StringFifo
     var start: LexPos
     var lineTerminated = false
 
     init(input inp: String) {
-        chars = Fifo<String>(inp)
+        chars = StringFifo(inp.makeIterator())
         start = LexPos(line: 1, char: 0)
     }
 
