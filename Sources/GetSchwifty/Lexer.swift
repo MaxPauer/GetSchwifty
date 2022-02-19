@@ -64,12 +64,19 @@ internal struct DelimiterLex: Lex {
 
 internal struct ContractionLex: Lex {
     let prettyName = "Contraction"
-    let prettyLiteral: String? = nil
-    let literal = "'"
+    var prettyLiteral: String? { "'\(literal)" }
+    let literal: String
     let range: LexRange
 
-    init(start: LexPos) {
-        range = (→start)-start
+    init(_ chars: inout Fifo<String>, start: LexPos) {
+        var rep = ""
+        var end = →start
+        while chars.peek()?.isLetter ?? false {
+            end = →end
+            rep.append(chars.pop()!)
+        }
+        literal = rep
+        range = end-start
     }
 }
 
@@ -177,7 +184,7 @@ internal struct StringLex: Lex {
 
 internal struct IdentifierLex: Lex {
     let prettyName = "Identifier"
-    var prettyLiteral: String? { literal }
+    let prettyLiteral: String?
     let literal: String
     let range: LexRange
 
@@ -188,8 +195,17 @@ internal struct IdentifierLex: Lex {
             end = →end
             rep.append(chars.pop()!)
         }
-        literal = rep
-        range = end-start
+        self.init(literal: rep, range: end-start)
+    }
+
+    init(literal l: String, range r: LexRange) {
+        self.init(literal: l, prettyLiteral: l, range: r)
+    }
+
+    init(literal l: String, prettyLiteral p: String, range r: LexRange) {
+        literal = l
+        prettyLiteral = p
+        range = r
     }
 }
 
@@ -257,7 +273,7 @@ private func nextLexeme(_ chars: inout Fifo<String>, start: LexPos) -> Lex? {
     case ",", "&":
         return DelimiterLex(c, start: start)
     case "'":
-        return ContractionLex(start: start)
+        return ContractionLex(&chars, start: start)
     case \.isWhitespace:
         return WhitespaceLex(&chars, firstChar: c, start: start)
     case \.isLetter:

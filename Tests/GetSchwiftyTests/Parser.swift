@@ -23,10 +23,11 @@ final class ParserTests: XCTestCase {
         try testParse("Doctor Feelgood", "doctor feelgood")
         try testParse("Distance In Km", "distance in km")
         try testParse("Doctor", "doctor")
+        try testParse("she'lob", "shelob")
     }
 
     func testPronouns() throws {
-        for inp in ["it", "he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"] {
+        for inp in ["it", "he", "she", "him", "her", "they", "them", "th'em", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"] {
             var p = try XCTUnwrap(self.parse(inp))
             _ = try XCTUnwrap(try p.next() as? PronounExpr)
             XCTAssertNil(try p.next())
@@ -97,13 +98,19 @@ final class ParserTests: XCTestCase {
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("Your lies're my death's death", "your lies", 265)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked''", "my life", 6)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked'd", "my life", 7)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's  fucked'd", "my life", 7)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked'd ", "my life", 7)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked''d", "my life", 7)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("My life's fucked'd'd", "my life", 8)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a halfhalfpipe", "heaven", 12)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a halfhalfpipe''", "heaven", 12)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a ha'lfhalfpipe", "heaven", 12)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a ha''lfhalfpipe", "heaven", 12)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a half'halfpipe", "heaven", 12)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a halfhalfpi'pe", "heaven", 12)
         let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a half'halfpi'pe", "heaven", 12)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e", "heaven", 12)
+        let _: (NumberExpr, PoeticNumberAssignmentExpr) = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e'", "heaven", 12)
     }
 
     func testPoeticNumberLiteralFailure() throws {
@@ -114,6 +121,9 @@ final class ParserTests: XCTestCase {
 
     func testPoeticStringLiteral() throws {
         let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
+        let _: (StringExpr, PoeticStringAssignmentExpr) = try assignParseTest("my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
     }
 
     func testPoeticStringLiteralFailure() throws {
@@ -139,6 +149,8 @@ final class ParserTests: XCTestCase {
     func testLetPutAssignmentFailure() throws {
         let _: UnexpectedIdentifierError = errorTest("let my life into false", AssignmentExpr.self)
         let _: UnexpectedIdentifierError = errorTest("put my life be true ", AssignmentExpr.self)
+        let _: UnexpectedIdentifierError = errorTest("let ' be nothing", AssignmentExpr.self)
+        let _: UnexpectedIdentifierError = errorTest("let ''' be nothing", AssignmentExpr.self)
     }
 
     func testInput() throws {
@@ -155,6 +167,7 @@ final class ParserTests: XCTestCase {
 
         try testParse("Listen", nil)
         try testParse("Listen ", nil)
+        try testParse("L'isten ", nil)
         try testParse("Listen to my heart", "my heart")
     }
 

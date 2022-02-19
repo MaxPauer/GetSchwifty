@@ -1,6 +1,15 @@
 fileprivate extension String {
     var firstCharIsUpperCase: Bool {
-        return self.first!.isUppercase
+        return self.first?.isUppercase ?? false
+    }
+}
+
+fileprivate extension IdentifierLex {
+    var isIsContraction: Bool { String.isContractionIdentifiers.contains(literal) }
+    var poeticNumeralValue: Int {
+        let n = isIsContraction ?
+            literal.count - 1 : literal.count
+        return n % 10
     }
 }
 
@@ -34,6 +43,8 @@ internal struct VanillaExpr: Expr {
     func fromIdentifier(_ id: IdentifierLex) -> Expr {
         let word = id.literal
         switch word {
+        case \.isEmpty:
+            return self
         case String.commonVariableIdentifiers:
             return CommonVariableNameExpr(first: word)
         case String.letAssignIdentifiers:
@@ -68,7 +79,7 @@ internal struct VanillaExpr: Expr {
         switch lex {
         case is NewlineLex:
             return try terminate(lex)
-        case is WhitespaceLex, is CommentLex, is ContractionLex:
+        case is WhitespaceLex, is CommentLex:
             return self
         case let id as IdentifierLex:
             return fromIdentifier(id)
@@ -87,12 +98,10 @@ internal struct VanillaExpr: Expr {
 
 internal protocol LocationExpr: Expr {}
 
-internal protocol FinalizedLocationExpr: LocationExpr {
-    var expectingIsContraction: Bool { get set }
-}
+internal protocol FinalizedLocationExpr: LocationExpr {}
 
 extension FinalizedLocationExpr {
-    var canTerminate: Bool { !expectingIsContraction }
+    var canTerminate: Bool { true }
 
     func fromIdentifier(_ id: IdentifierLex) throws -> Expr {
         let word = id.literal
@@ -103,11 +112,6 @@ extension FinalizedLocationExpr {
             return PoeticNumberAssignmentExpr(target: self)
         case String.indexingIdentifiers:
             return IndexingLocationExpr(target: self)
-        case String.isContractionIdentifiers:
-            if expectingIsContraction {
-                return PoeticNumberAssignmentExpr(target: self)
-            }
-            fallthrough
         default:
             throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set(String.poeticNumberIdentifiers ∪ String.sayPoeticStringIdentifiers))
         }
@@ -123,9 +127,6 @@ extension FinalizedLocationExpr {
             return try fromIdentifier(id)
         case is StringLex, is NumberLex, is DelimiterLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
-        case is ContractionLex:
-            expectingIsContraction = true
-            return self
         default:
             assertionFailure("unhandled lexeme")
             return self
@@ -135,14 +136,12 @@ extension FinalizedLocationExpr {
 
 internal struct PronounExpr: FinalizedLocationExpr {
     var isTerminated: Bool = false
-    var expectingIsContraction: Bool = false
     let prettyName: String = "Pronoun"
 }
 
 internal struct VariableNameExpr: FinalizedLocationExpr {
     let name: String
     var isTerminated: Bool = false
-    var expectingIsContraction: Bool = false
     var prettyName: String { "Variable Name (=\(name))" }
 
     init(name n: String) {
@@ -169,7 +168,7 @@ internal struct IndexingLocationExpr: LocationExpr {
             return try terminate(lex)
         case is WhitespaceLex, is CommentLex:
             return self
-        case is IdentifierLex, is StringLex, is NumberLex, is DelimiterLex, is ContractionLex:
+        case is IdentifierLex, is StringLex, is NumberLex, is DelimiterLex:
             try pushThrough(lex)
             return self
         default:
@@ -202,7 +201,7 @@ internal struct CommonVariableNameExpr: LocationExpr {
             return self
         case let id as IdentifierLex:
             return fromIdentifier(id)
-        case is StringLex, is NumberLex, is DelimiterLex, is ContractionLex:
+        case is StringLex, is NumberLex, is DelimiterLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
             assertionFailure("unhandled lexeme")
@@ -251,7 +250,7 @@ internal struct ProperVariableNameExpr: LocationExpr {
             return self
         case let id as IdentifierLex:
             return try fromIdentifier(id)
-        case is DelimiterLex, is ContractionLex:
+        case is DelimiterLex:
             return try pushToFinalVariable(lex)
         case is StringLex, is NumberLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
@@ -271,8 +270,8 @@ internal protocol AnyAssignmentExpr: Expr {
 internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
     var isTerminated: Bool = false
     var target: Expr
-    private var digits: [Int] = []
-    private var continueDigit = false
+    private var _value = 0
+    private var digit: Int? = nil
     var value: NumberExpr?
     let prettyName: String = "Poetic Number Assignment"
 
@@ -281,39 +280,32 @@ internal struct PoeticNumberAssignmentExpr: AnyAssignmentExpr {
         target = t
     }
 
-    var canTerminate: Bool { digits.count > 0 }
+    var canTerminate: Bool { _value > 0 }
 
-    mutating func addPoeticNumber(fromString s: String) {
-        var newDigit: Int!
-        if continueDigit {
-            newDigit = ((digits.popLast() ?? 0) + s.count) % 10
-            continueDigit = false
-        } else {
-            newDigit = s.count % 10
-        }
-        digits.append(newDigit)
+    mutating func addToPoeticDigit(from id: IdentifierLex) {
+        let n = id.poeticNumeralValue
+        digit = (digit ?? 0) + n
     }
 
-    func calcValue() -> Double {
-        var v = 0
-        for digit in digits {
-            v *= 10
-            v += digit
+    mutating func pushPoeticDigit() {
+        if let n = digit {
+            _value *= 10
+            _value += n % 10
+            digit = nil
         }
-        return Double(v)
     }
 
     mutating func push(_ lex: Lex) throws -> Expr {
         switch lex {
         case is WhitespaceLex, is CommentLex:
-            break
+            pushPoeticDigit()
+            return self
         case is NewlineLex:
-            value = NumberExpr(literal: calcValue())
+            pushPoeticDigit()
+            value = NumberExpr(literal: Double(_value))
             return try terminate(lex)
         case let id as IdentifierLex:
-            addPoeticNumber(fromString: id.literal)
-        case is ContractionLex:
-            continueDigit = true
+            addToPoeticDigit(from: id)
         break
         case is StringLex, is DelimiterLex, is NumberLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
@@ -343,17 +335,15 @@ internal struct PoeticStringAssignmentExpr: AnyAssignmentExpr {
         case is NewlineLex:
             value = StringExpr(literal: _value)
             return try terminate(lex)
-        case is IdentifierLex, is ContractionLex, is DelimiterLex, is NumberLex:
+        case is DelimiterLex, is NumberLex:
             _value += lex.literal
+        case is IdentifierLex, is CommentLex, is StringLex:
+            _value += lex.prettyLiteral!
         case is WhitespaceLex:
             let hasContent = canTerminate
             if hasContent {
                 _value += lex.literal
             }
-        case let comm as CommentLex:
-            _value += "(\(comm.literal))"
-        case let str as StringLex:
-            _value += "\"\(str.literal)\""
         default:
             assertionFailure("unhandled lexeme")
         }
@@ -397,12 +387,12 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
     mutating func fromIdentifier(_ id: IdentifierLex) throws {
         switch id.literal {
         case String.assignBeIdentifiers:
-            guard expectingTarget else {
+            guard expectingTarget && !(target is VanillaExpr) else {
                 throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.assignIntoIdentifiers)
             }
             expectingTarget = false
         case String.assignIntoIdentifiers:
-            guard expectingValue else {
+            guard expectingValue && !(value is VanillaExpr) else {
                 throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.assignBeIdentifiers)
             }
             expectingValue = false
@@ -420,7 +410,7 @@ internal struct AssignmentExpr: AnyAssignmentExpr {
             break
         case let id as IdentifierLex:
             try fromIdentifier(id)
-        case is StringLex, is ContractionLex, is DelimiterLex, is NumberLex:
+        case is StringLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
         default:
             assertionFailure("unhandled lexeme")
@@ -469,7 +459,7 @@ internal struct InputExpr: Expr {
             break
         case let id as IdentifierLex:
             try fromIdentifier(id)
-        case is StringLex, is ContractionLex, is DelimiterLex, is NumberLex:
+        case is StringLex, is DelimiterLex, is NumberLex:
             try pushThrough(lex)
         default:
             assertionFailure("unhandled lexeme")
@@ -520,7 +510,7 @@ extension LeafExpr {
         switch lex {
         case is NewlineLex:
             return try terminate(lex)
-        case is CommentLex, is WhitespaceLex, is ContractionLex:
+        case is CommentLex, is WhitespaceLex:
             return self
         case is StringLex, is NumberLex, is DelimiterLex:
             throw LeafExprPushError(got: lex, parsing: self)

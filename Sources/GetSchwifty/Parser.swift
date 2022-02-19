@@ -1,6 +1,10 @@
 internal struct Parser {
-    var lexemes: LexIterator
+    var lexemes: LexContractor
     var currentExpr: Expr?
+
+    init(lexemes l: LexIterator) {
+        lexemes = LexContractor(lexemes: l)
+    }
 
     mutating func flushCurrentExpr() -> Expr? {
         defer { currentExpr = nil }
@@ -9,6 +13,7 @@ internal struct Parser {
 
     mutating func next() throws -> Expr? {
         while let l = lexemes.next() {
+            assert(!(l is ContractionLex), "LexContractor should have filtered these out")
             currentExpr = currentExpr ?? VanillaExpr()
 
             do {

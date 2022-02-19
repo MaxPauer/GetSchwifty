@@ -29,7 +29,7 @@ internal extension String {
         Set(["say", "says", "said"])
     }
     static var poeticNumberIdentifiers: Set<String> {
-        Set(["is", "are", "was", "were"])
+        Set(["is", "are", "was", "were"]) ∪ String.isContractionIdentifiers
     }
     static var letAssignIdentifiers: Set<String> {
         Set(["let"])
@@ -44,7 +44,7 @@ internal extension String {
         Set(["mysterious"])
     }
     static var isContractionIdentifiers: Set<String> {
-        Set(["s", "re"])
+        Set(["'s", "'re"])
     }
     static var assignBeIdentifiers: Set<String> {
         Set(["be"])
