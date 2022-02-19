@@ -21,24 +21,23 @@ fileprivate extension ContractionLex {
 
 internal struct LexContractor: IteratorProtocol, Sequence {
     var lexemes: LexIterator
-    var stack: [Lex] = []
+    var ll = DLinkedList<Lex>()
 
     init(lexemes l: LexIterator) {
         lexemes = l
         guard let first = lexemes.next() else { return }
-        stack.append(first)
+        ll.pushBack(first)
     }
 
     mutating func next() -> Lex? {
         while let l = lexemes.next() {
             if let c = l as? ContractionLex {
-                stack.append(contentsOf: c.contract(stack.popLast()))
+                c.contract(ll.popBack()).forEach{ ll.pushBack($0) }
             } else {
-                stack.append(l)
+                ll.pushBack(l)
                 break
             }
         }
-        guard let first = stack.first else { return nil }
-        return stack.removeFirst()
+        return ll.popFront()
     }
 }
