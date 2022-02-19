@@ -39,6 +39,13 @@ internal class VanillaExpr: Expr {
     var isTerminated = false
     let canTerminate: Bool = true
     let prettyName: String = "Vanilla"
+    let parent: Expr?
+
+    init(parent p: Expr?) {
+        parent = p
+    }
+
+    private var bestErrorLocation: Expr { parent ?? self }
 
     func fromIdentifier(_ id: IdentifierLex) -> Expr {
         let word = id.literal
@@ -86,9 +93,9 @@ internal class VanillaExpr: Expr {
         case let str as StringLex:
             return StringExpr(literal: str.literal)
         case let num as NumberLex:
-            return try NumberExpr(from: num, in: self)
+            return try NumberExpr(from: num, in: bestErrorLocation)
         case is DelimiterLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
+            throw UnexpectedLexemeError(got: lex, parsing: bestErrorLocation)
         default:
             assertionFailure("unhandled lexeme")
             return self
@@ -151,7 +158,7 @@ internal class VariableNameExpr: FinalizedLocationExpr {
 
 internal class IndexingLocationExpr: LocationExpr {
     let target: LocationExpr
-    var index: Expr = VanillaExpr()
+    lazy var index: Expr = VanillaExpr(parent: self)
     var isTerminated: Bool = false
     var prettyName: String { "Indexing (=\(target)[\(index)])" }
 
@@ -364,8 +371,8 @@ internal class PoeticStringAssignmentExpr: AnyAssignmentExpr {
 
 internal class AssignmentExpr: AnyAssignmentExpr {
     var isTerminated: Bool = false
-    var target: Expr = VanillaExpr()
-    var value: Expr = VanillaExpr()
+    lazy var target: Expr = VanillaExpr(parent: self)
+    lazy var value: Expr = VanillaExpr(parent: self)
     let prettyName: String = "Assignment"
 
     private(set) var expectingTarget: Bool
@@ -453,7 +460,7 @@ internal class InputExpr: Expr {
     func fromIdentifier(_ id: IdentifierLex) throws {
         switch id.literal {
         case String.toIdentifiers:
-            target = VanillaExpr()
+            target = VanillaExpr(parent: self)
         default:
             try pushThrough(id)
         }
@@ -482,7 +489,7 @@ internal class InputExpr: Expr {
 
 internal class OutputExpr: Expr {
     var isTerminated: Bool = false
-    var target: Expr = VanillaExpr()
+    lazy var target: Expr = VanillaExpr(parent: self)
     let prettyName: String = "Output"
 
     var canTerminate: Bool {
@@ -572,22 +579,4 @@ internal class MysteriousExpr: LeafExpr {
     var isTerminated: Bool = false
     let literal: Int? = nil
     let prettyName: String = "Mysterious Value"
-}
-
-internal class RootExpr: Expr {
-    var isTerminated: Bool = false
-    let canTerminate: Bool = false
-    var children: [Expr] = [VanillaExpr()]
-    let prettyName: String = "Root"
-
-    func push(_ lex: Lex) throws -> Expr {
-        var lastExpr = children.last!
-        if !lastExpr.isTerminated {
-            _ = children.popLast()
-        } else {
-            lastExpr = VanillaExpr()
-        }
-        children.append(try lastExpr.push(lex))
-        return self
-    }
 }

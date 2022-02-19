@@ -74,7 +74,7 @@ final class ParserErrorTests: XCTestCase {
 
     func testOutputFailure() throws {
         let _: UnexpectedEOLError = errorTest("Shout", OutputExpr.self, (1,5))
-        let _: UnexpectedLexemeError = errorTest("Shout ,", DelimiterLex.self, VanillaExpr.self, (1,6))
+        let _: UnexpectedLexemeError = errorTest("Shout ,", DelimiterLex.self, OutputExpr.self, (1,6))
         let _: LeafExprPushError = errorTest("Shout true \"dat\"", StringLex.self, BoolExpr.self, (1,11))
     }
 }

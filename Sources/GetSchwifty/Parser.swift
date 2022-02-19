@@ -15,7 +15,7 @@ internal struct Parser {
     mutating func next() throws -> Expr? {
         while let l = lexemes.next() {
             assert(!(l is ContractionLex), "LexContractor should have filtered these out")
-            currentExpr = currentExpr ?? VanillaExpr()
+            currentExpr = currentExpr ?? VanillaExpr(parent: nil)
 
             do {
                 currentExpr = try currentExpr!.push(l)
