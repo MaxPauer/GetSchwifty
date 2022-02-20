@@ -1,6 +1,6 @@
 internal protocol ParserError: Error, CustomStringConvertible {
     var _description: String { get }
-    var parsing: Expr { get }
+    var parsing: ExprBuilder { get }
     var range: LexRange { get }
 }
 
@@ -22,7 +22,7 @@ extension LexemeError {
 
 internal struct UnexpectedIdentifierError: LexemeError {
     let got: Lex
-    let parsing: Expr
+    let parsing: ExprBuilder
     let expecting: Set<String>
 
     var expectingDescr: String {
@@ -38,7 +38,7 @@ internal struct UnexpectedIdentifierError: LexemeError {
 
 internal struct UnexpectedLexemeError: LexemeError {
     let got: Lex
-    let parsing: Expr
+    let parsing: ExprBuilder
 
     var _description: String {
         "encountered unexpected lexeme: \(got) while parsing: \(parsing)"
@@ -47,7 +47,7 @@ internal struct UnexpectedLexemeError: LexemeError {
 
 internal struct UnparsableNumberLexemeError: LexemeError {
     let got: Lex
-    let parsing: Expr
+    let parsing: ExprBuilder
 
     var _description: String {
         "encountered unparsable number lexeme: \(got) while parsing: \(parsing)"
@@ -55,9 +55,9 @@ internal struct UnparsableNumberLexemeError: LexemeError {
 }
 
 internal struct UnexpectedExprError<Expecting>: ParserError {
-    let got: Expr
+    let got: ExprP
     let range: LexRange
-    let parsing: Expr
+    let parsing: ExprBuilder
 
     var _description: String {
         "encountered unexpected expression: \(got) while parsing: \(parsing), expecting: \(Expecting.self)"
@@ -66,7 +66,7 @@ internal struct UnexpectedExprError<Expecting>: ParserError {
 
 internal struct UnexpectedEOLError: ParserError {
     let range: LexRange
-    let parsing: Expr
+    let parsing: ExprBuilder
 
     var _description: String {
         "encountered unexpected EOL while parsing: \(parsing)"
@@ -75,7 +75,7 @@ internal struct UnexpectedEOLError: ParserError {
 
 internal struct LeafExprPushError: LexemeError {
     let got: Lex
-    let parsing: Expr
+    let parsing: ExprBuilder
 
     var _description: String {
         "trying to push lexeme \(got) onto \(parsing)"

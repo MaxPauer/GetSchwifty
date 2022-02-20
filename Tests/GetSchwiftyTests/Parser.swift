@@ -11,7 +11,7 @@ final class ParserTests: XCTestCase {
             var p = try XCTUnwrap(self.parse(inp))
             let v = try XCTUnwrap(try p.next() as? VariableNameExpr)
             XCTAssertEqual(v.name, exp)
-            XCTAssertNil(try p.next())
+            XCTAssert(try p.next() is NopExpr)
         }
 
         try testParse("A horse", "a horse")
@@ -30,16 +30,15 @@ final class ParserTests: XCTestCase {
         for inp in ["it", "he", "she", "him", "her", "they", "them", "th'em", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"] {
             var p = try XCTUnwrap(self.parse(inp))
             _ = try XCTUnwrap(try p.next() as? PronounExpr)
-            XCTAssertNil(try p.next())
         }
     }
 
-    func assignParseTest<U, V>(_ inp: String, _ expVarName: String, _ expValue: U) throws -> V where U: Equatable, V: LeafExpr, V.LiteralType == U {
+    func assignParseTest<U, V>(_ inp: String, _ expVarName: String, _ expValue: U) throws -> V where U: Equatable, V: LiteralExprP, V.LiteralT == U {
         var p = try XCTUnwrap(self.parse(inp))
         let ass = try p.next() as! AssignmentExpr
-        XCTAssertNil(try p.next())
+        XCTAssert(try p.next() is NopExpr)
         XCTAssertEqual((ass.target as! VariableNameExpr).name, expVarName)
-        let rhs = try XCTUnwrap(ass.value as? V)
+        let rhs = try XCTUnwrap(ass.source as? V)
         XCTAssertEqual(rhs.literal, expValue)
         return rhs
     }
@@ -48,6 +47,8 @@ final class ParserTests: XCTestCase {
         let _: NumberExpr = try assignParseTest("heaven is a halfpipe", "heaven", 18)
         let _: NumberExpr = try assignParseTest("My life's fucked", "my life", 6)
         let _: NumberExpr = try assignParseTest("My life's gone", "my life", 4)
+        let _: NumberExpr = try assignParseTest("My life's", "my life", 0)
+        let _: NumberExpr = try assignParseTest("My life's ", "my life", 0)
         let _: NumberExpr = try assignParseTest("Your lies're my death", "your lies", 25)
         let _: NumberExpr = try assignParseTest("Your lies're my death's death", "your lies", 265)
         let _: NumberExpr = try assignParseTest("My life's fucked''", "my life", 6)
@@ -97,7 +98,7 @@ final class ParserTests: XCTestCase {
         let testParse = { (inp: String, expLocName: String?) in
             var p = try XCTUnwrap(self.parse(inp))
             let i = try XCTUnwrap(try p.next() as? InputExpr)
-            XCTAssertNil(try p.next())
+            XCTAssert(try p.next() is NopExpr)
             if let elc = expLocName {
                 XCTAssertEqual(try XCTUnwrap(i.target as? VariableNameExpr).name, elc)
             } else {
@@ -115,8 +116,8 @@ final class ParserTests: XCTestCase {
         func testParse<T>(_ inp: String) throws -> T {
             var p = try XCTUnwrap(self.parse(inp))
             let o = try XCTUnwrap(p.next() as? OutputExpr)
-            let t = try XCTUnwrap(o.target as? T)
-            XCTAssertNil(try p.next())
+            let t = try XCTUnwrap(o.source as? T)
+            XCTAssert(try p.next() is NopExpr)
             return t
         }
 
@@ -131,9 +132,11 @@ final class ParserTests: XCTestCase {
     func testIncDecrement() throws {
         func testParse<T>(_ inp: String, _ value: Int) throws -> T {
             var p = try XCTUnwrap(self.parse(inp))
-            let o = try XCTUnwrap(p.next() as? CrementExpr)
+            let o = try XCTUnwrap(p.next() as? AssignmentExpr)
             let t = try XCTUnwrap(o.target as? T)
-            XCTAssertEqual(o.value, value)
+            let s = try XCTUnwrap(o.source as? ArithmeticExpr)
+            let v = try XCTUnwrap(s.rhs as? NumberExpr)
+            XCTAssertEqual(v.literal, Double(value))
             return t
         }
 
@@ -145,7 +148,7 @@ final class ParserTests: XCTestCase {
         let _: PronounExpr = try testParse("knock him", 0)
         let _: PronounExpr = try testParse("knock him down", -1)
         let _: PronounExpr = try testParse("knock him down, down", -2)
-        let _: IndexingLocationExpr = try testParse("knock him at 0 down,down down", -3)
+        let _: IndexingExpr = try testParse("knock him at 0 down,down down", -3)
     }
 
     func testFizzBuzz() throws {
