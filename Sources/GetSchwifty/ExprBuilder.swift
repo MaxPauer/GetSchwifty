@@ -92,6 +92,39 @@ extension ExprBuilder {
     }
 }
 
+internal protocol CanPushThrough: ExprBuilder {
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder
+}
+internal protocol PushesIdentifierThrough: CanPushThrough {}
+internal protocol PushesStringThrough: CanPushThrough {}
+internal protocol PushesNumberThrough: CanPushThrough {}
+internal protocol PushesDelimiterThrough: CanPushThrough {}
+
+internal extension PushesIdentifierThrough {
+    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(i)
+    }
+}
+
+internal extension PushesStringThrough {
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return try pushThrough(s)
+    }
+}
+
+internal extension PushesNumberThrough {
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        return try pushThrough(n)
+    }
+}
+
+internal extension PushesDelimiterThrough {
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return try pushThrough(d)
+    }
+}
+
+
 internal protocol SingleExprBuilder: ExprBuilder {}
 
 extension SingleExprBuilder {
@@ -212,7 +245,8 @@ internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
     }
 }
 
-internal class IndexingLocationExprBuilder: SingleExprBuilder {
+internal class IndexingLocationExprBuilder:
+        SingleExprBuilder, PushesIdentifierThrough, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
 
@@ -231,22 +265,6 @@ internal class IndexingLocationExprBuilder: SingleExprBuilder {
         let t: IndexableExprP = try target.build(asChildOf: self, inRange: range)
         let i: ValueExprP = try index.build(asChildOf: self, inRange: range)
         return IndexingExpr(source: t, operand: i)
-    }
-
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        return try pushThrough(id)
-    }
-
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        return try pushThrough(s)
-    }
-
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
-        return try pushThrough(n)
-    }
-
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return try pushThrough(d)
     }
 }
 
@@ -268,7 +286,7 @@ internal class CommonVariableNameExprBuilder: SingleExprBuilder {
     }
 }
 
-internal class ProperVariableNameExprBuilder: SingleExprBuilder {
+internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiterThrough {
     private(set) var words: [String]
     var prettyName: String { "Variable Name (unfinished=\(name) …)" }
 
@@ -286,7 +304,7 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder {
         VariableNameExprBuilder(name: name)
     }
 
-    func pushToFinalVariable(_ lex: Lex) throws -> ExprBuilder {
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         let newMe = finalize()
         return try newMe.partialPush(lex)
     }
@@ -297,12 +315,8 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder {
             words.append(word)
             return self
         } else {
-            return try pushToFinalVariable(id)
+            return try pushThrough(id)
         }
-    }
-
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return try pushToFinalVariable(d)
     }
 }
 
@@ -411,7 +425,8 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
     }
 }
 
-internal class PoeticStringAssignmentExprBuilder: SingleExprBuilder {
+internal class PoeticStringAssignmentExprBuilder:
+        SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough, PushesNumberThrough, PushesStringThrough {
     var target: ExprBuilder
     private var value: String?
     let prettyName: String = "Poetic String Assignment"
@@ -425,31 +440,19 @@ internal class PoeticStringAssignmentExprBuilder: SingleExprBuilder {
         return VoidCallExpr(head: .assign, target: t, source: StringExpr(literal: value ?? ""), arg: nil)
     }
 
-    @discardableResult
-    func append(_ s: String) -> ExprBuilder {
+    func append(_ s: String) {
         if value == nil { value = "" }
         value! += s
+    }
+
+    @discardableResult
+    func pushThrough(_ lex: Lex) -> ExprBuilder {
+        append(lex.prettyLiteral ?? lex.literal)
         return self
     }
 
-    func handleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder {
-        return append(id.prettyLiteral!)
-    }
-
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return append(d.literal)
-    }
-
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
-        return append(n.literal)
-    }
-
     func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder {
-        return append(c.prettyLiteral!)
-    }
-
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        return append(s.prettyLiteral!)
+        return pushThrough(c)
     }
 
     func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
@@ -462,7 +465,7 @@ internal class PoeticStringAssignmentExprBuilder: SingleExprBuilder {
     }
 }
 
-internal class AssignmentExprBuilder: SingleExprBuilder {
+internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
     let prettyName: String = "Assignment"
@@ -517,21 +520,9 @@ internal class AssignmentExprBuilder: SingleExprBuilder {
         }
         return self
     }
-
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        return try pushThrough(s)
-    }
-
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
-        return try pushThrough(n)
-    }
-
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return try pushThrough(d)
-    }
 }
 
-internal class CrementExprBuilder: SingleExprBuilder {
+internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesStringThrough {
     var targetFinished: Bool = false
     var isIncrement: Bool
     var isDecrement: Bool { !isIncrement }
@@ -576,21 +567,13 @@ internal class CrementExprBuilder: SingleExprBuilder {
         return self
     }
 
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        return try pushThrough(s)
-    }
-
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
-        return try pushThrough(n)
-    }
-
     func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
         guard !targetFinished else { return self }
         return try pushThrough(d)
     }
 }
 
-internal class InputExprBuilder: SingleExprBuilder {
+internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
     var target: ExprBuilder?
     let prettyName: String = "Input"
 
@@ -618,21 +601,10 @@ internal class InputExprBuilder: SingleExprBuilder {
         }
         return self
     }
-
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        return try pushThrough(s)
-    }
-
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
-        return try pushThrough(n)
-    }
-
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return try pushThrough(d)
-    }
 }
 
-internal class OutputExprBuilder: SingleExprBuilder {
+internal class OutputExprBuilder:
+        SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough, PushesNumberThrough, PushesStringThrough {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     let prettyName: String = "Output"
 
@@ -644,22 +616,6 @@ internal class OutputExprBuilder: SingleExprBuilder {
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         target = try target.partialPush(lex)
         return self
-    }
-
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        return try pushThrough(id)
-    }
-
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        return try pushThrough(s)
-    }
-
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
-        return try pushThrough(n)
-    }
-
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return try pushThrough(d)
     }
 }
 
