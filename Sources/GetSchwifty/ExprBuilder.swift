@@ -31,6 +31,13 @@ internal protocol ExprBuilder: AnyObject, CustomStringConvertible {
     func partialPush(_ lex: Lex) throws -> ExprBuilder
     func push(_ lex: Lex) throws -> PartialExpr
     func build(inRange range: LexRange) throws -> ExprP
+
+    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder
+    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder
+    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder
 }
 
 extension ExprBuilder {
@@ -44,6 +51,44 @@ extension ExprBuilder {
             throw UnexpectedExprError<T>(got: ep, range: range, parsing: parent)
         }
         return tep
+    }
+
+    func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        switch lex {
+        case let i as IdentifierLex: return try handleIdentifierLex(i)
+        case let w as WhitespaceLex: return try handleWhitespaceLex(w)
+        case let c as CommentLex: return try handleCommentLex(c)
+        case let s as StringLex: return try handleStringLex(s)
+        case let n as NumberLex: return try handleNumberLex(n)
+        case let d as DelimiterLex: return try handleDelimiterLex(d)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
+    }
+
+    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
+        return self
+    }
+
+    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder {
+        return self
+    }
+
+    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: i, parsing: self)
+    }
+
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: s, parsing: self)
+    }
+
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: n, parsing: self)
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: d, parsing: self)
     }
 }
 
@@ -73,7 +118,7 @@ internal class VanillaExprBuilder: SingleExprBuilder {
 
     private var bestErrorLocation: ExprBuilder { parent ?? self }
 
-    func fromIdentifier(_ id: IdentifierLex) -> ExprBuilder {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         let word = id.literal
         switch word {
         case \.isEmpty:
@@ -112,22 +157,16 @@ internal class VanillaExprBuilder: SingleExprBuilder {
         }
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            return self
-        case let id as IdentifierLex:
-            return fromIdentifier(id)
-        case let str as StringLex:
-            return StringExprBuilder(literal: str.literal)
-        case let num as NumberLex:
-            return try NumberExprBuilder(from: num, in: bestErrorLocation)
-        case is DelimiterLex:
-            throw UnexpectedLexemeError(got: lex, parsing: bestErrorLocation)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
+    func handleStringLex(_ s: StringLex) -> ExprBuilder {
+        return StringExprBuilder(literal: s.literal)
+    }
+
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        return try NumberExprBuilder(from: n, in: bestErrorLocation)
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: d, parsing: bestErrorLocation)
     }
 }
 
@@ -136,7 +175,7 @@ internal protocol FinalizedLocationExprBuilder: SingleExprBuilder {}
 extension FinalizedLocationExprBuilder {
     var canTerminate: Bool { true }
 
-    func fromIdentifier(_ id: IdentifierLex) throws -> ExprBuilder {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         let word = id.literal
         switch word {
         case String.sayPoeticStringIdentifiers:
@@ -148,20 +187,6 @@ extension FinalizedLocationExprBuilder {
         default:
             throw UnexpectedIdentifierError(got: id, parsing: self, expecting:
                 Set((String.poeticNumberIdentifiers ∪ String.sayPoeticStringIdentifiers) ∪ String.indexingIdentifiers))
-        }
-    }
-
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            return self
-        case let id as IdentifierLex:
-            return try fromIdentifier(id)
-        case is StringLex, is NumberLex, is DelimiterLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
         }
     }
 }
@@ -197,8 +222,9 @@ internal class IndexingLocationExprBuilder: SingleExprBuilder {
         target = t
     }
 
-    func pushThrough(_ lex: Lex) throws {
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         index = try index.partialPush(lex)
+        return self
     }
 
     func build(inRange range: LexRange) throws -> ExprP {
@@ -207,17 +233,20 @@ internal class IndexingLocationExprBuilder: SingleExprBuilder {
         return IndexingExpr(source: t, operand: i)
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            return self
-        case is IdentifierLex, is StringLex, is NumberLex, is DelimiterLex:
-            try pushThrough(lex)
-            return self
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(id)
+    }
+
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return try pushThrough(s)
+    }
+
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        return try pushThrough(n)
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return try pushThrough(d)
     }
 }
 
@@ -233,23 +262,9 @@ internal class CommonVariableNameExprBuilder: SingleExprBuilder {
         throw UnexpectedEOLError(range: range, parsing: self)
     }
 
-    func fromIdentifier(_ id: IdentifierLex) -> ExprBuilder {
+    func handleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder {
         let word = id.literal
         return VariableNameExprBuilder(name: "\(first) \(word)")
-    }
-
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            return self
-        case let id as IdentifierLex:
-            return fromIdentifier(id)
-        case is StringLex, is NumberLex, is DelimiterLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
     }
 }
 
@@ -276,7 +291,7 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder {
         return try newMe.partialPush(lex)
     }
 
-    func fromIdentifier(_ id: IdentifierLex) throws -> ExprBuilder {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         let word = id.literal
         if word.firstCharIsUpperCase {
             words.append(word)
@@ -286,20 +301,8 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder {
         }
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            return self
-        case let id as IdentifierLex:
-            return try fromIdentifier(id)
-        case is DelimiterLex:
-            return try pushToFinalVariable(lex)
-        case is StringLex, is NumberLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return try pushToFinalVariable(d)
     }
 }
 
@@ -319,13 +322,19 @@ internal class PoeticConstantAssignmentExprBuilder: SingleExprBuilder {
         return VoidCallExpr(head: .assign, target: t, source: v, arg: nil)
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is CommentLex, is DelimiterLex, is WhitespaceLex, is IdentifierLex, is StringLex, is NumberLex:
-            return self
-        default:
-            assertionFailure("unhandled lexeme")
-        }
+    func handleIdentifierLex(_: IdentifierLex) throws -> ExprBuilder {
+        return self
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return self
+    }
+
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return self
+    }
+
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
         return self
     }
 }
@@ -352,7 +361,8 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
         return m
     }
 
-    func pushPoeticDigit() {
+    @discardableResult
+    func pushPoeticDigit() -> ExprBuilder {
         if let n = digit {
             if decimalDigit == 0 {
                 value *= 10
@@ -363,6 +373,7 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
             }
             digit = nil
         }
+        return self
     }
 
     func build(inRange range: LexRange) throws -> ExprP {
@@ -371,31 +382,30 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
         return VoidCallExpr(head: .assign, target: t, source: NumberExpr(literal: Double(value)), arg: nil)
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is CommentLex, is DelimiterLex:
-            pushPoeticDigit()
-            return self
-        case let w as WhitespaceLex:
-            pushPoeticDigit()
-            if decimalDigit == 0 && w.literal.firstCharIsDot {
-                decimalDigit = 1
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        if value == 0 {
+            switch id.literal {
+            case String.constantIdentifiers:
+                return try PoeticConstantAssignmentExprBuilder(target: target, constantId: id)
+            default: break
             }
-            return self
-        case let id as IdentifierLex:
-            if value == 0 {
-                switch id.literal {
-                case String.constantIdentifiers:
-                    return try PoeticConstantAssignmentExprBuilder(target: target, constantId: id)
-                default: break
-                }
-            }
-            addToPoeticDigit(from: id)
-        break
-        case is StringLex, is NumberLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
+        }
+        addToPoeticDigit(from: id)
+        return self
+    }
+
+    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder {
+        return pushPoeticDigit()
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return pushPoeticDigit()
+    }
+
+    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
+        pushPoeticDigit()
+        if decimalDigit == 0 && w.literal.firstCharIsDot {
+            decimalDigit = 1
         }
         return self
     }
@@ -415,27 +425,39 @@ internal class PoeticStringAssignmentExprBuilder: SingleExprBuilder {
         return VoidCallExpr(head: .assign, target: t, source: StringExpr(literal: value ?? ""), arg: nil)
     }
 
-    func append(_ s: String) {
-        guard value != nil else { value = s; return }
+    @discardableResult
+    func append(_ s: String) -> ExprBuilder {
+        if value == nil { value = "" }
         value! += s
+        return self
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is DelimiterLex, is NumberLex:
-            append(lex.literal)
-        case is IdentifierLex, is CommentLex, is StringLex:
-            append(lex.prettyLiteral!)
-        case is WhitespaceLex:
-            if value == nil {
-                value = ""
-            } else {
-                append(lex.literal)
-            }
-        default:
-            assertionFailure("unhandled lexeme")
-        }
+    func handleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder {
+        return append(id.prettyLiteral!)
+    }
 
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return append(d.literal)
+    }
+
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        return append(n.literal)
+    }
+
+    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder {
+        return append(c.prettyLiteral!)
+    }
+
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return append(s.prettyLiteral!)
+    }
+
+    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
+        if value == nil {
+            value = ""
+        } else {
+            append(w.literal)
+        }
         return self
     }
 }
@@ -468,15 +490,17 @@ internal class AssignmentExprBuilder: SingleExprBuilder {
         return VoidCallExpr(head: .assign, target: t, source: s, arg: nil)
     }
 
-    func pushThrough(_ lex: Lex) throws {
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         if expectingTarget {
             target = try target.partialPush(lex)
         } else {
             value = try value.partialPush(lex)
         }
+        return self
     }
 
-    func fromIdentifier(_ id: IdentifierLex) throws {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.assignBeIdentifiers:
             guard expectingTarget && !(target is VanillaExprBuilder) else {
@@ -491,21 +515,19 @@ internal class AssignmentExprBuilder: SingleExprBuilder {
         default:
             try pushThrough(id)
         }
+        return self
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            break
-        case let id as IdentifierLex:
-            try fromIdentifier(id)
-        case is StringLex, is DelimiterLex, is NumberLex:
-            try pushThrough(lex)
-        default:
-            assertionFailure("unhandled lexeme")
-        }
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return try pushThrough(s)
+    }
 
-        return self
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        return try pushThrough(n)
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return try pushThrough(d)
     }
 }
 
@@ -520,6 +542,7 @@ internal class CrementExprBuilder: SingleExprBuilder {
     init(forIncrement inc: Bool) {
         isIncrement = inc
     }
+
     init(forDecrement dec: Bool) {
         isIncrement = !dec
     }
@@ -530,12 +553,14 @@ internal class CrementExprBuilder: SingleExprBuilder {
         return VoidCallExpr(head: .assign, target: t, source: add, arg: nil)
     }
 
-    func pushThrough(_ lex: Lex) throws {
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         guard !targetFinished else { throw UnexpectedLexemeError(got: lex, parsing: self) }
         target = try target.partialPush(lex)
+        return self
     }
 
-    func fromIdentifier(_ id: IdentifierLex) throws {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.upIdentifiers:
             guard isIncrement else { throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.downIdentifiers ) }
@@ -548,24 +573,20 @@ internal class CrementExprBuilder: SingleExprBuilder {
         default:
             try pushThrough(id)
         }
+        return self
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            break
-        case let id as IdentifierLex:
-            try fromIdentifier(id)
-        case is StringLex, is NumberLex:
-            try pushThrough(lex)
-        case is DelimiterLex:
-            guard !targetFinished else { break }
-            try pushThrough(lex)
-        default:
-            assertionFailure("unhandled lexeme")
-        }
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return try pushThrough(s)
+    }
 
-        return self
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        return try pushThrough(n)
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        guard !targetFinished else { return self }
+        return try pushThrough(d)
     }
 }
 
@@ -579,35 +600,35 @@ internal class InputExprBuilder: SingleExprBuilder {
         return VoidCallExpr(head: .scan, target: t, source: nil, arg: nil)
     }
 
-    func pushThrough(_ lex: Lex) throws {
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         guard target != nil else {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         }
         target = try target!.partialPush(lex)
+        return self
     }
 
-    func fromIdentifier(_ id: IdentifierLex) throws {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.toIdentifiers:
             target = VanillaExprBuilder(parent: self)
         default:
             try pushThrough(id)
         }
+        return self
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            break
-        case let id as IdentifierLex:
-            try fromIdentifier(id)
-        case is StringLex, is DelimiterLex, is NumberLex:
-            try pushThrough(lex)
-        default:
-            assertionFailure("unhandled lexeme")
-        }
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return try pushThrough(s)
+    }
 
-        return self
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        return try pushThrough(n)
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return try pushThrough(d)
     }
 }
 
@@ -620,21 +641,25 @@ internal class OutputExprBuilder: SingleExprBuilder {
         return VoidCallExpr(head: .print, target: nil, source: s, arg: nil)
     }
 
-    func pushThrough(_ lex: Lex) throws {
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         target = try target.partialPush(lex)
+        return self
     }
 
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is WhitespaceLex, is CommentLex:
-            break
-        case is IdentifierLex, is StringLex, is ContractionLex, is DelimiterLex, is NumberLex:
-            try pushThrough(lex)
-        default:
-            assertionFailure("unhandled lexeme")
-        }
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(id)
+    }
 
-        return self
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return try pushThrough(s)
+    }
+
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
+        return try pushThrough(n)
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return try pushThrough(d)
     }
 }
 
@@ -647,7 +672,7 @@ internal class StringExprBuilder: SingleExprBuilder {
         return StringExpr(literal: literal)
     }
 
-    func fromIdentifier(_ id: IdentifierLex) throws -> ExprBuilder {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.indexingIdentifiers:
             return IndexingLocationExprBuilder(target: self)
@@ -656,21 +681,8 @@ internal class StringExprBuilder: SingleExprBuilder {
         }
     }
 
-
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is CommentLex, is WhitespaceLex:
-            return self
-        case let id as IdentifierLex:
-            return try fromIdentifier(id)
-        case let s as StringLex:
-            return StringExprBuilder(literal: literal + s.literal)
-        case is NumberLex, is DelimiterLex, is IdentifierLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
+        return StringExprBuilder(literal: literal + s.literal)
     }
 }
 
@@ -688,20 +700,9 @@ internal class NumberExprBuilder: SingleExprBuilder {
         }
         literal = f
     }
+
     init(literal f: Double) {
         literal = f
-    }
-
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is CommentLex, is WhitespaceLex:
-            return self
-        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
     }
 }
 
@@ -713,18 +714,6 @@ internal class BoolExprBuilder: SingleExprBuilder {
     func build(inRange _: LexRange) -> ExprP {
         return BoolExpr(literal: literal)
     }
-
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is CommentLex, is WhitespaceLex:
-            return self
-        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
-    }
 }
 
 internal class NullExprBuilder: SingleExprBuilder {
@@ -733,18 +722,6 @@ internal class NullExprBuilder: SingleExprBuilder {
     func build(inRange _: LexRange) -> ExprP {
         return NullExpr()
     }
-
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is CommentLex, is WhitespaceLex:
-            return self
-        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
-    }
 }
 
 internal class MysteriousExprBuilder: SingleExprBuilder {
@@ -752,17 +729,5 @@ internal class MysteriousExprBuilder: SingleExprBuilder {
 
     func build(inRange _: LexRange) -> ExprP {
         return MysteriousExpr()
-    }
-
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is CommentLex, is WhitespaceLex:
-            return self
-        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
-            throw UnexpectedLexemeError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
     }
 }
