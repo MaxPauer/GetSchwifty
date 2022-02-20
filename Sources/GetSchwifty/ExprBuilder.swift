@@ -638,23 +638,7 @@ internal class OutputExprBuilder: SingleExprBuilder {
     }
 }
 
-internal protocol LeafExprBuilder: SingleExprBuilder {}
-
-extension LeafExprBuilder {
-    func partialPush(_ lex: Lex) throws -> ExprBuilder {
-        switch lex {
-        case is CommentLex, is WhitespaceLex:
-            return self
-        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
-            throw LeafExprPushError(got: lex, parsing: self)
-        default:
-            assertionFailure("unhandled lexeme")
-            return self
-        }
-    }
-}
-
-internal class StringExprBuilder: LeafExprBuilder {
+internal class StringExprBuilder: SingleExprBuilder {
     let literal: String
     var prettyName: String { "String (=\"\(literal)\")" }
     init(literal s: String) { literal = s }
@@ -662,9 +646,35 @@ internal class StringExprBuilder: LeafExprBuilder {
     func build(inRange _: LexRange) -> ExprP {
         return StringExpr(literal: literal)
     }
+
+    func fromIdentifier(_ id: IdentifierLex) throws -> ExprBuilder {
+        switch id.literal {
+        case String.indexingIdentifiers:
+            return IndexingLocationExprBuilder(target: self)
+        default:
+            throw UnexpectedLexemeError(got: id, parsing: self)
+        }
+    }
+
+
+    func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        switch lex {
+        case is CommentLex, is WhitespaceLex:
+            return self
+        case let id as IdentifierLex:
+            return try fromIdentifier(id)
+        case let s as StringLex:
+            return StringExprBuilder(literal: literal + s.literal)
+        case is NumberLex, is DelimiterLex, is IdentifierLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
+    }
 }
 
-internal class NumberExprBuilder: LeafExprBuilder {
+internal class NumberExprBuilder: SingleExprBuilder {
     let literal: Double
     var prettyName: String { "Numberic Value (=\"\(literal)\")" }
 
@@ -681,9 +691,21 @@ internal class NumberExprBuilder: LeafExprBuilder {
     init(literal f: Double) {
         literal = f
     }
+
+    func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        switch lex {
+        case is CommentLex, is WhitespaceLex:
+            return self
+        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
+    }
 }
 
-internal class BoolExprBuilder: LeafExprBuilder {
+internal class BoolExprBuilder: SingleExprBuilder {
     let literal: Bool
     var prettyName: String { "Boolean Value (=\"\(literal)\")" }
     init(literal b: Bool) { literal = b }
@@ -691,20 +713,56 @@ internal class BoolExprBuilder: LeafExprBuilder {
     func build(inRange _: LexRange) -> ExprP {
         return BoolExpr(literal: literal)
     }
+
+    func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        switch lex {
+        case is CommentLex, is WhitespaceLex:
+            return self
+        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
+    }
 }
 
-internal class NullExprBuilder: LeafExprBuilder {
+internal class NullExprBuilder: SingleExprBuilder {
     let prettyName: String = "Null Value"
 
     func build(inRange _: LexRange) -> ExprP {
         return NullExpr()
     }
+
+    func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        switch lex {
+        case is CommentLex, is WhitespaceLex:
+            return self
+        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
+    }
 }
 
-internal class MysteriousExprBuilder: LeafExprBuilder {
+internal class MysteriousExprBuilder: SingleExprBuilder {
     let prettyName: String = "Mysterious Value"
 
     func build(inRange _: LexRange) -> ExprP {
         return MysteriousExpr()
+    }
+
+    func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        switch lex {
+        case is CommentLex, is WhitespaceLex:
+            return self
+        case is StringLex, is NumberLex, is DelimiterLex, is IdentifierLex:
+            throw UnexpectedLexemeError(got: lex, parsing: self)
+        default:
+            assertionFailure("unhandled lexeme")
+            return self
+        }
     }
 }

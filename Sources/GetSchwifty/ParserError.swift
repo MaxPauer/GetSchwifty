@@ -72,12 +72,3 @@ internal struct UnexpectedEOLError: ParserError {
         "encountered unexpected EOL while parsing: \(parsing)"
     }
 }
-
-internal struct LeafExprPushError: LexemeError {
-    let got: Lex
-    let parsing: ExprBuilder
-
-    var _description: String {
-        "trying to push lexeme \(got) onto \(parsing)"
-    }
-}
