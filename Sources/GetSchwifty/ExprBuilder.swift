@@ -303,6 +303,33 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder {
     }
 }
 
+internal class PoeticConstantAssignmentExprBuilder: SingleExprBuilder {
+    let prettyName: String = "Poetic Constant Assignment"
+    private var target: ExprBuilder
+    lazy private var constant: ExprBuilder = VanillaExprBuilder(parent: self)
+
+    init(target t: ExprBuilder, constantId id: IdentifierLex) throws {
+        target = t
+        constant = try constant.partialPush(id)
+    }
+
+    func build(inRange range: LexRange) throws -> ExprP {
+        let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
+        let v: ValueExprP = try constant.build(asChildOf: self, inRange: range)
+        return AssignmentExpr(target: t, source: v)
+    }
+
+    func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        switch lex {
+        case is CommentLex, is DelimiterLex, is WhitespaceLex, is IdentifierLex, is StringLex, is NumberLex:
+            return self
+        default:
+            assertionFailure("unhandled lexeme")
+        }
+        return self
+    }
+}
+
 internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
     var target: ExprBuilder
     private var value = 0.0
@@ -356,6 +383,13 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
             }
             return self
         case let id as IdentifierLex:
+            if value == 0 {
+                switch id.literal {
+                case String.constantIdentifiers:
+                    return try PoeticConstantAssignmentExprBuilder(target: target, constantId: id)
+                default: break
+                }
+            }
             addToPoeticDigit(from: id)
         break
         case is StringLex, is NumberLex:

@@ -43,6 +43,9 @@ internal extension String {
     static var mysteriousIdentifiers: Set<String> {
         Set(["mysterious"])
     }
+    static var constantIdentifiers: Set<String> {
+        String.emptyStringIdentifiers ∪ (String.trueIdentifiers ∪ (String.falseIdentifiers ∪ (String.mysteriousIdentifiers ∪ String.nullIdentifiers)))
+    }
     static var isContractionIdentifiers: Set<String> {
         Set(["'s", "'re"])
     }

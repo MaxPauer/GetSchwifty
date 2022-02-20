@@ -46,7 +46,6 @@ final class ParserTests: XCTestCase {
     func testPoeticNumberLiteral() throws {
         let _: NumberExpr = try assignParseTest("heaven is a halfpipe", "heaven", 18)
         let _: NumberExpr = try assignParseTest("My life's fucked", "my life", 6)
-        let _: NumberExpr = try assignParseTest("My life's gone", "my life", 4)
         let _: NumberExpr = try assignParseTest("My life's", "my life", 0)
         let _: NumberExpr = try assignParseTest("My life's ", "my life", 0)
         let _: NumberExpr = try assignParseTest("Your lies're my death", "your lies", 25)
@@ -69,6 +68,12 @@ final class ParserTests: XCTestCase {
         let _: NumberExpr = try assignParseTest("heaven is a half.pipe", "heaven", 14.4)
         let _: NumberExpr = try assignParseTest("heaven is a half.pipe pipe pi", "heaven", 14.442)
         let _: NumberExpr = try assignParseTest("heaven is a half.pipe pipe pi. pip", "heaven", 14.4423)
+    }
+
+    func testPoeticConstantLiteral() throws {
+        let _: NullExpr = try assignParseTest("My life's gone", "my life", nil)
+        let _: BoolExpr = try assignParseTest("My life's lies lol", "my life", false)
+        let _: MysteriousExpr = try assignParseTest("My life's mysterious", "my life", nil)
     }
 
     func testPoeticStringLiteral() throws {
