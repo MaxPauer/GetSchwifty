@@ -165,6 +165,22 @@ final class ParserTests: XCTestCase {
         let _: IndexingExpr = try testParse("knock him at 0 down,down down", -3)
     }
 
+    func testIndexing() throws {
+        func testParse<S,I>(_ inp: String) throws -> (S,I) {
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? IndexingExpr)
+            let s = try XCTUnwrap(i.source as? S)
+            let ii = try XCTUnwrap(i.operand as? I)
+            return (s,ii)
+        }
+
+        let _: (VariableNameExpr, NumberExpr) = try testParse("A horse at 5")
+        let _: (PronounExpr, PronounExpr) = try testParse("him at her")
+        let _: (VariableNameExpr, StringExpr) = try testParse("heaven at \"hell\"")
+        let _: (StringExpr, StringExpr) = try testParse("\"heaven\" at \"hell\"")
+        let _: (StringExpr, VariableNameExpr) = try testParse("\"heaven\" at hell")
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)

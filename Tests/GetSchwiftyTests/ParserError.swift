@@ -78,6 +78,12 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedLexemeError = errorTest("Shout true \"dat\"", StringLex.self, BoolExprBuilder.self, (1,11))
     }
 
+    func testIndexingFailure() throws {
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("him at", NopExpr.self, IndexingLocationExprBuilder.self, (1,6))
+        let _: UnexpectedLexemeError = errorTest("her at ,", DelimiterLex.self, IndexingLocationExprBuilder.self, (1,7))
+        let _: UnexpectedLexemeError = try errorTest("5 at 5", IdentifierLex.self, NumberExprBuilder.self, (1,2))
+    }
+
     func testIncDecrementFailure() throws {
         let _: UnexpectedExprError<LocationExprP> = try errorTest("Knock", NopExpr.self, CrementExprBuilder.self, (1,5))
         let _: UnexpectedExprError<LocationExprP> = try errorTest("Build", NopExpr.self, CrementExprBuilder.self, (1,5))
