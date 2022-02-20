@@ -17,11 +17,6 @@ internal struct VariableNameExpr: LocationExprP {
     let name: String
 }
 
-internal struct AssignmentExpr: ExprP {
-    let target: LocationExprP
-    let source: ValueExprP
-}
-
 internal struct BoolExpr: LiteralExprP {
     let literal: Bool
 }
@@ -47,83 +42,8 @@ internal struct IndexingExpr: LocationExprP {
     let operand: ValueExprP
 }
 
-internal struct ArithmeticExpr: ValueExprP {
-    enum Op {
-        case add; case sub; case mul; case div;
-    }
-
-    let lhs: ValueExprP
-    let rhs: ValueExprP
-    let op: Op
-}
-
-internal struct InputExpr: ExprP {
-    let target: LocationExprP?
-}
-
-internal struct OutputExpr: ExprP {
-    let source: ValueExprP
-}
-
 internal struct ListExpr: ValueExprP {
     let members: [ValueExprP]
-}
-
-internal struct PushExpr: ExprP {
-    let target: LocationExprP
-    let source: ExprP
-}
-
-internal struct PopExpr: ExprP {
-    let source: LocationExprP
-}
-
-internal struct SplitExpr: ExprP {
-    let target: LocationExprP
-    let source: ValueExprP
-    let splitt: ValueExprP?
-}
-
-internal struct JoinExpr: ExprP {
-    let target: LocationExprP
-    let source: ValueExprP
-    let splitt: ValueExprP?
-}
-
-internal struct CastExpr: ExprP {
-    let target: LocationExprP
-    let source: ValueExprP
-    let radix: ValueExprP?
-}
-
-internal struct RoundingExpr: ExprP {
-    enum Op {
-        case ceil; case floor; case round
-    }
-    let target: LocationExprP
-    let op: Op
-}
-
-internal struct ComparisonExpr: ValueExprP {
-    enum Op {
-        case eq; case neq; case gt; case lt; case geq; case leq
-    }
-    let lhs: ValueExprP
-    let rhs: ValueExprP
-    let op: Op
-}
-
-internal struct BinBooleanExpr: ValueExprP {
-    enum Op {
-        case and; case orr; case nor
-    }
-    let lhs: ValueExprP
-    let rhs: ValueExprP
-    let op: Op
-}
-
-internal struct BooleanNotExpr: ValueExprP {
-    let operand: ValueExprP
 }
 
 internal struct ConditionalExpr: ExprP {
@@ -141,7 +61,31 @@ internal struct ReturnExpr: ExprP {
     let value: ValueExprP
 }
 
-internal struct FunctionExpr: ExprP {
+internal struct FunctionDeclExpr: ValueExprP {
     let args: [String]
     let funBlock: [ExprP]
+}
+
+internal struct FunctionCallExpr: ValueExprP {
+    enum Op {
+        case not; case and; case orr; case nor; case eq
+        case neq; case gt; case lt; case geq; case leq
+        case add; case sub; case mul; case div
+        case custom
+    }
+    let head: Op
+    let args: [ValueExprP]
+}
+
+internal struct VoidCallExpr: ExprP {
+    enum Op {
+        case assign; case print; case scan; case push
+        case pop; case split; case join; case cast
+        case ceil; case floor; case round
+    }
+
+    let head: Op
+    let target: LocationExprP?
+    let source: ValueExprP?
+    let arg: ValueExprP?
 }

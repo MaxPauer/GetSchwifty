@@ -316,7 +316,7 @@ internal class PoeticConstantAssignmentExprBuilder: SingleExprBuilder {
     func build(inRange range: LexRange) throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
         let v: ValueExprP = try constant.build(asChildOf: self, inRange: range)
-        return AssignmentExpr(target: t, source: v)
+        return VoidCallExpr(head: .assign, target: t, source: v, arg: nil)
     }
 
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
@@ -368,7 +368,7 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
     func build(inRange range: LexRange) throws -> ExprP {
         pushPoeticDigit()
         let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
-        return AssignmentExpr(target: t, source: NumberExpr(literal: Double(value)))
+        return VoidCallExpr(head: .assign, target: t, source: NumberExpr(literal: Double(value)), arg: nil)
     }
 
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
@@ -412,7 +412,7 @@ internal class PoeticStringAssignmentExprBuilder: SingleExprBuilder {
 
     func build(inRange range: LexRange) throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
-        return AssignmentExpr(target: t, source: StringExpr(literal: value ?? ""))
+        return VoidCallExpr(head: .assign, target: t, source: StringExpr(literal: value ?? ""), arg: nil)
     }
 
     func append(_ s: String) {
@@ -465,7 +465,7 @@ internal class AssignmentExprBuilder: SingleExprBuilder {
     func build(inRange range: LexRange) throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
         let s: ValueExprP = try value.build(asChildOf: self, inRange: range)
-        return AssignmentExpr(target: t, source: s)
+        return VoidCallExpr(head: .assign, target: t, source: s, arg: nil)
     }
 
     func pushThrough(_ lex: Lex) throws {
@@ -526,7 +526,8 @@ internal class CrementExprBuilder: SingleExprBuilder {
 
     func build(inRange range: LexRange) throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
-        return AssignmentExpr(target: t, source: ArithmeticExpr(lhs: t, rhs: NumberExpr(literal: Double(value)), op: .add))
+        let add = FunctionCallExpr(head: .add, args: [t, NumberExpr(literal: Double(value))])
+        return VoidCallExpr(head: .assign, target: t, source: add, arg: nil)
     }
 
     func pushThrough(_ lex: Lex) throws {
@@ -573,9 +574,9 @@ internal class InputExprBuilder: SingleExprBuilder {
     let prettyName: String = "Input"
 
     func build(inRange range: LexRange) throws -> ExprP {
-        guard let target = target else { return InputExpr(target: nil) }
+        guard let target = target else { return VoidCallExpr(head: .scan, target: nil, source: nil, arg: nil) }
         let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
-        return InputExpr(target: t)
+        return VoidCallExpr(head: .scan, target: t, source: nil, arg: nil)
     }
 
     func pushThrough(_ lex: Lex) throws {
@@ -616,7 +617,7 @@ internal class OutputExprBuilder: SingleExprBuilder {
 
     func build(inRange range: LexRange) throws -> ExprP {
         let s: ValueExprP = try target.build(asChildOf: self, inRange: range)
-        return OutputExpr(source: s)
+        return VoidCallExpr(head: .print, target: nil, source: s, arg: nil)
     }
 
     func pushThrough(_ lex: Lex) throws {

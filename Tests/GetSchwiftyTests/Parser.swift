@@ -35,7 +35,8 @@ final class ParserTests: XCTestCase {
 
     func assignParseTest<U, V>(_ inp: String, _ expVarName: String, _ expValue: U) throws -> V where U: Equatable, V: LiteralExprP, V.LiteralT == U {
         var p = try XCTUnwrap(self.parse(inp))
-        let ass = try p.next() as! AssignmentExpr
+        let ass = try XCTUnwrap(p.next() as? VoidCallExpr)
+        XCTAssertEqual(ass.head, .assign)
         XCTAssert(try p.next() is NopExpr)
         XCTAssertEqual((ass.target as! VariableNameExpr).name, expVarName)
         let rhs = try XCTUnwrap(ass.source as? V)
@@ -105,7 +106,8 @@ final class ParserTests: XCTestCase {
     func testInput() throws {
         let testParse = { (inp: String, expLocName: String?) in
             var p = try XCTUnwrap(self.parse(inp))
-            let i = try XCTUnwrap(try p.next() as? InputExpr)
+            let i = try XCTUnwrap(try p.next() as? VoidCallExpr)
+            XCTAssertEqual(i.head, .scan)
             XCTAssert(try p.next() is NopExpr)
             if let elc = expLocName {
                 XCTAssertEqual(try XCTUnwrap(i.target as? VariableNameExpr).name, elc)
@@ -123,7 +125,8 @@ final class ParserTests: XCTestCase {
     func testOutput() throws {
         func testParse<T>(_ inp: String) throws -> T {
             var p = try XCTUnwrap(self.parse(inp))
-            let o = try XCTUnwrap(p.next() as? OutputExpr)
+            let o = try XCTUnwrap(p.next() as? VoidCallExpr)
+            XCTAssertEqual(o.head, .print)
             let t = try XCTUnwrap(o.source as? T)
             XCTAssert(try p.next() is NopExpr)
             return t
@@ -140,10 +143,13 @@ final class ParserTests: XCTestCase {
     func testIncDecrement() throws {
         func testParse<T>(_ inp: String, _ value: Int) throws -> T {
             var p = try XCTUnwrap(self.parse(inp))
-            let o = try XCTUnwrap(p.next() as? AssignmentExpr)
+            let o = try XCTUnwrap(p.next() as? VoidCallExpr)
+            XCTAssertEqual(o.head, .assign)
             let t = try XCTUnwrap(o.target as? T)
-            let s = try XCTUnwrap(o.source as? ArithmeticExpr)
-            let v = try XCTUnwrap(s.rhs as? NumberExpr)
+            let s = try XCTUnwrap(o.source as? FunctionCallExpr)
+            XCTAssertEqual(s.head, .add)
+            let _ = try XCTUnwrap(s.args[0] as? T)
+            let v = try XCTUnwrap(s.args[1] as? NumberExpr)
             XCTAssertEqual(v.literal, Double(value))
             return t
         }
