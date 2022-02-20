@@ -1,6 +1,14 @@
+fileprivate extension Character {
+    var isDot: Bool { self == "." }
+}
+
 fileprivate extension String {
     var firstCharIsUpperCase: Bool {
         return self.first?.isUppercase ?? false
+    }
+
+    var firstCharIsDot: Bool {
+        return self.first?.isDot ?? false
     }
 }
 
@@ -297,7 +305,8 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder {
 
 internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
     var target: ExprBuilder
-    private var value = 0
+    private var value = 0.0
+    private var decimalDigit: UInt = 0
     private var digit: Int? = nil
     let prettyName: String = "Poetic Number Assignment"
 
@@ -310,10 +319,21 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
         digit = (digit ?? 0) + n
     }
 
+    func pow10(_ n: UInt) -> UInt {
+        var m: UInt = 1
+        for _ in 0..<n { m *= 10 }
+        return m
+    }
+
     func pushPoeticDigit() {
         if let n = digit {
-            value *= 10
-            value += n % 10
+            if decimalDigit == 0 {
+                value *= 10
+                value += Double(n % 10)
+            } else {
+                value += Double(n) / Double(pow10(decimalDigit))
+                decimalDigit += 1
+            }
             digit = nil
         }
     }
@@ -326,13 +346,19 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
 
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
         switch lex {
-        case is WhitespaceLex, is CommentLex:
+        case is CommentLex, is DelimiterLex:
             pushPoeticDigit()
+            return self
+        case let w as WhitespaceLex:
+            pushPoeticDigit()
+            if decimalDigit == 0 && w.literal.firstCharIsDot {
+                decimalDigit = 1
+            }
             return self
         case let id as IdentifierLex:
             addToPoeticDigit(from: id)
         break
-        case is StringLex, is DelimiterLex, is NumberLex:
+        case is StringLex, is NumberLex:
             throw UnexpectedLexemeError(got: lex, parsing: self)
         default:
             assertionFailure("unhandled lexeme")

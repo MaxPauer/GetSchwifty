@@ -88,6 +88,9 @@ final class LexerTests: XCTestCase {
 
         testLex("", 0)
         testLex(" ", 1)
+        testLex(".", 1)
+        testLex("+", 1)
+        testLex("-", 1)
         testLex("  ", 1)
         testLex(" \t ", 1)
         testLex("  \t \t ", 1)
@@ -159,6 +162,8 @@ final class LexerTests: XCTestCase {
         testLex(".11.99", [0.11, 0.99])
         testLex("22+33", [22, 33])
         testLex("-4e-3", [-4e-3])
+        testLex(".2", [0.2])
+        testLex("-2", [-2])
     }
 
     func testDelimiter() throws {

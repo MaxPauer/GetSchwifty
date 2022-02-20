@@ -66,6 +66,9 @@ final class ParserTests: XCTestCase {
         let _: NumberExpr = try assignParseTest("heaven is a half'halfpi'pe", "heaven", 12)
         let _: NumberExpr = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e", "heaven", 12)
         let _: NumberExpr = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e'", "heaven", 12)
+        let _: NumberExpr = try assignParseTest("heaven is a half.pipe", "heaven", 14.4)
+        let _: NumberExpr = try assignParseTest("heaven is a half.pipe pipe pi", "heaven", 14.442)
+        let _: NumberExpr = try assignParseTest("heaven is a half.pipe pipe pi. pip", "heaven", 14.4423)
     }
 
     func testPoeticStringLiteral() throws {

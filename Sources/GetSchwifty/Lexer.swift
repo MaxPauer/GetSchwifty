@@ -242,7 +242,7 @@ internal struct NumberLex: Lex {
     var literal: String
     let range: LexRange
 
-    fileprivate init(_ chars: inout StringFifo, firstChar: Character, start: LexPos) {
+    fileprivate static func possibly(_ chars: inout StringFifo, firstChar: Character, start: LexPos) -> Lex {
         var rep = String(firstChar)
         var end = →start
 
@@ -270,8 +270,11 @@ internal struct NumberLex: Lex {
             rep.append(chars.pop()!)
         }
 
-        range = end-start
-        literal = rep
+        let range = end-start
+        if !firstChar.isNumber && rep.count == 1 {
+            return WhitespaceLex(literal: rep, range: range)
+        }
+        return NumberLex(literal: rep, range: range)
     }
 }
 
@@ -306,7 +309,7 @@ private func nextLexeme(_ chars: inout StringFifo, start: LexPos) -> Lex? {
     case \.isLetter:
         return IdentifierLex(&chars, firstChar: c, start: start)
     case \.isNumber, "+", "-", ".":
-        return NumberLex(&chars, firstChar: c, start: start)
+        return NumberLex.possibly(&chars, firstChar: c, start: start)
     default:
         return WhitespaceLex(&chars, firstChar: c, start: start)
     }
