@@ -51,7 +51,7 @@ extension SingleExprBuilder {
     }
 }
 
-internal class VanillaExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class VanillaExprBuilder: SingleExprBuilder {
     let prettyName: String = "Vanilla"
     let parent: ExprBuilder?
 
@@ -123,7 +123,7 @@ internal class VanillaExprBuilder: ExprBuilder, SingleExprBuilder {
     }
 }
 
-internal protocol FinalizedLocationExprBuilder: ExprBuilder, SingleExprBuilder {}
+internal protocol FinalizedLocationExprBuilder: SingleExprBuilder {}
 
 extension FinalizedLocationExprBuilder {
     var canTerminate: Bool { true }
@@ -179,7 +179,7 @@ internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
     }
 }
 
-internal class IndexingLocationExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class IndexingLocationExprBuilder: SingleExprBuilder {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
 
@@ -213,7 +213,7 @@ internal class IndexingLocationExprBuilder: ExprBuilder, SingleExprBuilder {
     }
 }
 
-internal class CommonVariableNameExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class CommonVariableNameExprBuilder: SingleExprBuilder {
     let first: String
     var prettyName: String { "Variable Name (unfinished=\(first) …)" }
 
@@ -245,7 +245,7 @@ internal class CommonVariableNameExprBuilder: ExprBuilder, SingleExprBuilder {
     }
 }
 
-internal class ProperVariableNameExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class ProperVariableNameExprBuilder: SingleExprBuilder {
     private(set) var words: [String]
     var prettyName: String { "Variable Name (unfinished=\(name) …)" }
 
@@ -295,7 +295,7 @@ internal class ProperVariableNameExprBuilder: ExprBuilder, SingleExprBuilder {
     }
 }
 
-internal class PoeticNumberAssignmentExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
     var target: ExprBuilder
     private var value = 0
     private var digit: Int? = nil
@@ -341,7 +341,7 @@ internal class PoeticNumberAssignmentExprBuilder: ExprBuilder, SingleExprBuilder
     }
 }
 
-internal class PoeticStringAssignmentExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class PoeticStringAssignmentExprBuilder: SingleExprBuilder {
     var target: ExprBuilder
     private var value: String?
     let prettyName: String = "Poetic String Assignment"
@@ -380,7 +380,7 @@ internal class PoeticStringAssignmentExprBuilder: ExprBuilder, SingleExprBuilder
     }
 }
 
-internal class AssignmentExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class AssignmentExprBuilder: SingleExprBuilder {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
     let prettyName: String = "Assignment"
@@ -449,7 +449,7 @@ internal class AssignmentExprBuilder: ExprBuilder, SingleExprBuilder {
     }
 }
 
-internal class CrementExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class CrementExprBuilder: SingleExprBuilder {
     var targetFinished: Bool = false
     var isIncrement: Bool
     var isDecrement: Bool { !isIncrement }
@@ -508,7 +508,7 @@ internal class CrementExprBuilder: ExprBuilder, SingleExprBuilder {
     }
 }
 
-internal class InputExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class InputExprBuilder: SingleExprBuilder {
     var target: ExprBuilder?
     let prettyName: String = "Input"
 
@@ -550,7 +550,7 @@ internal class InputExprBuilder: ExprBuilder, SingleExprBuilder {
     }
 }
 
-internal class OutputExprBuilder: ExprBuilder, SingleExprBuilder {
+internal class OutputExprBuilder: SingleExprBuilder {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     let prettyName: String = "Output"
 
@@ -577,7 +577,7 @@ internal class OutputExprBuilder: ExprBuilder, SingleExprBuilder {
     }
 }
 
-internal protocol LeafExprBuilder: ExprBuilder, SingleExprBuilder {}
+internal protocol LeafExprBuilder: SingleExprBuilder {}
 
 extension LeafExprBuilder {
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
