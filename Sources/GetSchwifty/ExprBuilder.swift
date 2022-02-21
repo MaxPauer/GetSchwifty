@@ -48,7 +48,7 @@ extension ExprBuilder {
     fileprivate func build<T>(asChildOf parent: ExprBuilder, inRange range: LexRange) throws -> T {
         let ep = try self.build(inRange: range)
         guard let tep = ep as? T else {
-            throw UnexpectedExprError<T>(got: ep, range: range, parsing: parent)
+            throw UnexpectedExprError<T>(got: ep, startPos: range.start, parsing: parent)
         }
         return tep
     }
@@ -277,7 +277,7 @@ internal class CommonVariableNameExprBuilder: SingleExprBuilder {
     }
 
     func build(inRange range: LexRange) throws -> ExprP {
-        throw UnexpectedEOLError(range: range, parsing: self)
+        throw UnexpectedEOLError(startPos: range.start, parsing: self)
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder {

@@ -1,13 +1,12 @@
 internal protocol ParserError: Error, CustomStringConvertible {
     var _description: String { get }
     var parsing: ExprBuilder { get }
-    var range: LexRange { get }
+    var startPos: LexPos { get }
 }
 
 extension ParserError {
     var description: String {
-        let pos = range.start
-        return "Parser error on line \(pos.line):\(pos.char): \(_description)"
+        return "Parser error on line \(startPos.line):\(startPos.char): \(_description)"
     }
 }
 
@@ -17,7 +16,7 @@ internal protocol LexemeError: ParserError {
 }
 
 extension LexemeError {
-    var range: LexRange { got.range }
+    var startPos: LexPos { got.range.start }
 }
 
 internal struct UnexpectedIdentifierError: LexemeError {
@@ -56,7 +55,7 @@ internal struct UnparsableNumberLexemeError: LexemeError {
 
 internal struct UnexpectedExprError<Expecting>: ParserError {
     let got: ExprP
-    let range: LexRange
+    let startPos: LexPos
     let parsing: ExprBuilder
 
     var _description: String {
@@ -65,7 +64,7 @@ internal struct UnexpectedExprError<Expecting>: ParserError {
 }
 
 internal struct UnexpectedEOLError: ParserError {
-    let range: LexRange
+    let startPos: LexPos
     let parsing: ExprBuilder
 
     var _description: String {

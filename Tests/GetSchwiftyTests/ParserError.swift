@@ -14,7 +14,7 @@ final class ParserErrorTests: XCTestCase {
             XCTAssert(type(of: error.got) == got)
             XCTAssert(type(of: error.parsing) == expr)
             let (line,char) = pos
-            XCTAssertEqual(error.range.start, LexPos(line: line, char: char))
+            XCTAssertEqual(error.startPos, LexPos(line: line, char: char))
         }
         return error
     }
@@ -25,7 +25,7 @@ final class ParserErrorTests: XCTestCase {
             error = try! XCTUnwrap(e as? UnexpectedEOLError)
             XCTAssert(type(of: error.parsing) == expr)
             let (line,char) = pos
-            XCTAssertEqual(error.range.start, LexPos(line: line, char: char))
+            XCTAssertEqual(error.startPos, LexPos(line: line, char: char))
         }
         return error
     }
@@ -43,7 +43,7 @@ final class ParserErrorTests: XCTestCase {
         XCTAssert(type(of: err.got) == got)
         XCTAssert(type(of: err.parsing) == expr)
         let (line,char) = pos
-        XCTAssertEqual(err.range.start, LexPos(line: line, char: char))
+        XCTAssertEqual(err.startPos, LexPos(line: line, char: char))
         return err
     }
 
