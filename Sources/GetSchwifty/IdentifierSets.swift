@@ -1,4 +1,5 @@
-infix operator ∪
+infix operator ∪: AdditionPrecedence
+
 
 internal extension Set {
     static func ∪(lhs: Set, rhs: Set) -> Set {
@@ -44,7 +45,11 @@ internal extension String {
         Set(["mysterious"])
     }
     static var constantIdentifiers: Set<String> {
-        String.emptyStringIdentifiers ∪ (String.trueIdentifiers ∪ (String.falseIdentifiers ∪ (String.mysteriousIdentifiers ∪ String.nullIdentifiers)))
+        String.emptyStringIdentifiers
+        ∪ String.trueIdentifiers
+        ∪ String.falseIdentifiers
+        ∪ String.mysteriousIdentifiers
+        ∪ String.nullIdentifiers
     }
     static var isContractionIdentifiers: Set<String> {
         Set(["'s", "'re"])

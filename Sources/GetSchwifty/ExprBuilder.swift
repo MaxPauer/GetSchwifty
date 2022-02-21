@@ -219,7 +219,7 @@ extension FinalizedLocationExprBuilder {
             return IndexingLocationExprBuilder(target: self)
         default:
             throw UnexpectedIdentifierError(got: id, parsing: self, expecting:
-                Set((String.poeticNumberIdentifiers ∪ String.sayPoeticStringIdentifiers) ∪ String.indexingIdentifiers))
+                String.poeticNumberIdentifiers ∪ String.sayPoeticStringIdentifiers ∪ String.indexingIdentifiers)
         }
     }
 }
