@@ -16,6 +16,7 @@ internal struct LexPos {
     static func -(end: LexPos, start: LexPos) -> LexRange {
         LexRange(start: start, end: end)
     }
+    static var origin: LexPos { LexPos(line: 1, char: 0) }
 }
 
 internal struct LexRange {
@@ -322,7 +323,7 @@ internal struct LexIterator: Sequence, IteratorProtocol {
 
     init(input inp: String) {
         chars = StringFifo(inp.makeIterator())
-        start = LexPos(line: 1, char: 0)
+        start = LexPos.origin
     }
 
     mutating func next() -> Lex? {
