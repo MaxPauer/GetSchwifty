@@ -1,3 +1,5 @@
+infix operator |=>
+
 fileprivate extension Character {
     var isDot: Bool { self == "." }
 }
@@ -28,9 +30,10 @@ internal enum PartialExpr {
 
 internal protocol ExprBuilder: AnyObject, CustomStringConvertible {
     var prettyName: String { get }
+    var range: LexRange! { get set }
     func partialPush(_ lex: Lex) throws -> ExprBuilder
     func push(_ lex: Lex) throws -> PartialExpr
-    func build(inRange range: LexRange) throws -> ExprP
+    func build() throws -> ExprP
 
     func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder
     func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder
@@ -45,26 +48,35 @@ extension ExprBuilder {
         "[\(prettyName) Expression]"
     }
 
-    fileprivate func build<T>(asChildOf parent: ExprBuilder, inRange range: LexRange) throws -> T {
-        let ep = try self.build(inRange: range)
+    fileprivate func build<T>(asChildOf parent: ExprBuilder) throws -> T {
+        let ep = try self.build()
         guard let tep = ep as? T else {
             throw UnexpectedExprError<T>(got: ep, startPos: range.start, parsing: parent)
         }
         return tep
     }
 
+    static func |=> <E>(lhs: Self, rhs: E) -> E where E: ExprBuilder {
+        rhs.range = -lhs.range.end
+        return rhs
+    }
+
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        var newSelf: ExprBuilder = self
+
         switch lex {
-        case let i as IdentifierLex: return try handleIdentifierLex(i)
-        case let w as WhitespaceLex: return try handleWhitespaceLex(w)
-        case let c as CommentLex: return try handleCommentLex(c)
-        case let s as StringLex: return try handleStringLex(s)
-        case let n as NumberLex: return try handleNumberLex(n)
-        case let d as DelimiterLex: return try handleDelimiterLex(d)
+        case let i as IdentifierLex: newSelf = try handleIdentifierLex(i)
+        case let w as WhitespaceLex: newSelf = try handleWhitespaceLex(w)
+        case let c as CommentLex: newSelf = try handleCommentLex(c)
+        case let s as StringLex: newSelf = try handleStringLex(s)
+        case let n as NumberLex: newSelf = try handleNumberLex(n)
+        case let d as DelimiterLex: newSelf = try handleDelimiterLex(d)
         default:
             assertionFailure("unhandled lexeme")
-            return self
         }
+
+        newSelf.range = self.range + lex.range
+        return newSelf
     }
 
     func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
@@ -124,14 +136,12 @@ internal extension PushesDelimiterThrough {
     }
 }
 
-
 internal protocol SingleExprBuilder: ExprBuilder {}
 
 extension SingleExprBuilder {
-
     func push(_ lex: Lex) throws -> PartialExpr {
         if lex is NewlineLex {
-            return .expr(try build(inRange: lex.range))
+            return .expr(try build())
         }
         return .builder(try partialPush(lex))
     }
@@ -140,12 +150,19 @@ extension SingleExprBuilder {
 internal class VanillaExprBuilder: SingleExprBuilder {
     let prettyName: String = "Vanilla"
     let parent: ExprBuilder?
+    var range: LexRange!
 
-    init(parent p: ExprBuilder?) {
+    init(parent p: ExprBuilder) {
         parent = p
+        range = -p.range.end
     }
 
-    func build(inRange _: LexRange) -> ExprP {
+    init(startPos: LexPos) {
+        parent = nil
+        range = -startPos
+    }
+
+    func build() -> ExprP {
         return NopExpr()
     }
 
@@ -226,21 +243,23 @@ extension FinalizedLocationExprBuilder {
 
 internal class PronounExprBuilder: FinalizedLocationExprBuilder {
     let prettyName: String = "Pronoun"
+    var range: LexRange!
 
-    func build(inRange _: LexRange) -> ExprP {
+    func build() -> ExprP {
         return PronounExpr()
     }
 }
 
 internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
     let name: String
+    var range: LexRange!
     var prettyName: String { "Variable Name (=\(name))" }
 
     init(name n: String) {
         name = n.lowercased()
     }
 
-    func build(inRange _: LexRange) -> ExprP {
+    func build() -> ExprP {
         return VariableNameExpr(name: name)
     }
 }
@@ -249,6 +268,7 @@ internal class IndexingLocationExprBuilder:
         SingleExprBuilder, PushesIdentifierThrough, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
 
     var prettyName: String { "Indexing (=\(target)[\(index)])" }
 
@@ -261,33 +281,35 @@ internal class IndexingLocationExprBuilder:
         return self
     }
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        let t: IndexableExprP = try target.build(asChildOf: self, inRange: range)
-        let i: ValueExprP = try index.build(asChildOf: self, inRange: range)
+    func build() throws -> ExprP {
+        let t: IndexableExprP = try target.build(asChildOf: self)
+        let i: ValueExprP = try index.build(asChildOf: self)
         return IndexingExpr(source: t, operand: i)
     }
 }
 
 internal class CommonVariableNameExprBuilder: SingleExprBuilder {
     let first: String
+    var range: LexRange!
     var prettyName: String { "Variable Name (unfinished=\(first) …)" }
 
     init(first f: String) {
         first = f
     }
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        throw UnexpectedEOLError(startPos: range.start, parsing: self)
+    func build() throws -> ExprP {
+        throw UnexpectedEOLError(startPos: range.end, parsing: self)
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder {
         let word = id.literal
-        return VariableNameExprBuilder(name: "\(first) \(word)")
+        return self |=> VariableNameExprBuilder(name: "\(first) \(word)")
     }
 }
 
 internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiterThrough {
     private(set) var words: [String]
+    var range: LexRange!
     var prettyName: String { "Variable Name (unfinished=\(name) …)" }
 
     init(first: String) {
@@ -296,12 +318,12 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiter
 
     private var name: String { words.joined(separator: " ") }
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        return finalize().build(inRange: range)
+    func build() throws -> ExprP {
+        return finalize().build()
     }
 
     func finalize() -> VariableNameExprBuilder {
-        VariableNameExprBuilder(name: name)
+        self |=> VariableNameExprBuilder(name: name)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
@@ -324,19 +346,21 @@ internal class PoeticConstantAssignmentExprBuilder: SingleExprBuilder {
     let prettyName: String = "Poetic Constant Assignment"
     private var target: ExprBuilder
     lazy private var constant: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
 
-    init(target t: ExprBuilder, constantId id: IdentifierLex) throws {
+    init(target t: ExprBuilder) throws {
         target = t
-        constant = try constant.partialPush(id)
     }
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
-        let v: ValueExprP = try constant.build(asChildOf: self, inRange: range)
+    func build() throws -> ExprP {
+        let t: LocationExprP = try target.build(asChildOf: self)
+        let v: ValueExprP = try constant.build(asChildOf: self)
         return VoidCallExpr(head: .assign, target: t, source: v, arg: nil)
     }
 
-    func handleIdentifierLex(_: IdentifierLex) throws -> ExprBuilder {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        guard constant is VanillaExprBuilder else { return self }
+        constant = try constant.partialPush(id)
         return self
     }
 
@@ -358,6 +382,7 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
     private var value = 0.0
     private var decimalDigit: UInt = 0
     private var digit: Int? = nil
+    var range: LexRange!
     let prettyName: String = "Poetic Number Assignment"
 
     init(target t: ExprBuilder) {
@@ -390,9 +415,9 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
         return self
     }
 
-    func build(inRange range: LexRange) throws -> ExprP {
+    func build() throws -> ExprP {
         pushPoeticDigit()
-        let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
+        let t: LocationExprP = try target.build(asChildOf: self)
         return VoidCallExpr(head: .assign, target: t, source: NumberExpr(literal: Double(value)), arg: nil)
     }
 
@@ -400,7 +425,8 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
         if value == 0 {
             switch id.literal {
             case String.constantIdentifiers:
-                return try PoeticConstantAssignmentExprBuilder(target: target, constantId: id)
+                let newSelf = try self |=> PoeticConstantAssignmentExprBuilder(target: target)
+                return try newSelf.partialPush(id)
             default: break
             }
         }
@@ -429,14 +455,15 @@ internal class PoeticStringAssignmentExprBuilder:
         SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough, PushesNumberThrough, PushesStringThrough {
     var target: ExprBuilder
     private var value: String?
+    var range: LexRange!
     let prettyName: String = "Poetic String Assignment"
 
     init(target t: ExprBuilder) {
         target = t
     }
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
+    func build() throws -> ExprP {
+        let t: LocationExprP = try target.build(asChildOf: self)
         return VoidCallExpr(head: .assign, target: t, source: StringExpr(literal: value ?? ""), arg: nil)
     }
 
@@ -469,6 +496,7 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
     let prettyName: String = "Assignment"
+    var range: LexRange!
 
     private(set) var expectingTarget: Bool
     private var expectingValue: Bool { !expectingTarget }
@@ -487,9 +515,9 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
         self.init(expectingTarget: !ev)
     }
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
-        let s: ValueExprP = try value.build(asChildOf: self, inRange: range)
+    func build() throws -> ExprP {
+        let t: LocationExprP = try target.build(asChildOf: self)
+        let s: ValueExprP = try value.build(asChildOf: self)
         return VoidCallExpr(head: .assign, target: t, source: s, arg: nil)
     }
 
@@ -528,6 +556,7 @@ internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, Pushe
     var isDecrement: Bool { !isIncrement }
     var value: Int = 0
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
     let prettyName: String = "In-/Decrement"
 
     init(forIncrement inc: Bool) {
@@ -538,8 +567,8 @@ internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, Pushe
         isIncrement = !dec
     }
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
+    func build() throws -> ExprP {
+        let t: LocationExprP = try target.build(asChildOf: self)
         let add = FunctionCallExpr(head: .add, args: [t, NumberExpr(literal: Double(value))])
         return VoidCallExpr(head: .assign, target: t, source: add, arg: nil)
     }
@@ -574,28 +603,30 @@ internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, Pushe
 }
 
 internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
-    var target: ExprBuilder?
+    lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
+    var hasTarget = false
+    var range: LexRange!
     let prettyName: String = "Input"
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        guard let target = target else { return VoidCallExpr(head: .scan, target: nil, source: nil, arg: nil) }
-        let t: LocationExprP = try target.build(asChildOf: self, inRange: range)
+    func build() throws -> ExprP {
+        guard hasTarget else { return VoidCallExpr(head: .scan, target: nil, source: nil, arg: nil) }
+        let t: LocationExprP = try target.build(asChildOf: self)
         return VoidCallExpr(head: .scan, target: t, source: nil, arg: nil)
     }
 
     @discardableResult
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
-        guard target != nil else {
+        guard hasTarget else {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         }
-        target = try target!.partialPush(lex)
+        target = try target.partialPush(lex)
         return self
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.toIdentifiers:
-            target = VanillaExprBuilder(parent: self)
+            hasTarget = true
         default:
             try pushThrough(id)
         }
@@ -606,10 +637,11 @@ internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Push
 internal class OutputExprBuilder:
         SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough, PushesNumberThrough, PushesStringThrough {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
     let prettyName: String = "Output"
 
-    func build(inRange range: LexRange) throws -> ExprP {
-        let s: ValueExprP = try target.build(asChildOf: self, inRange: range)
+    func build() throws -> ExprP {
+        let s: ValueExprP = try target.build(asChildOf: self)
         return VoidCallExpr(head: .print, target: nil, source: s, arg: nil)
     }
 
@@ -621,10 +653,11 @@ internal class OutputExprBuilder:
 
 internal class StringExprBuilder: SingleExprBuilder {
     let literal: String
+    var range: LexRange!
     var prettyName: String { "String (=\"\(literal)\")" }
     init(literal s: String) { literal = s }
 
-    func build(inRange _: LexRange) -> ExprP {
+    func build() -> ExprP {
         return StringExpr(literal: literal)
     }
 
@@ -638,15 +671,16 @@ internal class StringExprBuilder: SingleExprBuilder {
     }
 
     func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        return StringExprBuilder(literal: literal + s.literal)
+        return self |=> StringExprBuilder(literal: literal + s.literal)
     }
 }
 
 internal class NumberExprBuilder: SingleExprBuilder {
     let literal: Double
+    var range: LexRange!
     var prettyName: String { "Numberic Value (=\"\(literal)\")" }
 
-    func build(inRange _: LexRange) -> ExprP {
+    func build() -> ExprP {
         return NumberExpr(literal: literal)
     }
 
@@ -664,26 +698,29 @@ internal class NumberExprBuilder: SingleExprBuilder {
 
 internal class BoolExprBuilder: SingleExprBuilder {
     let literal: Bool
+    var range: LexRange!
     var prettyName: String { "Boolean Value (=\"\(literal)\")" }
     init(literal b: Bool) { literal = b }
 
-    func build(inRange _: LexRange) -> ExprP {
+    func build() -> ExprP {
         return BoolExpr(literal: literal)
     }
 }
 
 internal class NullExprBuilder: SingleExprBuilder {
     let prettyName: String = "Null Value"
+    var range: LexRange!
 
-    func build(inRange _: LexRange) -> ExprP {
+    func build() -> ExprP {
         return NullExpr()
     }
 }
 
 internal class MysteriousExprBuilder: SingleExprBuilder {
     let prettyName: String = "Mysterious Value"
+    var range: LexRange!
 
-    func build(inRange _: LexRange) -> ExprP {
+    func build() -> ExprP {
         return MysteriousExpr()
     }
 }

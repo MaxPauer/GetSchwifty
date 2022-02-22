@@ -16,12 +16,19 @@ internal struct LexPos {
     static func -(end: LexPos, start: LexPos) -> LexRange {
         LexRange(start: start, end: end)
     }
+    static prefix func -(end: LexPos) -> LexRange {
+        return end-end
+    }
     static var origin: LexPos { LexPos(line: 1, char: 0) }
 }
 
 internal struct LexRange {
     let start: LexPos
     let end: LexPos
+
+    static func +(lhs: LexRange, rhs: LexRange) -> LexRange {
+        LexRange(start: lhs.start, end: rhs.end)
+    }
 }
 
 internal protocol Lex: CustomStringConvertible {

@@ -1,6 +1,6 @@
 internal struct Parser {
     var lexemes: LexContractor
-    var currentExprBuilder: ExprBuilder = VanillaExprBuilder(parent: nil)
+    var currentExprBuilder: ExprBuilder = VanillaExprBuilder(startPos: LexPos.origin)
 
     init(input inp: String) {
         let l = LexIterator(input: inp)
@@ -24,11 +24,11 @@ internal struct Parser {
             case .builder(let b):
                 currentExprBuilder = b
             case .expr(let e):
-                currentExprBuilder = VanillaExprBuilder(parent: nil)
+                currentExprBuilder = VanillaExprBuilder(startPos: l.range.end)
                 return e
             }
         }
 
-        return try currentExprBuilder.build(inRange: LexPos(line: 0, char: 0)-LexPos(line: 0, char: 0))
+        return try currentExprBuilder.build()
     }
 }
