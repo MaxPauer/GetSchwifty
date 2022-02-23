@@ -31,21 +31,13 @@ internal struct LexRange {
     }
 }
 
-internal protocol Lex: CustomStringConvertible {
-    var prettyName: String { get }
+internal protocol Lex: PrettyNamed {
     var prettyLiteral: String? { get }
     var literal: String { get }
     var range: LexRange { get }
 }
 
-extension Lex {
-    var description: String {
-        prettyLiteral != nil ? "<\(prettyName): \(prettyLiteral!)>" : "<\(prettyName)>"
-    }
-}
-
 internal struct NewlineLex: Lex {
-    let prettyName = "Newline"
     let literal: String
     let range: LexRange
 
@@ -71,7 +63,6 @@ internal struct NewlineLex: Lex {
 }
 
 internal struct DelimiterLex: Lex {
-    let prettyName = "Delimiter"
     let prettyLiteral: String? = nil
     let literal: String
     let range: LexRange
@@ -83,7 +74,6 @@ internal struct DelimiterLex: Lex {
 }
 
 internal struct ContractionLex: Lex {
-    let prettyName = "Contraction"
     var prettyLiteral: String? { "'\(literal)" }
     let literal: String
     let range: LexRange
@@ -101,7 +91,6 @@ internal struct ContractionLex: Lex {
 }
 
 internal struct WhitespaceLex: Lex {
-    let prettyName = "\"Whitespace\""
     let literal: String
     let range: LexRange
 
@@ -135,7 +124,6 @@ internal struct WhitespaceLex: Lex {
 }
 
 internal struct CommentLex: Lex {
-    let prettyName = "Comment"
     var prettyLiteral: String? { "(\(literal))" }
     let literal: String
     let range: LexRange
@@ -172,7 +160,6 @@ internal struct CommentLex: Lex {
 }
 
 internal struct StringLex: Lex {
-    let prettyName = "String"
     var prettyLiteral: String? { "\"\(literal)\"" }
     let literal: String
     let range: LexRange
@@ -218,7 +205,6 @@ internal struct StringLex: Lex {
 }
 
 internal struct IdentifierLex: Lex {
-    let prettyName = "Identifier"
     let prettyLiteral: String?
     let literal: String
     let range: LexRange
@@ -245,7 +231,6 @@ internal struct IdentifierLex: Lex {
 }
 
 internal struct NumberLex: Lex {
-    let prettyName = "Number"
     var prettyLiteral: String? { literal }
     var literal: String
     let range: LexRange

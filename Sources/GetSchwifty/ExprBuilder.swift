@@ -28,8 +28,7 @@ internal enum PartialExpr {
     case expr(ExprP)
 }
 
-internal protocol ExprBuilder: AnyObject, CustomStringConvertible {
-    var prettyName: String { get }
+internal protocol ExprBuilder: AnyObject, PrettyNamed {
     var range: LexRange! { get set }
     func partialPush(_ lex: Lex) throws -> ExprBuilder
     func push(_ lex: Lex) throws -> PartialExpr
@@ -44,10 +43,6 @@ internal protocol ExprBuilder: AnyObject, CustomStringConvertible {
 }
 
 extension ExprBuilder {
-    var description: String {
-        "[\(prettyName) Expression]"
-    }
-
     fileprivate func build<T>(asChildOf parent: ExprBuilder) throws -> T {
         let ep = try self.build()
         guard let tep = ep as? T else {
@@ -148,7 +143,6 @@ extension SingleExprBuilder {
 }
 
 internal class VanillaExprBuilder: SingleExprBuilder {
-    let prettyName: String = "Vanilla"
     let parent: ExprBuilder?
     var range: LexRange!
 
@@ -242,7 +236,6 @@ extension FinalizedLocationExprBuilder {
 }
 
 internal class PronounExprBuilder: FinalizedLocationExprBuilder {
-    let prettyName: String = "Pronoun"
     var range: LexRange!
 
     func build() -> ExprP {
@@ -253,7 +246,6 @@ internal class PronounExprBuilder: FinalizedLocationExprBuilder {
 internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
     let name: String
     var range: LexRange!
-    var prettyName: String { "Variable Name (=\(name))" }
 
     init(name n: String) {
         name = n.lowercased()
@@ -269,8 +261,6 @@ internal class IndexingLocationExprBuilder:
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
-
-    var prettyName: String { "Indexing (=\(target)[\(index)])" }
 
     init(target t: ExprBuilder) {
         target = t
@@ -288,17 +278,24 @@ internal class IndexingLocationExprBuilder:
     }
 }
 
-internal class CommonVariableNameExprBuilder: SingleExprBuilder {
+internal class CommonVariableNameExprBuilder: ExprBuilder {
     let first: String
     var range: LexRange!
-    var prettyName: String { "Variable Name (unfinished=\(first) …)" }
 
     init(first f: String) {
         first = f
     }
 
+    func push(_ lex: Lex) throws -> PartialExpr {
+        if lex is NewlineLex {
+            throw UnexpectedLexemeError(got: lex, parsing: self)
+        }
+        return .builder(try partialPush(lex))
+    }
+
     func build() throws -> ExprP {
-        throw UnexpectedEOLError(startPos: range.end, parsing: self)
+        assertionFailure("must not be called")
+        return NopExpr()
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder {
@@ -310,13 +307,11 @@ internal class CommonVariableNameExprBuilder: SingleExprBuilder {
 internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiterThrough {
     private(set) var words: [String]
     var range: LexRange!
-    var prettyName: String { "Variable Name (unfinished=\(name) …)" }
+    var name: String { words.joined(separator: " ") }
 
     init(first: String) {
         words = [first]
     }
-
-    private var name: String { words.joined(separator: " ") }
 
     func build() throws -> ExprP {
         return finalize().build()
@@ -343,7 +338,6 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiter
 }
 
 internal class PoeticConstantAssignmentExprBuilder: SingleExprBuilder {
-    let prettyName: String = "Poetic Constant Assignment"
     private var target: ExprBuilder
     lazy private var constant: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
@@ -383,7 +377,6 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
     private var decimalDigit: UInt = 0
     private var digit: Int? = nil
     var range: LexRange!
-    let prettyName: String = "Poetic Number Assignment"
 
     init(target t: ExprBuilder) {
         target = t
@@ -456,7 +449,6 @@ internal class PoeticStringAssignmentExprBuilder:
     var target: ExprBuilder
     private var value: String?
     var range: LexRange!
-    let prettyName: String = "Poetic String Assignment"
 
     init(target t: ExprBuilder) {
         target = t
@@ -495,7 +487,6 @@ internal class PoeticStringAssignmentExprBuilder:
 internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
-    let prettyName: String = "Assignment"
     var range: LexRange!
 
     private(set) var expectingTarget: Bool
@@ -557,7 +548,6 @@ internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, Pushe
     var value: Int = 0
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
-    let prettyName: String = "In-/Decrement"
 
     init(forIncrement inc: Bool) {
         isIncrement = inc
@@ -606,7 +596,6 @@ internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Push
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var hasTarget = false
     var range: LexRange!
-    let prettyName: String = "Input"
 
     func build() throws -> ExprP {
         guard hasTarget else { return VoidCallExpr(head: .scan, target: nil, source: nil, arg: nil) }
@@ -638,7 +627,6 @@ internal class OutputExprBuilder:
         SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough, PushesNumberThrough, PushesStringThrough {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
-    let prettyName: String = "Output"
 
     func build() throws -> ExprP {
         let s: ValueExprP = try target.build(asChildOf: self)
@@ -654,7 +642,6 @@ internal class OutputExprBuilder:
 internal class StringExprBuilder: SingleExprBuilder {
     let literal: String
     var range: LexRange!
-    var prettyName: String { "String (=\"\(literal)\")" }
     init(literal s: String) { literal = s }
 
     func build() -> ExprP {
@@ -678,7 +665,6 @@ internal class StringExprBuilder: SingleExprBuilder {
 internal class NumberExprBuilder: SingleExprBuilder {
     let literal: Double
     var range: LexRange!
-    var prettyName: String { "Numberic Value (=\"\(literal)\")" }
 
     func build() -> ExprP {
         return NumberExpr(literal: literal)
@@ -699,7 +685,7 @@ internal class NumberExprBuilder: SingleExprBuilder {
 internal class BoolExprBuilder: SingleExprBuilder {
     let literal: Bool
     var range: LexRange!
-    var prettyName: String { "Boolean Value (=\"\(literal)\")" }
+
     init(literal b: Bool) { literal = b }
 
     func build() -> ExprP {
@@ -708,7 +694,6 @@ internal class BoolExprBuilder: SingleExprBuilder {
 }
 
 internal class NullExprBuilder: SingleExprBuilder {
-    let prettyName: String = "Null Value"
     var range: LexRange!
 
     func build() -> ExprP {
@@ -717,7 +702,6 @@ internal class NullExprBuilder: SingleExprBuilder {
 }
 
 internal class MysteriousExprBuilder: SingleExprBuilder {
-    let prettyName: String = "Mysterious Value"
     var range: LexRange!
 
     func build() -> ExprP {

@@ -19,17 +19,6 @@ final class ParserErrorTests: XCTestCase {
         return error
     }
 
-    func errorTest(_ inp: String, _ expr: ExprBuilder.Type, _ pos: (UInt,UInt)) -> UnexpectedEOLError {
-        var error: UnexpectedEOLError!
-        XCTAssertThrowsError(try parseDiscardAll(inp)) { (e: Error) in
-            error = try! XCTUnwrap(e as? UnexpectedEOLError)
-            XCTAssert(type(of: error.parsing) == expr)
-            let (line,char) = pos
-            XCTAssertEqual(error.startPos, LexPos(line: line, char: char))
-        }
-        return error
-    }
-
     func errorTest(_ inp: String, _ expr: ExprBuilder.Type, _ pos: (UInt,UInt)) -> UnexpectedIdentifierError {
         return errorTest(inp, IdentifierLex.self, expr, pos)
     }
@@ -50,9 +39,9 @@ final class ParserErrorTests: XCTestCase {
     func testCommonVariableFailure() throws {
         let _: UnexpectedLexemeError = errorTest("A\"field\"", StringLex.self, CommonVariableNameExprBuilder.self, (1,1))
         let _: UnexpectedLexemeError = errorTest("A,field", DelimiterLex.self, CommonVariableNameExprBuilder.self, (1,1))
-        let _: UnexpectedEOLError = errorTest("A\nfield", CommonVariableNameExprBuilder.self, (1,1))
-        let _: UnexpectedEOLError = errorTest("A ", CommonVariableNameExprBuilder.self, (1,2))
-        let _: UnexpectedEOLError = errorTest("A \n", CommonVariableNameExprBuilder.self, (1,2))
+        let _: UnexpectedLexemeError = errorTest("A\nfield", NewlineLex.self, CommonVariableNameExprBuilder.self, (1,1))
+        let _: UnexpectedLexemeError = errorTest("A ", NewlineLex.self, CommonVariableNameExprBuilder.self, (1,2))
+        let _: UnexpectedLexemeError = errorTest("A \n", NewlineLex.self, CommonVariableNameExprBuilder.self, (1,2))
     }
 
     func testPoeticNumberLiteralFailure() throws {

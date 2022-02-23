@@ -1,4 +1,4 @@
-internal protocol ExprP {}
+internal protocol ExprP: PrettyNamed {}
 
 internal protocol ValueExprP: ExprP {}
 internal protocol IndexableExprP: ValueExprP {}

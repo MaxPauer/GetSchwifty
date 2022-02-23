@@ -26,12 +26,12 @@ internal struct UnexpectedIdentifierError: LexemeError {
 
     var expectingDescr: String {
         expecting.map {
-            "<\($0)>"
+            "‹\($0)›"
         }.joined(separator: " or ")
     }
 
     var _description: String {
-        "encountered unexpected lexeme: \(got) while parsing: \(parsing). Expecting \(expectingDescr)"
+        "encountered unexpected \(got) lexeme while parsing \(parsing) expression. Expecting \(expectingDescr)"
     }
 }
 
@@ -40,7 +40,7 @@ internal struct UnexpectedLexemeError: LexemeError {
     let parsing: ExprBuilder
 
     var _description: String {
-        "encountered unexpected lexeme: \(got) while parsing: \(parsing)"
+        "encountered unexpected \(got) lexeme while parsing \(parsing) expression"
     }
 }
 
@@ -49,7 +49,7 @@ internal struct UnparsableNumberLexemeError: LexemeError {
     let parsing: ExprBuilder
 
     var _description: String {
-        "encountered unparsable number lexeme: \(got) while parsing: \(parsing)"
+        "encountered unparsable number \(got) lexeme while parsing \(parsing) expression"
     }
 }
 
@@ -59,15 +59,6 @@ internal struct UnexpectedExprError<Expecting>: ParserError {
     let parsing: ExprBuilder
 
     var _description: String {
-        "encountered unexpected expression: \(got) while parsing: \(parsing), expecting: \(Expecting.self)"
-    }
-}
-
-internal struct UnexpectedEOLError: ParserError {
-    let startPos: LexPos
-    let parsing: ExprBuilder
-
-    var _description: String {
-        "encountered unexpected EOL while parsing: \(parsing)"
+        "encountered unexpected \(got) expression while parsing \(parsing) expression, expecting: \(Expecting.self)"
     }
 }
