@@ -193,6 +193,10 @@ internal class VanillaExprBuilder: SingleExprBuilder {
             return CrementExprBuilder(forIncrement: true)
         case String.knockIdentifiers:
             return CrementExprBuilder(forDecrement: true)
+        case String.pushIdentifiers:
+            return PushExprBuilder()
+        case String.popIdentifiers:
+            return PopExprBuilder()
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word)
@@ -537,6 +541,60 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
         default:
             try pushThrough(id)
         }
+        return self
+    }
+}
+
+internal class PushExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+    lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
+    lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
+
+    private(set) var expectingValue: Bool = false
+
+    func build() throws -> ExprP {
+        let t: LocationExprP = try target.build(asChildOf: self)
+        guard expectingValue else {
+            return VoidCallExpr(head: .push, target: t, source: nil, arg: nil)
+        }
+        let v: ValueExprP = try value.build(asChildOf: self)
+        return VoidCallExpr(head: .push, target: t, source: nil, arg: v)
+    }
+
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        if !expectingValue {
+            target = try target.partialPush(lex)
+        } else {
+            value = try value.partialPush(lex)
+        }
+        return self
+    }
+
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        switch id.literal {
+        case String.withIdentifiers:
+            expectingValue = true
+        default:
+            try pushThrough(id)
+        }
+        return self
+    }
+}
+
+internal class PopExprBuilder:
+        SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough, PushesIdentifierThrough {
+    lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
+
+    func build() throws -> ExprP {
+        let s: LocationExprP = try source.build(asChildOf: self)
+        return FunctionCallExpr(head: .pop, args: [s])
+    }
+
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        source = try source.partialPush(lex)
         return self
     }
 }

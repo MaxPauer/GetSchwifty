@@ -70,7 +70,7 @@ internal struct FunctionCallExpr: ValueExprP {
     enum Op {
         case not; case and; case orr; case nor; case eq
         case neq; case gt; case lt; case geq; case leq
-        case add; case sub; case mul; case div
+        case add; case sub; case mul; case div; case pop
         case custom
     }
     let head: Op
@@ -80,7 +80,7 @@ internal struct FunctionCallExpr: ValueExprP {
 internal struct VoidCallExpr: ExprP {
     enum Op {
         case assign; case print; case scan; case push
-        case pop; case split; case join; case cast
+        case split; case join; case cast
         case ceil; case floor; case round
     }
 

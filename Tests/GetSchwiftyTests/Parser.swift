@@ -165,6 +165,34 @@ final class ParserTests: XCTestCase {
         let _: IndexingExpr = try testParse("knock him at 0 down,down down", -3)
     }
 
+    func testPush() throws {
+        func testParse(_ inp: String, _ hasArg: Bool) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let o = try XCTUnwrap(p.next() as? VoidCallExpr)
+            XCTAssertEqual(o.head, .push)
+            _ = try XCTUnwrap(o.target as? VariableNameExpr)
+            if hasArg {
+                _ = try XCTUnwrap(o.arg as? PronounExpr)
+            }
+        }
+
+        try testParse("rock the boat", false)
+        try testParse("rock the boat with her", true)
+        try testParse("(i) push my fingers (into my eyes)", false)
+    }
+
+    func testPop() throws {
+        func testParse(_ inp: String) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let o = try XCTUnwrap(p.next() as? FunctionCallExpr)
+            XCTAssertEqual(o.head, .pop)
+            _ = try XCTUnwrap(o.args[0] as? VariableNameExpr)
+        }
+
+        try testParse("roll the boat")
+        try testParse("pop a rock")
+    }
+
     func testIndexing() throws {
         func testParse<S,I>(_ inp: String) throws -> (S,I) {
             var p = try XCTUnwrap(self.parse(inp))

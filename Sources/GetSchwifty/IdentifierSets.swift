@@ -81,6 +81,15 @@ internal extension String {
     static var downIdentifiers: Set<String> {
         Set(["down"])
     }
+    static var pushIdentifiers: Set<String> {
+        Set(["rock", "push"])
+    }
+    static var popIdentifiers: Set<String> {
+        Set(["roll", "pop"])
+    }
+    static var withIdentifiers: Set<String> {
+        Set(["with"])
+    }
 }
 
 internal func ~=(pattern: Set<String>, value: String) -> Bool {

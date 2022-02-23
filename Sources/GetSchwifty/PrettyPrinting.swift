@@ -97,6 +97,12 @@ extension NullExprBuilder {
 extension MysteriousExprBuilder {
     var prettyName: String { "Mysterious Value" }
 }
+extension PushExprBuilder {
+    var prettyName: String { "Rock/Push" }
+}
+extension PopExprBuilder {
+    var prettyName: String { "Roll/Pop" }
+}
 
 extension NopExpr {
     var prettyName: String { "Nop" }

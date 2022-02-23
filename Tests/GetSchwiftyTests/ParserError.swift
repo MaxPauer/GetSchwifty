@@ -81,4 +81,11 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedLexemeError = errorTest("Knock me down at", IdentifierLex.self, CrementExprBuilder.self, (1,14))
         let _: UnexpectedLexemeError = errorTest("Build it up 0.5", NumberLex.self, CrementExprBuilder.self, (1,12))
     }
+
+    func testPushPopFailure() throws {
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("rock", NopExpr.self, PushExprBuilder.self, (1,4))
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("push it with", NopExpr.self, PushExprBuilder.self, (1,12))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("roll", NopExpr.self, PopExprBuilder.self, (1,4))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("pop 5", NumberExpr.self, PopExprBuilder.self, (1,4))
+    }
 }
