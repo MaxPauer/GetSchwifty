@@ -32,7 +32,7 @@ internal extension String {
     static var sayPoeticStringIdentifiers: Set<String> {
         Set(["say", "says", "said"])
     }
-    static var poeticNumberIdentifiers: Set<String> {
+    static var isIdentifiers: Set<String> {
         Set(["is", "are", "was", "were"]) ∪ String.isContractionIdentifiers
     }
     static var isContractionIdentifiers: Set<String> {

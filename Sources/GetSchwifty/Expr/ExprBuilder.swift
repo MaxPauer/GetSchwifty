@@ -161,6 +161,7 @@ internal class VanillaExprBuilder: SingleExprBuilder {
     }
 
     private var bestErrorLocation: ExprBuilder { parent ?? self }
+    private var isStatement: Bool { parent == nil }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         let word = id.literal
@@ -168,7 +169,7 @@ internal class VanillaExprBuilder: SingleExprBuilder {
         case \.isEmpty:
             return self
         case String.commonVariableIdentifiers:
-            return CommonVariableNameExprBuilder(first: word)
+            return CommonVariableNameExprBuilder(first: word, isStatement: isStatement)
         case String.letAssignIdentifiers:
             return AssignmentExprBuilder(expectingTarget: true)
         case String.putAssignIdentifiers:
@@ -188,7 +189,7 @@ internal class VanillaExprBuilder: SingleExprBuilder {
         case String.mysteriousIdentifiers:
             return MysteriousExprBuilder()
         case String.pronounIdentifiers:
-            return PronounExprBuilder()
+            return PronounExprBuilder(isStatement: isStatement)
         case String.buildIdentifiers:
             return CrementExprBuilder(forIncrement: true)
         case String.knockIdentifiers:
@@ -201,9 +202,9 @@ internal class VanillaExprBuilder: SingleExprBuilder {
             return UnArithExprBuilder(op: .not)
 
         case \.firstCharIsUpperCase:
-            return ProperVariableNameExprBuilder(first: word)
+            return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)
         default:
-            return VariableNameExprBuilder(name: word)
+            return VariableNameExprBuilder(name: word, isStatement: isStatement)
         }
     }
 
@@ -221,6 +222,7 @@ internal class VanillaExprBuilder: SingleExprBuilder {
 }
 
 internal protocol ArithValueExprBuilder: SingleExprBuilder {
+    var isStatement: Bool { get }
     func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
 }
 
@@ -241,6 +243,11 @@ func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
             return BiArithExprBuilder(op: .orr, lhs: self)
         case String.norIdentifiers:
             return BiArithExprBuilder(op: .nor, lhs: self)
+        case String.isIdentifiers:
+            if isStatement {
+                return PoeticNumberAssignmentExprBuilder(target: self)
+            }
+            return BiArithExprBuilder(op: .eq, lhs: self)
         default:
             return try handleOtherIdentifierLex(id)
         }
@@ -257,19 +264,22 @@ extension FinalizedLocationExprBuilder {
         switch word {
         case String.sayPoeticStringIdentifiers:
             return PoeticStringAssignmentExprBuilder(target: self)
-        case String.poeticNumberIdentifiers:
-            return PoeticNumberAssignmentExprBuilder(target: self)
         case String.indexingIdentifiers:
-            return IndexingLocationExprBuilder(target: self)
+            return IndexingLocationExprBuilder(target: self, isStatement: isStatement)
         default:
             throw UnexpectedIdentifierError(got: id, parsing: self, expecting:
-                String.poeticNumberIdentifiers ∪ String.sayPoeticStringIdentifiers ∪ String.indexingIdentifiers)
+                String.isIdentifiers ∪ String.sayPoeticStringIdentifiers ∪ String.indexingIdentifiers)
         }
     }
 }
 
 internal class PronounExprBuilder: FinalizedLocationExprBuilder {
+    let isStatement: Bool
     var range: LexRange!
+
+    init(isStatement iss: Bool) {
+        isStatement = iss
+    }
 
     func build() -> ExprP {
         return PronounExpr()
@@ -278,10 +288,12 @@ internal class PronounExprBuilder: FinalizedLocationExprBuilder {
 
 internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
     let name: String
+    let isStatement: Bool
     var range: LexRange!
 
-    init(name n: String) {
+    init(name n: String, isStatement iss: Bool) {
         name = n.lowercased()
+        isStatement = iss
     }
 
     func build() -> ExprP {
@@ -290,18 +302,24 @@ internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
 }
 
 internal class IndexingLocationExprBuilder:
-        SingleExprBuilder, PushesIdentifierThrough, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
+        ArithValueExprBuilder, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
+    let isStatement: Bool
     var range: LexRange!
 
-    init(target t: ExprBuilder) {
+    init(target t: ExprBuilder, isStatement iss: Bool) {
         target = t
+        isStatement = iss
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         index = try index.partialPush(lex)
         return self
+    }
+
+    func handleOtherIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(i)
     }
 
     func build() throws -> ExprP {
@@ -314,9 +332,11 @@ internal class IndexingLocationExprBuilder:
 internal class CommonVariableNameExprBuilder: ExprBuilder {
     let first: String
     var range: LexRange!
+    let isStatement: Bool
 
-    init(first f: String) {
+    init(first f: String, isStatement iss: Bool) {
         first = f
+        isStatement = iss
     }
 
     func push(_ lex: Lex) throws -> PartialExpr {
@@ -333,17 +353,19 @@ internal class CommonVariableNameExprBuilder: ExprBuilder {
 
     func handleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder {
         let word = id.literal
-        return self |=> VariableNameExprBuilder(name: "\(first) \(word)")
+        return self |=> VariableNameExprBuilder(name: "\(first) \(word)", isStatement: isStatement)
     }
 }
 
 internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiterThrough {
     private(set) var words: [String]
     var range: LexRange!
+    let isStatement: Bool
     var name: String { words.joined(separator: " ") }
 
-    init(first: String) {
+    init(first: String, isStatement iss: Bool) {
         words = [first]
+        isStatement = iss
     }
 
     func build() throws -> ExprP {
@@ -351,7 +373,7 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiter
     }
 
     func finalize() -> VariableNameExprBuilder {
-        self |=> VariableNameExprBuilder(name: name)
+        self |=> VariableNameExprBuilder(name: name, isStatement: isStatement)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
@@ -729,6 +751,8 @@ internal class OutputExprBuilder:
 internal class StringExprBuilder: ArithValueExprBuilder {
     let literal: String
     var range: LexRange!
+    let isStatement = false
+
     init(literal s: String) { literal = s }
 
     func build() -> ExprP {
@@ -738,7 +762,7 @@ internal class StringExprBuilder: ArithValueExprBuilder {
     func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.indexingIdentifiers:
-            return IndexingLocationExprBuilder(target: self)
+            return IndexingLocationExprBuilder(target: self, isStatement: isStatement)
         default:
             throw UnexpectedLexemeError(got: id, parsing: self)
         }
@@ -752,6 +776,7 @@ internal class StringExprBuilder: ArithValueExprBuilder {
 internal class NumberExprBuilder: ArithValueExprBuilder {
     let literal: Double
     var range: LexRange!
+    let isStatement = false
 
     func build() -> ExprP {
         return NumberExpr(literal: literal)
@@ -776,6 +801,7 @@ internal class NumberExprBuilder: ArithValueExprBuilder {
 internal class BoolExprBuilder: ArithValueExprBuilder {
     let literal: Bool
     var range: LexRange!
+    let isStatement = false
 
     init(literal b: Bool) { literal = b }
 
@@ -790,6 +816,7 @@ internal class BoolExprBuilder: ArithValueExprBuilder {
 
 internal class NullExprBuilder: ArithValueExprBuilder {
     var range: LexRange!
+    let isStatement = false
 
     func build() -> ExprP {
         return NullExpr()
@@ -802,6 +829,7 @@ internal class NullExprBuilder: ArithValueExprBuilder {
 
 internal class MysteriousExprBuilder: ArithValueExprBuilder {
     var range: LexRange!
+    let isStatement = false
 
     func build() -> ExprP {
         return MysteriousExpr()
