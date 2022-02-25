@@ -38,6 +38,9 @@ internal extension String {
     static var isContractionIdentifiers: Set<String> {
         Set(["'s", "'re"])
     }
+    static var isntIdentifiers: Set<String> {
+        Set(["isnt", "arent", "wasnt", "werent", "aint"])
+    }
     static var assignIntoIdentifiers: Set<String> {
         Set(["in", "into"])
     }

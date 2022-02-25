@@ -217,11 +217,12 @@ final class ParserTests: XCTestCase {
                 case .sub: return "-"
                 case .div: return "/"
                 case .mul: return "*"
-                case .and: return "&"
-                case .orr: return "|"
-                case .nor: return "!|"
+                case .and: return "&&"
+                case .orr: return "||"
+                case .nor: return "|!|"
                 case .not: return "!"
                 case .eq:  return "=="
+                case .neq: return "!="
                 default: return "?"
                 }
             }
@@ -247,20 +248,27 @@ final class ParserTests: XCTestCase {
             _ = try XCTUnwrap(p.next() as? NopExpr)
             return str(i)
         }
+        func testParse(_ inp: String, _ exp: String) throws {
+            let got = try stringifyParse(inp)
+            XCTAssertEqual(got, exp)
+        }
 
-        XCTAssertEqual(try stringifyParse("1 with 2"), "(1+2)")
-        XCTAssertEqual(try stringifyParse("1 with 2 of 3"), "(1+(2*3))")
-        XCTAssertEqual(try stringifyParse("1 with 2 of 3 over 4"), "(1+((2*3)/4))")
-        XCTAssertEqual(try stringifyParse("1 with 2 of 3 without 4"), "((1+(2*3))-4)")
-        XCTAssertEqual(try stringifyParse("3 over 4 over 5"), "((3/4)/5)")
-        XCTAssertEqual(try stringifyParse("3 over 4 minus 5"), "((3/4)-5)")
-        XCTAssertEqual(try stringifyParse("3 over 4 minus 5 between 6"), "((3/4)-(5/6))")
-        XCTAssertEqual(try stringifyParse("1 with 2 nor 3"), "((1+2)!|3)")
-        XCTAssertEqual(try stringifyParse("not 1"), "(!1)")
-        XCTAssertEqual(try stringifyParse("not 1 or 2"), "((!1)|2)")
-        XCTAssertEqual(try stringifyParse("1 of not 2"), "(1*(!2))")
-        XCTAssertEqual(try stringifyParse("1 of not 2 over 3"), "((1*(!2))/3)")
-        XCTAssertEqual(try stringifyParse("3 over 4 is 5 between 6"), "((3/4)==(5/6))")
+        try testParse("1 with 2", "(1+2)")
+        try testParse("1 with 2 of 3", "(1+(2*3))")
+        try testParse("1 with 2 of 3 over 4", "(1+((2*3)/4))")
+        try testParse("1 with 2 of 3 without 4", "((1+(2*3))-4)")
+        try testParse("3 over 4 over 5", "((3/4)/5)")
+        try testParse("3 over 4 minus 5", "((3/4)-5)")
+        try testParse("3 over 4 minus 5 between 6", "((3/4)-(5/6))")
+        try testParse("1 with 2 nor 3", "((1+2)|!|3)")
+        try testParse("not 1", "(!1)")
+        try testParse("not 1 or 2", "((!1)||2)")
+        try testParse("1 of not 2", "(1*(!2))")
+        try testParse("1 of not 2 over 3", "((1*(!2))/3)")
+        try testParse("3 over 4 is 5 between 6", "((3/4)==(5/6))")
+        try testParse("3 over 4 isn't 5 between 6", "((3/4)!=(5/6))")
+        try testParse("3 with 4 isn't 5 and 6", "(((3+4)!=5)&&6)")
+        try testParse("3 with 4 is not 5 with not 6", "((3+4)==((!5)+(!6)))")
     }
 
     func testFizzBuzz() throws {

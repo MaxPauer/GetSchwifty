@@ -243,6 +243,8 @@ func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
             return BiArithExprBuilder(op: .orr, lhs: self)
         case String.norIdentifiers:
             return BiArithExprBuilder(op: .nor, lhs: self)
+        case String.isntIdentifiers:
+            return BiArithExprBuilder(op: .neq, lhs: self)
         case String.isIdentifiers:
             if isStatement {
                 return PoeticNumberAssignmentExprBuilder(target: self)
