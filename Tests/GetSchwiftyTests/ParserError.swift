@@ -88,4 +88,13 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedExprError<LocationExprP> = try errorTest("roll", NopExpr.self, PopExprBuilder.self, (1,4))
         let _: UnexpectedExprError<LocationExprP> = try errorTest("pop 5", NumberExpr.self, PopExprBuilder.self, (1,4))
     }
+
+    func testArithFailure() throws {
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("1 with ", NopExpr.self, BiArithExprBuilder.self, (1,7))
+        let _: UnexpectedLexemeError = errorTest("1 with 5 is greater 4", NumberLex.self, BiArithExprBuilder.self, (1,20))
+        let _: UnexpectedIdentifierError = errorTest("1 with 5 is greater as 4", BiArithExprBuilder.self, (1,20))
+        let _: UnexpectedLexemeError = errorTest("1 with 5 is than 4", NumberLex.self, VariableNameExprBuilder.self, (1,17))
+        let _: UnexpectedIdentifierError = errorTest("1 with 5 is as greater 4", BiArithExprBuilder.self, (1,15))
+        let _: UnexpectedLexemeError = errorTest("1 with 5 is 4 greater", IdentifierLex.self, NumberExprBuilder.self, (1,14))
+    }
 }

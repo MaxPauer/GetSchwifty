@@ -41,6 +41,7 @@ extension ArithExprBuilder {
 internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
     var op: FunctionCallExpr.Op
     var opMustContinueWith: Set<String> = Set()
+    var hasRhs: Bool = false
     var lhs: ExprBuilder
     lazy var rhs: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
@@ -60,6 +61,7 @@ internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
         guard opMustContinueWith.isEmpty else {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         }
+        hasRhs = true
         rhs = try rhs.partialPush(lex)
         return self
     }
@@ -80,9 +82,11 @@ internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
                 opMustContinueWith = String.asIdentifiers
                 return self
             default:
-                throw UnexpectedIdentifierError(got: id, parsing: self, expecting: opMustContinueWith)
+                break
             }
-        } else if self.op == .eq {
+        } else if !opMustContinueWith.isEmpty {
+            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: opMustContinueWith)
+        } else if self.op == .eq && !hasRhs {
             switch id.literal {
             case String.higherIdentifiers:
                 self.op = .gt
