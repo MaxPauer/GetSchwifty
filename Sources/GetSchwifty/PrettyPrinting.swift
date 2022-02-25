@@ -61,11 +61,14 @@ extension CommonVariableNameExprBuilder {
 extension ProperVariableNameExprBuilder{
     var prettyName: String { "Variable Name: unfinished=\(name) …" }
 }
-extension PoeticConstantAssignmentExprBuilder {
-    var prettyName: String { "Poetic Constant Assignment" }
+extension PoeticConstantExprBuilder {
+    var prettyName: String { "Poetic Constant" }
 }
-extension PoeticNumberAssignmentExprBuilder {
-    var prettyName: String { "Poetic Number Assignment" }
+extension PoeticNumberExprBuilder {
+    var prettyName: String { "Poetic Number" }
+}
+extension PoeticNumberishAssignmentExprBuilder {
+    var prettyName: String { "Poetic Number/Constant Assignment" }
 }
 extension PoeticStringAssignmentExprBuilder {
     var prettyName: String { "Poetic String Assignment" }

@@ -45,8 +45,9 @@ final class ParserErrorTests: XCTestCase {
     }
 
     func testPoeticNumberLiteralFailure() throws {
-        let _: UnexpectedLexemeError = errorTest("My heaven is 1.5", NumberLex.self, PoeticNumberAssignmentExprBuilder.self, (1,13))
-        let _: UnexpectedLexemeError = errorTest("My life's \"\"", StringLex.self, PoeticNumberAssignmentExprBuilder.self, (1,10))
+        let _: UnexpectedLexemeError = errorTest("My heaven is 1.5", NumberLex.self, PoeticNumberishAssignmentExprBuilder.self, (1,13))
+        let _: UnexpectedLexemeError = errorTest("My life's \"\"", StringLex.self, PoeticNumberishAssignmentExprBuilder.self, (1,10))
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("My life's ", NopExpr.self, PoeticNumberishAssignmentExprBuilder.self, (1,9))
     }
 
     func testLetPutAssignmentFailure() throws {

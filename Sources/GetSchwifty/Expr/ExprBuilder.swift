@@ -247,7 +247,7 @@ func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
             return BiArithExprBuilder(op: .neq, lhs: self)
         case String.isIdentifiers:
             if isStatement {
-                return PoeticNumberAssignmentExprBuilder(target: self)
+                return PoeticNumberishAssignmentExprBuilder(target: self)
             }
             return BiArithExprBuilder(op: .eq, lhs: self)
         default:
@@ -394,19 +394,13 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiter
     }
 }
 
-internal class PoeticConstantAssignmentExprBuilder: SingleExprBuilder {
-    private var target: ExprBuilder
+internal class PoeticConstantExprBuilder: SingleExprBuilder {
     lazy private var constant: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
-    init(target t: ExprBuilder) throws {
-        target = t
-    }
-
     func build() throws -> ExprP {
-        let t: LocationExprP = try target.build(asChildOf: self)
         let v: ValueExprP = try constant.build(asChildOf: self)
-        return VoidCallExpr(head: .assign, target: t, source: v, arg: nil)
+        return v
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -428,20 +422,14 @@ internal class PoeticConstantAssignmentExprBuilder: SingleExprBuilder {
     }
 }
 
-internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
-    var target: ExprBuilder
+internal class PoeticNumberExprBuilder: SingleExprBuilder {
     private var value = 0.0
     private var decimalDigit: UInt = 0
     private var digit: Int? = nil
     var range: LexRange!
 
-    init(target t: ExprBuilder) {
-        target = t
-    }
-
     func addToPoeticDigit(from id: IdentifierLex) {
-        let n = id.poeticNumeralValue
-        digit = (digit ?? 0) + n
+        digit = (digit ?? 0) + id.poeticNumeralValue
     }
 
     func pow10(_ n: UInt) -> UInt {
@@ -467,16 +455,16 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
 
     func build() throws -> ExprP {
         pushPoeticDigit()
-        let t: LocationExprP = try target.build(asChildOf: self)
-        return VoidCallExpr(head: .assign, target: t, source: NumberExpr(literal: Double(value)), arg: nil)
+        return value == 0 ? NopExpr() : NumberExpr(literal: Double(value))
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         if value == 0 {
             switch id.literal {
             case String.constantIdentifiers:
-                let newSelf = try self |=> PoeticConstantAssignmentExprBuilder(target: target)
-                return try newSelf.partialPush(id)
+                var c: ExprBuilder = self |=> PoeticConstantExprBuilder()
+                c = try c.partialPush(id)
+                return c
             default: break
             }
         }
@@ -498,6 +486,36 @@ internal class PoeticNumberAssignmentExprBuilder: SingleExprBuilder {
             decimalDigit = 1
         }
         return self
+    }
+}
+
+internal class PoeticNumberishAssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough {
+    var target: ExprBuilder
+    lazy var source: ExprBuilder = self |=> PoeticNumberExprBuilder()
+    var range: LexRange!
+
+    init(target t: ExprBuilder) {
+        target = t
+    }
+
+    func build() throws -> ExprP {
+        let t: LocationExprP = try target.build(asChildOf: self)
+        let s: ValueExprP = try source.build(asChildOf: self)
+        return VoidCallExpr(head: .assign, target: t, source: s, arg: nil)
+    }
+
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        source = try source.partialPush(lex)
+        return self
+    }
+
+    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder {
+        return try pushThrough(c)
+    }
+
+    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
+        return try pushThrough(w)
     }
 }
 

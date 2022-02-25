@@ -96,6 +96,7 @@ internal extension String {
     static var notIdentifiers: Set<String> { Set(["not"]) }
     static var asIdentifiers: Set<String> { Set(["as"]) }
     static var thanIdentifiers: Set<String> { Set(["than"]) }
+    static var likeIdentifiers: Set<String> { Set(["like"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers
