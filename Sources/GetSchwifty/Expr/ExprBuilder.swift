@@ -197,6 +197,8 @@ internal class VanillaExprBuilder: SingleExprBuilder {
             return PushExprBuilder()
         case String.popIdentifiers:
             return PopExprBuilder()
+        case String.notIdentifiers:
+            return UnArithExprBuilder(op: .not)
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word)
@@ -226,19 +228,19 @@ extension ArithValueExprBuilder {
 func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.additionIdentifiers:
-            return ArithExprBuilder(op: .add, lhs: self)
+            return BiArithExprBuilder(op: .add, lhs: self)
         case String.subtractionIdentifiers:
-            return ArithExprBuilder(op: .sub, lhs: self)
+            return BiArithExprBuilder(op: .sub, lhs: self)
         case String.multiplicationIdentifiers:
-            return ArithExprBuilder(op: .mul, lhs: self)
+            return BiArithExprBuilder(op: .mul, lhs: self)
         case String.divisionIdentifiers:
-            return ArithExprBuilder(op: .div, lhs: self)
+            return BiArithExprBuilder(op: .div, lhs: self)
         case String.andIdentifiers:
-            return ArithExprBuilder(op: .and, lhs: self)
+            return BiArithExprBuilder(op: .and, lhs: self)
         case String.orIdentifiers:
-            return ArithExprBuilder(op: .orr, lhs: self)
+            return BiArithExprBuilder(op: .orr, lhs: self)
         case String.norIdentifiers:
-            return ArithExprBuilder(op: .nor, lhs: self)
+            return BiArithExprBuilder(op: .nor, lhs: self)
         default:
             return try handleOtherIdentifierLex(id)
         }

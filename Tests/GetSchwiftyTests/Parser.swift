@@ -220,6 +220,7 @@ final class ParserTests: XCTestCase {
                 case .and: return "&"
                 case .orr: return "|"
                 case .nor: return "!|"
+                case .not: return "!"
                 default: return "?"
                 }
             }
@@ -231,7 +232,14 @@ final class ParserTests: XCTestCase {
                 }
             }
             func str(_ n: NumberExpr) -> String { String(Int(n.literal)) }
-            func str(_ f: FunctionCallExpr) -> String { "(\(str(f.args[0]))\(str(f.head))\(str(f.args[1])))" }
+            func str(_ f: FunctionCallExpr) -> String {
+                if f.args.count == 2 {
+                    return "(\(str(f.args[0]))\(str(f.head))\(str(f.args[1])))"
+                } else if f.args.count == 1 {
+                    return "(\(str(f.head))\(str(f.args[0])))"
+                }
+                return "??"
+            }
 
             var p = try XCTUnwrap(self.parse(inp))
             let i = try XCTUnwrap(p.next() as? FunctionCallExpr)
@@ -239,29 +247,18 @@ final class ParserTests: XCTestCase {
             return str(i)
         }
 
-        let f1 = try stringifyParse("1 with 2")
-        XCTAssertEqual(f1, "(1+2)")
-
-        let f2 = try stringifyParse("1 with 2 of 3")
-        XCTAssertEqual(f2, "(1+(2*3))")
-
-        let f3 = try stringifyParse("1 with 2 of 3 over 4")
-        XCTAssertEqual(f3, "(1+((2*3)/4))")
-
-        let f4 = try stringifyParse("1 with 2 of 3 without 4")
-        XCTAssertEqual(f4, "((1+(2*3))-4)")
-
-        let f5 = try stringifyParse("3 over 4 over 5")
-        XCTAssertEqual(f5, "((3/4)/5)")
-
-        let f6 = try stringifyParse("3 over 4 minus 5")
-        XCTAssertEqual(f6, "((3/4)-5)")
-
-        let f7 = try stringifyParse("3 over 4 minus 5 between 6")
-        XCTAssertEqual(f7, "((3/4)-(5/6))")
-
-        let f8 = try stringifyParse("1 with 2 nor 3")
-        XCTAssertEqual(f8, "((1+2)!|3)")
+        XCTAssertEqual(try stringifyParse("1 with 2"), "(1+2)")
+        XCTAssertEqual(try stringifyParse("1 with 2 of 3"), "(1+(2*3))")
+        XCTAssertEqual(try stringifyParse("1 with 2 of 3 over 4"), "(1+((2*3)/4))")
+        XCTAssertEqual(try stringifyParse("1 with 2 of 3 without 4"), "((1+(2*3))-4)")
+        XCTAssertEqual(try stringifyParse("3 over 4 over 5"), "((3/4)/5)")
+        XCTAssertEqual(try stringifyParse("3 over 4 minus 5"), "((3/4)-5)")
+        XCTAssertEqual(try stringifyParse("3 over 4 minus 5 between 6"), "((3/4)-(5/6))")
+        XCTAssertEqual(try stringifyParse("1 with 2 nor 3"), "((1+2)!|3)")
+        XCTAssertEqual(try stringifyParse("not 1"), "(!1)")
+        XCTAssertEqual(try stringifyParse("not 1 or 2"), "((!1)|2)")
+        XCTAssertEqual(try stringifyParse("1 of not 2"), "(1*(!2))")
+        XCTAssertEqual(try stringifyParse("1 of not 2 over 3"), "((1*(!2))/3)")
     }
 
     func testFizzBuzz() throws {
