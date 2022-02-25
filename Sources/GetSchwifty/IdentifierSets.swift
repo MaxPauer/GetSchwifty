@@ -75,6 +75,10 @@ internal extension String {
     static var knockIdentifiers: Set<String> { Set(["knock"]) }
     static var downIdentifiers: Set<String> { Set(["down"]) }
     static var withIdentifiers: Set<String> { Set(["with"]) }
+    static var andIdentifiers: Set<String> { Set(["and"]) }
+    static var orIdentifiers: Set<String> { Set(["or"]) }
+    static var norIdentifiers: Set<String> { Set(["nor"]) }
+    static var notIdentifiers: Set<String> { Set(["not"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers

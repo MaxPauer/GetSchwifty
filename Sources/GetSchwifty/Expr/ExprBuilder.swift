@@ -233,6 +233,12 @@ func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
             return ArithExprBuilder(op: .mul, lhs: self)
         case String.divisionIdentifiers:
             return ArithExprBuilder(op: .div, lhs: self)
+        case String.andIdentifiers:
+            return ArithExprBuilder(op: .and, lhs: self)
+        case String.orIdentifiers:
+            return ArithExprBuilder(op: .orr, lhs: self)
+        case String.norIdentifiers:
+            return ArithExprBuilder(op: .nor, lhs: self)
         default:
             return try handleOtherIdentifierLex(id)
         }

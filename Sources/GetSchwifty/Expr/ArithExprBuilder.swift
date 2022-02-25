@@ -44,6 +44,9 @@ internal class ArithExprBuilder: SingleExprBuilder, PushesStringThrough, PushesN
         case String.subtractionIdentifiers: return .sub
         case String.multiplicationIdentifiers: return .mul
         case String.divisionIdentifiers: return .div
+        case String.andIdentifiers: return .and
+        case String.orIdentifiers: return .orr
+        case String.norIdentifiers: return .nor
         default: return nil
         }
     }

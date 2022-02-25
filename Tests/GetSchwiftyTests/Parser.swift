@@ -217,6 +217,9 @@ final class ParserTests: XCTestCase {
                 case .sub: return "-"
                 case .div: return "/"
                 case .mul: return "*"
+                case .and: return "&"
+                case .orr: return "|"
+                case .nor: return "!|"
                 default: return "?"
                 }
             }
@@ -256,6 +259,9 @@ final class ParserTests: XCTestCase {
 
         let f7 = try stringifyParse("3 over 4 minus 5 between 6")
         XCTAssertEqual(f7, "((3/4)-(5/6))")
+
+        let f8 = try stringifyParse("1 with 2 nor 3")
+        XCTAssertEqual(f8, "((1+2)!|3)")
     }
 
     func testFizzBuzz() throws {
