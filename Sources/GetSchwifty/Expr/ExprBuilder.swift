@@ -43,7 +43,7 @@ internal protocol ExprBuilder: AnyObject, PrettyNamed {
 }
 
 extension ExprBuilder {
-    fileprivate func build<T>(asChildOf parent: ExprBuilder) throws -> T {
+    internal func build<T>(asChildOf parent: ExprBuilder) throws -> T {
         let ep = try self.build()
         guard let tep = ep as? T else {
             throw UnexpectedExprError<T>(got: ep, startPos: range.start, parsing: parent)
@@ -218,12 +218,33 @@ internal class VanillaExprBuilder: SingleExprBuilder {
     }
 }
 
-internal protocol FinalizedLocationExprBuilder: SingleExprBuilder {}
+internal protocol ArithValueExprBuilder: SingleExprBuilder {
+    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
+}
+
+extension ArithValueExprBuilder {
+func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        switch id.literal {
+        case String.additionIdentifiers:
+            return ArithExprBuilder(op: .add, lhs: self)
+        case String.subtractionIdentifiers:
+            return ArithExprBuilder(op: .sub, lhs: self)
+        case String.multiplicationIdentifiers:
+            return ArithExprBuilder(op: .mul, lhs: self)
+        case String.divisionIdentifiers:
+            return ArithExprBuilder(op: .div, lhs: self)
+        default:
+            return try handleOtherIdentifierLex(id)
+        }
+    }
+}
+
+internal protocol FinalizedLocationExprBuilder: ArithValueExprBuilder {}
 
 extension FinalizedLocationExprBuilder {
     var canTerminate: Bool { true }
 
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         let word = id.literal
         switch word {
         case String.sayPoeticStringIdentifiers:
@@ -697,7 +718,7 @@ internal class OutputExprBuilder:
     }
 }
 
-internal class StringExprBuilder: SingleExprBuilder {
+internal class StringExprBuilder: ArithValueExprBuilder {
     let literal: String
     var range: LexRange!
     init(literal s: String) { literal = s }
@@ -706,7 +727,7 @@ internal class StringExprBuilder: SingleExprBuilder {
         return StringExpr(literal: literal)
     }
 
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.indexingIdentifiers:
             return IndexingLocationExprBuilder(target: self)
@@ -720,12 +741,16 @@ internal class StringExprBuilder: SingleExprBuilder {
     }
 }
 
-internal class NumberExprBuilder: SingleExprBuilder {
+internal class NumberExprBuilder: ArithValueExprBuilder {
     let literal: Double
     var range: LexRange!
 
     func build() -> ExprP {
         return NumberExpr(literal: literal)
+    }
+
+    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: id, parsing: self)
     }
 
     init(from l: NumberLex, in e: ExprBuilder) throws {
@@ -740,7 +765,7 @@ internal class NumberExprBuilder: SingleExprBuilder {
     }
 }
 
-internal class BoolExprBuilder: SingleExprBuilder {
+internal class BoolExprBuilder: ArithValueExprBuilder {
     let literal: Bool
     var range: LexRange!
 
@@ -749,20 +774,32 @@ internal class BoolExprBuilder: SingleExprBuilder {
     func build() -> ExprP {
         return BoolExpr(literal: literal)
     }
+
+    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: id, parsing: self)
+    }
 }
 
-internal class NullExprBuilder: SingleExprBuilder {
+internal class NullExprBuilder: ArithValueExprBuilder {
     var range: LexRange!
 
     func build() -> ExprP {
         return NullExpr()
     }
+
+    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: id, parsing: self)
+    }
 }
 
-internal class MysteriousExprBuilder: SingleExprBuilder {
+internal class MysteriousExprBuilder: ArithValueExprBuilder {
     var range: LexRange!
 
     func build() -> ExprP {
         return MysteriousExpr()
+    }
+
+    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        throw UnexpectedLexemeError(got: id, parsing: self)
     }
 }

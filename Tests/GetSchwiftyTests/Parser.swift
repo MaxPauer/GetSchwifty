@@ -209,6 +209,55 @@ final class ParserTests: XCTestCase {
         let _: (StringExpr, VariableNameExpr) = try testParse("\"heaven\" at hell")
     }
 
+    func testArithmetic() throws {
+        func stringifyParse(_ inp: String) throws -> String {
+            func str(_ op: FunctionCallExpr.Op) -> String {
+                switch op {
+                case .add: return "+"
+                case .sub: return "-"
+                case .div: return "/"
+                case .mul: return "*"
+                default: return "?"
+                }
+            }
+            func str(_ e: ExprP) -> String {
+                switch e {
+                case let n as NumberExpr: return str(n)
+                case let f as FunctionCallExpr: return str(f)
+                default: return "(?)"
+                }
+            }
+            func str(_ n: NumberExpr) -> String { String(Int(n.literal)) }
+            func str(_ f: FunctionCallExpr) -> String { "(\(str(f.args[0]))\(str(f.head))\(str(f.args[1])))" }
+
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? FunctionCallExpr)
+            _ = try XCTUnwrap(p.next() as? NopExpr)
+            return str(i)
+        }
+
+        let f1 = try stringifyParse("1 with 2")
+        XCTAssertEqual(f1, "(1+2)")
+
+        let f2 = try stringifyParse("1 with 2 of 3")
+        XCTAssertEqual(f2, "(1+(2*3))")
+
+        let f3 = try stringifyParse("1 with 2 of 3 over 4")
+        XCTAssertEqual(f3, "(1+((2*3)/4))")
+
+        let f4 = try stringifyParse("1 with 2 of 3 without 4")
+        XCTAssertEqual(f4, "((1+(2*3))-4)")
+
+        let f5 = try stringifyParse("3 over 4 over 5")
+        XCTAssertEqual(f5, "((3/4)/5)")
+
+        let f6 = try stringifyParse("3 over 4 minus 5")
+        XCTAssertEqual(f6, "((3/4)-5)")
+
+        let f7 = try stringifyParse("3 over 4 minus 5 between 6")
+        XCTAssertEqual(f7, "((3/4)-(5/6))")
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)

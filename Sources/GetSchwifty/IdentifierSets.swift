@@ -50,6 +50,18 @@ internal extension String {
     static var popIdentifiers: Set<String> {
         Set(["roll", "pop"])
     }
+    static var additionIdentifiers: Set<String> {
+        Set(["plus", "with"])
+    }
+    static var subtractionIdentifiers: Set<String> {
+        Set(["minus", "without"])
+    }
+    static var multiplicationIdentifiers: Set<String> {
+        Set(["times", "of"])
+    }
+    static var divisionIdentifiers: Set<String> {
+        Set(["over", "between"])
+    }
 
     static var letAssignIdentifiers: Set<String> { Set(["let"]) }
     static var putAssignIdentifiers: Set<String> { Set(["put"]) }
