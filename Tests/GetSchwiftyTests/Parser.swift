@@ -223,6 +223,10 @@ final class ParserTests: XCTestCase {
                 case .not: return "!"
                 case .eq:  return "=="
                 case .neq: return "!="
+                case .leq: return "<="
+                case .geq: return ">="
+                case .lt:  return "<"
+                case .gt:  return ">"
                 default: return "?"
                 }
             }
@@ -269,6 +273,10 @@ final class ParserTests: XCTestCase {
         try testParse("3 over 4 isn't 5 between 6", "((3/4)!=(5/6))")
         try testParse("3 with 4 isn't 5 and 6", "(((3+4)!=5)&&6)")
         try testParse("3 with 4 is not 5 with not 6", "((3+4)==((!5)+(!6)))")
+        try testParse("3 over 4 is greater than 5 between 6", "((3/4)>(5/6))")
+        try testParse("3 over 4 is less than 5 between 6", "((3/4)<(5/6))")
+        try testParse("3 over 4 is as small as 5 between 6", "((3/4)<=(5/6))")
+        try testParse("3 over 4 is as high as 5 between 6", "((3/4)>=(5/6))")
     }
 
     func testFizzBuzz() throws {

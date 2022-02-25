@@ -65,6 +65,18 @@ internal extension String {
     static var divisionIdentifiers: Set<String> {
         Set(["over", "between"])
     }
+    static var highIdentifiers: Set<String> {
+        Set(["high", "great", "big", "strong"])
+    }
+    static var higherIdentifiers: Set<String> {
+        Set(["higher", "greater", "bigger", "stronger"])
+    }
+    static var lowIdentifiers: Set<String> {
+        Set(["low", "little", "small", "weak"])
+    }
+    static var lowerIdentifiers: Set<String> {
+        Set(["lower", "less", "smaller", "weaker"])
+    }
 
     static var letAssignIdentifiers: Set<String> { Set(["let"]) }
     static var putAssignIdentifiers: Set<String> { Set(["put"]) }
@@ -82,6 +94,8 @@ internal extension String {
     static var orIdentifiers: Set<String> { Set(["or"]) }
     static var norIdentifiers: Set<String> { Set(["nor"]) }
     static var notIdentifiers: Set<String> { Set(["not"]) }
+    static var asIdentifiers: Set<String> { Set(["as"]) }
+    static var thanIdentifiers: Set<String> { Set(["than"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers

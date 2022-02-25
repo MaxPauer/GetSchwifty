@@ -17,16 +17,11 @@ extension FunctionCallExpr.Op {
 }
 
 internal protocol ArithExprBuilder: SingleExprBuilder {
-    var op: FunctionCallExpr.Op { get }
+    var op: FunctionCallExpr.Op { get set }
     var rhs: ExprBuilder { get set }
 }
 
 extension ArithExprBuilder {
-        func pushThrough(_ lex: Lex) throws -> ExprBuilder {
-        rhs = try rhs.partialPush(lex)
-        return self
-    }
-
     func getOp(_ id: IdentifierLex) -> FunctionCallExpr.Op? {
         switch id.literal {
         case String.additionIdentifiers: return .add
@@ -36,22 +31,16 @@ extension ArithExprBuilder {
         case String.andIdentifiers: return .and
         case String.orIdentifiers: return .orr
         case String.norIdentifiers: return .nor
-        case String.isIdentifiers: return .eq
         case String.isntIdentifiers: return .neq
+        case String.isIdentifiers: return .eq
         default: return nil
         }
-    }
-
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        if let op = getOp(id), op <= self.op {
-            return self |=> BiArithExprBuilder(op: op, lhs: self)
-        }
-        return try pushThrough(id)
     }
 }
 
 internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
-    let op: FunctionCallExpr.Op
+    var op: FunctionCallExpr.Op
+    var opMustContinueWith: Set<String> = Set()
     var lhs: ExprBuilder
     lazy var rhs: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
@@ -66,10 +55,60 @@ internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
         let r: ValueExprP = try rhs.build(asChildOf: self)
         return FunctionCallExpr(head: op, args: [l,r])
     }
+
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        guard opMustContinueWith.isEmpty else {
+            throw UnexpectedLexemeError(got: lex, parsing: self)
+        }
+        rhs = try rhs.partialPush(lex)
+        return self
+    }
+
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        if opMustContinueWith ~= id.literal {
+            switch id.literal {
+            case String.thanIdentifiers,
+                 String.asIdentifiers:
+                opMustContinueWith = Set()
+                return self
+            case String.lowIdentifiers:
+                self.op = .leq
+                opMustContinueWith = String.asIdentifiers
+                return self
+            case String.highIdentifiers:
+                self.op = .geq
+                opMustContinueWith = String.asIdentifiers
+                return self
+            default:
+                throw UnexpectedIdentifierError(got: id, parsing: self, expecting: opMustContinueWith)
+            }
+        } else if self.op == .eq {
+            switch id.literal {
+            case String.higherIdentifiers:
+                self.op = .gt
+                opMustContinueWith = String.thanIdentifiers
+                return self
+            case String.lowerIdentifiers:
+                self.op = .lt
+                opMustContinueWith = String.thanIdentifiers
+                return self
+            case String.asIdentifiers:
+                opMustContinueWith = String.highIdentifiers ∪ String.lowIdentifiers
+                return self
+            default:
+                break
+            }
+        }
+
+        if let op = getOp(id), op <= self.op {
+            return self |=> BiArithExprBuilder(op: op, lhs: self)
+        }
+        return try pushThrough(id)
+    }
 }
 
 internal class UnArithExprBuilder: ArithExprBuilder, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
-    let op: FunctionCallExpr.Op
+    var op: FunctionCallExpr.Op
     lazy var rhs: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
@@ -80,5 +119,17 @@ internal class UnArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
     func build() throws -> ExprP {
         let r: ValueExprP = try rhs.build(asChildOf: self)
         return FunctionCallExpr(head: op, args: [r])
+    }
+
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        rhs = try rhs.partialPush(lex)
+        return self
+    }
+
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        if let op = getOp(id), op <= self.op {
+            return self |=> BiArithExprBuilder(op: op, lhs: self)
+        }
+        return try pushThrough(id)
     }
 }
