@@ -221,6 +221,7 @@ final class ParserTests: XCTestCase {
                 case .orr: return "|"
                 case .nor: return "!|"
                 case .not: return "!"
+                case .eq:  return "=="
                 default: return "?"
                 }
             }
@@ -259,6 +260,7 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(try stringifyParse("not 1 or 2"), "((!1)|2)")
         XCTAssertEqual(try stringifyParse("1 of not 2"), "(1*(!2))")
         XCTAssertEqual(try stringifyParse("1 of not 2 over 3"), "((1*(!2))/3)")
+        XCTAssertEqual(try stringifyParse("3 over 4 is 5 between 6"), "((3/4)==(5/6))")
     }
 
     func testFizzBuzz() throws {

@@ -36,6 +36,7 @@ extension ArithExprBuilder {
         case String.andIdentifiers: return .and
         case String.orIdentifiers: return .orr
         case String.norIdentifiers: return .nor
+        case String.isIdentifiers: return .eq
         default: return nil
         }
     }
