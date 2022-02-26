@@ -1,3 +1,7 @@
+fileprivate extension DelimiterLex {
+    var isComma: Bool { literal == "," }
+}
+
 internal protocol ArithValueExprBuilder: SingleExprBuilder {
     var isStatement: Bool { get }
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
@@ -78,7 +82,7 @@ internal class ListExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesSt
     }
 
     func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        takesAnd = d.literal == ","
+        takesAnd = d.isComma
         sources.pushBack(currSource)
         currSource = VanillaExprBuilder(parent: self)
         return self
