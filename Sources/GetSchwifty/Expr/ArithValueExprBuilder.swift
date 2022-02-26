@@ -1,19 +1,10 @@
 internal protocol ArithValueExprBuilder: SingleExprBuilder {
     var isStatement: Bool { get }
-    func preHandleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder?
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
 }
 
 extension ArithValueExprBuilder {
-    func preHandleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder? {
-        nil
-    }
-
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        if let e = preHandleIdentifierLex(id) {
-            return e
-        }
-
         switch id.literal {
         case String.additionIdentifiers:
             return BiArithExprBuilder(op: .add, lhs: self)
@@ -47,7 +38,7 @@ extension ArithValueExprBuilder {
     }
 }
 
-internal class ListExprBuilder: ArithValueExprBuilder, PushesNumberThrough, PushesStringThrough {
+internal class ListExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesStringThrough {
     var sources = DLinkedList<ExprBuilder>()
     lazy var currSource: ExprBuilder = VanillaExprBuilder(parent: self)
     var takesAnd: Bool
@@ -61,6 +52,7 @@ internal class ListExprBuilder: ArithValueExprBuilder, PushesNumberThrough, Push
     }
 
     func build() throws -> ExprP {
+        sources.pushBack(currSource)
         var members: [ValueExprP] = []
         while let member = sources.popFront() {
             let m: ValueExprP = try member.build(asChildOf: self)
@@ -75,22 +67,20 @@ internal class ListExprBuilder: ArithValueExprBuilder, PushesNumberThrough, Push
         return self
     }
 
-    func preHandleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder? {
-        defer { takesAnd = false }
-        if case String.andIdentifiers = id.literal, takesAnd {
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        switch id.literal {
+        case String.andIdentifiers where takesAnd:
+            takesAnd = false
             return self
+        default:
+            return try pushThrough(id)
         }
-        return nil
-    }
-
-    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        return try pushThrough(id)
     }
 
     func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
         takesAnd = true
         sources.pushBack(currSource)
-        currSource = self |=> VanillaExprBuilder(parent: self)
+        currSource = VanillaExprBuilder(parent: self)
         return self
     }
 }

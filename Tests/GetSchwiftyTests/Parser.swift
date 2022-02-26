@@ -299,6 +299,31 @@ final class ParserTests: XCTestCase {
         try testParse("3 over 4 is as high as 5 between 6", "((3/4)>=(5/6))")
     }
 
+    func testList() throws {
+        func testParse(_ inp: String, _ exp: [Any]) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? ListExpr)
+            XCTAssertEqual(i.members.count, exp.count)
+            for (m,e) in zip(i.members, exp) {
+                if let ee = e as? Int {
+                    let mm = try XCTUnwrap(m as? NumberExpr)
+                    XCTAssertEqual(mm.literal, Double(ee))
+                } else {
+                    let ee = e as! [Any]
+                    let mm = try XCTUnwrap(m as? FunctionCallExpr)
+                    XCTAssertEqual(mm.head, .and)
+                    for i in 0...1 {
+                        let eee = ee[i] as! Int
+                        let mmm = try XCTUnwrap(mm.args[i] as? NumberExpr)
+                        XCTAssertEqual(mmm.literal, Double(eee))
+                    }
+                }
+            }
+        }
+        try testParse("5, 6 & 7, and 8, 9 & and 10", [5,6,7,8,9,10])
+        try testParse("5, 6 and 7, and 8", [5,[6,7],8])
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)
