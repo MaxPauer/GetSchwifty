@@ -338,6 +338,27 @@ final class ParserTests: XCTestCase {
         try testParse("turn it around", .round)
     }
 
+    func testCasting() throws {
+        func testParse(_ inp: String, _ target: ExprP.Type, _ source: ExprP.Type?, _ arg: ExprP.Type?) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let x = try p.next()
+            let i = try XCTUnwrap(x as? VoidCallExpr)
+            XCTAssertEqual(i.head, .cast)
+            XCTAssert(target == type(of: i.target!))
+            if let source = source {
+                XCTAssert(source == type(of: i.source!))
+            }
+            if let arg = arg {
+                XCTAssert(arg == type(of: i.arg!))
+            }
+        }
+        try testParse("cast my life", VariableNameExpr.self, nil, nil)
+        try testParse("burn my life with 5", VariableNameExpr.self, nil, NumberExpr.self)
+        try testParse("cast my dream into my life", VariableNameExpr.self, VariableNameExpr.self, nil)
+        try testParse("cast my dream into my life with 5", VariableNameExpr.self, VariableNameExpr.self, NumberExpr.self)
+        try testParse("cast 5 into my life", VariableNameExpr.self, NumberExpr.self, nil)
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)

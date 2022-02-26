@@ -126,4 +126,12 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedExprError<LocationExprP> = try errorTest("turn 5 up", NumberExpr.self, RoundExprBuilder.self, (1,5))
         let _: UnfinishedExprError = try errorTest("turn it", RoundExprBuilder.self, (1,7))
     }
+
+    func testCastingFailure() throws {
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast ", NopExpr.self, CastExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5", NumberExpr.self, CastExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast my life into", NopExpr.self, CastExprBuilder.self, (1,17))
+        let _: UnexpectedExprError<ValueExprP?> = try errorTest("cast my life with", NopExpr.self, CastExprBuilder.self, (1,17))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5 into 5", NumberExpr.self, CastExprBuilder.self, (1,12))
+    }
 }

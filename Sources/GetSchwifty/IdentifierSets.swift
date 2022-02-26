@@ -80,6 +80,9 @@ internal extension String {
     static var roundIdentifiers: Set<String> {
         Set(["round", "around"])
     }
+    static var castIdentifiers: Set<String> {
+        Set(["cast", "burn"])
+    }
 
     static var letAssignIdentifiers: Set<String> { Set(["let"]) }
     static var putAssignIdentifiers: Set<String> { Set(["put"]) }
@@ -101,6 +104,7 @@ internal extension String {
     static var thanIdentifiers: Set<String> { Set(["than"]) }
     static var likeIdentifiers: Set<String> { Set(["like"]) }
     static var turnIdentifiers: Set<String> { Set(["turn"]) }
+    static var intoIdentifiers: Set<String> { Set(["into"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers
