@@ -16,9 +16,11 @@ extension FinalizedLocationExprBuilder {
             return PoeticStringAssignmentExprBuilder(target: self)
         case String.indexingIdentifiers:
             return IndexingLocationExprBuilder(target: self, isStatement: isStatement)
+        case String.takingIdentifiers:
+            return FunctionCallExprBuilder(head: self)
         default:
             throw UnexpectedIdentifierError(got: id, parsing: self, expecting:
-                String.isIdentifiers ∪ String.sayPoeticStringIdentifiers ∪ String.indexingIdentifiers)
+                String.isIdentifiers ∪ String.sayPoeticStringIdentifiers ∪ String.indexingIdentifiers ∪ String.takingIdentifiers)
         }
     }
 }

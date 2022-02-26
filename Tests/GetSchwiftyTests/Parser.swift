@@ -341,8 +341,7 @@ final class ParserTests: XCTestCase {
     func testCasting() throws {
         func testParse(_ inp: String, _ target: ExprP.Type, _ source: ExprP.Type?, _ arg: ExprP.Type?) throws {
             var p = try XCTUnwrap(self.parse(inp))
-            let x = try p.next()
-            let i = try XCTUnwrap(x as? VoidCallExpr)
+            let i = try XCTUnwrap(p.next() as? VoidCallExpr)
             XCTAssertEqual(i.head, .cast)
             XCTAssert(target == type(of: i.target!))
             if let source = source {
@@ -357,6 +356,19 @@ final class ParserTests: XCTestCase {
         try testParse("cast my dream into my life", VariableNameExpr.self, VariableNameExpr.self, nil)
         try testParse("cast my dream into my life with 5", VariableNameExpr.self, VariableNameExpr.self, NumberExpr.self)
         try testParse("cast 5 into my life", VariableNameExpr.self, NumberExpr.self, nil)
+    }
+
+    func testFuncCall() throws {
+        func testParse(_ inp: String, _ head: ExprP.Type, _ ex: ExprP.Type) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? FunctionCallExpr)
+            XCTAssertEqual(i.head, .custom)
+            XCTAssert(type(of: i.args[0]) == head)
+            XCTAssert(type(of: i.args[1]) == ex)
+        }
+        try testParse("my life taking 5", VariableNameExpr.self, NumberExpr.self)
+        try testParse("it taking work", PronounExpr.self, VariableNameExpr.self)
+        try testParse("my life taking 5, and 6", VariableNameExpr.self, ListExpr.self)
     }
 
     func testFizzBuzz() throws {

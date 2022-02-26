@@ -519,3 +519,25 @@ internal class OutputExprBuilder:
         return self
     }
 }
+
+internal class FunctionCallExprBuilder:
+        SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough, PushesNumberThrough, PushesStringThrough {
+    var head: ExprBuilder
+    lazy var args: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
+
+    init(head h: ExprBuilder) {
+        head = h
+    }
+
+    func build() throws -> ExprP {
+        let h: LocationExprP = try head.build(asChildOf: self)
+        let a: ValueExprP = try args.build(asChildOf: self)
+        return FunctionCallExpr(head: .custom, args: [h, a])
+    }
+
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        args = try args.partialPush(lex)
+        return self
+    }
+}

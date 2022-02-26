@@ -105,6 +105,7 @@ internal extension String {
     static var likeIdentifiers: Set<String> { Set(["like"]) }
     static var turnIdentifiers: Set<String> { Set(["turn"]) }
     static var intoIdentifiers: Set<String> { Set(["into"]) }
+    static var takingIdentifiers: Set<String> { Set(["taking"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers

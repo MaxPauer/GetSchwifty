@@ -134,4 +134,8 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedExprError<ValueExprP?> = try errorTest("cast my life with", NopExpr.self, CastExprBuilder.self, (1,17))
         let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5 into 5", NumberExpr.self, CastExprBuilder.self, (1,12))
     }
+
+    func testFuncCallFailure() throws {
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("my life taking ", NopExpr.self, FunctionCallExprBuilder.self, (1,15))
+    }
 }

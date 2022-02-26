@@ -118,6 +118,9 @@ extension CastExprBuilder {
 extension ArithExprBuilder {
     var prettyName: String { "Arithmetic: \(op)" }
 }
+extension FunctionCallExprBuilder {
+    var prettyName: String { "Function Call" }
+}
 
 extension NopExpr {
     var prettyName: String { "Nop" }
