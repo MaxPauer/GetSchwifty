@@ -21,9 +21,9 @@ internal protocol ArithExprBuilder: SingleExprBuilder {
     var rhs: ExprBuilder { get set }
 }
 
-extension ArithExprBuilder {
-    func getOp(_ id: IdentifierLex) -> FunctionCallExpr.Op? {
-        switch id.literal {
+extension IdentifierLex {
+    func getOp() -> FunctionCallExpr.Op? {
+        switch literal {
         case String.additionIdentifiers: return .add
         case String.subtractionIdentifiers: return .sub
         case String.multiplicationIdentifiers: return .mul
@@ -104,7 +104,7 @@ internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
             }
         }
 
-        if let op = getOp(id), op <= self.op {
+        if let op = id.getOp(), op <= self.op {
             return self |=> BiArithExprBuilder(op: op, lhs: self)
         }
         return try pushThrough(id)
@@ -131,7 +131,7 @@ internal class UnArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        if let op = getOp(id), op <= self.op {
+        if let op = id.getOp(), op <= self.op {
             return self |=> BiArithExprBuilder(op: op, lhs: self)
         }
         return try pushThrough(id)

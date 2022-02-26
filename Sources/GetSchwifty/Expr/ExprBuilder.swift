@@ -394,6 +394,7 @@ internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiter
 internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
+    var op: FunctionCallExpr.Op?
     var range: LexRange!
 
     private(set) var expectingTarget: Bool
@@ -415,7 +416,10 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
 
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
-        let s: ValueExprP = try value.build(asChildOf: self)
+        var s: ValueExprP = try value.build(asChildOf: self)
+        if let op = op {
+            s = FunctionCallExpr(head: op, args: [t,s])
+        }
         return VoidCallExpr(head: .assign, target: t, source: s, arg: nil)
     }
 
@@ -441,6 +445,12 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
                 throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.assignBeIdentifiers)
             }
             expectingTarget = true
+        case String.additionIdentifiers, String.subtractionIdentifiers,
+             String.multiplicationIdentifiers, String.divisionIdentifiers:
+            guard !expectingTarget && !(target is VanillaExprBuilder) else {
+                throw UnexpectedLexemeError(got: id, parsing: self)
+            }
+            op = id.getOp()!
         default:
             try pushThrough(id)
         }

@@ -101,6 +101,26 @@ final class ParserTests: XCTestCase {
         let _: StringExpr = try assignParseTest("put silence into my pants", "my pants", "")
     }
 
+    func testLetWithAssignment() throws {
+        func parseTest(_ inp: String, _ op: FunctionCallExpr.Op, _ val: Double) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let ass = try XCTUnwrap(p.next() as? VoidCallExpr)
+            XCTAssertEqual(ass.head, .assign)
+            XCTAssert(try p.next() is NopExpr)
+            let lhsTar = try XCTUnwrap(ass.target as? VariableNameExpr)
+            let rhs = try XCTUnwrap(ass.source as? FunctionCallExpr)
+            XCTAssertEqual(rhs.head, op)
+            let rhsTar = try XCTUnwrap(rhs.args[0] as? VariableNameExpr)
+            let rhsVal = try XCTUnwrap(rhs.args[1] as? NumberExpr)
+            XCTAssertEqual(lhsTar.name, rhsTar.name)
+            XCTAssertEqual(rhsVal.literal, val)
+        }
+        try parseTest("let the devil be plus 5", .add, 5)
+        try parseTest("let the devil be minus 6", .sub, 6)
+        try parseTest("let the devil be of 7", .mul, 7)
+        try parseTest("let the devil be between 8", .div, 8)
+    }
+
     func testInput() throws {
         let testParse = { (inp: String, expLocName: String?) in
             var p = try XCTUnwrap(self.parse(inp))
