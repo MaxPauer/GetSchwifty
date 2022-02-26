@@ -324,6 +324,20 @@ final class ParserTests: XCTestCase {
         try testParse("5, 6 and 7, and 8", [5,[6,7],8])
     }
 
+    func testRounding() throws {
+        func testParse(_ inp: String, _ dir: VoidCallExpr.Op) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? VoidCallExpr)
+            XCTAssertEqual(i.head, dir)
+        }
+        try testParse("turn up hell", .ceil)
+        try testParse("turn down heaven", .floor)
+        try testParse("turn round partner", .round)
+        try testParse("turn it up", .ceil)
+        try testParse("turn him down", .floor)
+        try testParse("turn it around", .round)
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)

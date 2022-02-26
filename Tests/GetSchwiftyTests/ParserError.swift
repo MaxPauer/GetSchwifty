@@ -23,6 +23,18 @@ final class ParserErrorTests: XCTestCase {
         return errorTest(inp, IdentifierLex.self, expr, pos)
     }
 
+    func errorTest(_ inp: String, _ expr: ExprBuilder.Type, _ pos: (UInt,UInt)) throws -> UnfinishedExprError {
+        var error: Error!
+        XCTAssertThrowsError(try parseDiscardAll(inp)) { (e: Error) in
+            error = e
+        }
+        let err = try XCTUnwrap(error as? UnfinishedExprError)
+        XCTAssert(type(of: err.parsing) == expr)
+        let (line,char) = pos
+        XCTAssertEqual(err.startPos, LexPos(line: line, char: char))
+        return err
+    }
+
     func errorTest<Expecting>(_ inp: String, _ got: ExprP.Type, _ expr: ExprBuilder.Type, _ pos: (UInt,UInt)) throws -> UnexpectedExprError<Expecting> {
         var error: Error!
         XCTAssertThrowsError(try parseDiscardAll(inp)) { (e: Error) in
@@ -107,5 +119,11 @@ final class ParserErrorTests: XCTestCase {
     func testLetWithAssignmentFailure() throws {
         let _: UnexpectedExprError<ValueExprP> = try errorTest("let the devil be between ", NopExpr.self, AssignmentExprBuilder.self, (1,25))
         let _: UnexpectedLexemeError = errorTest("let the devil be 8 between", IdentifierLex.self, AssignmentExprBuilder.self, (1,19))
+    }
+
+    func testRoundingFailure() throws {
+        let _: UnfinishedExprError = try errorTest("turn ", RoundExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("turn 5 up", NumberExpr.self, RoundExprBuilder.self, (1,5))
+        let _: UnfinishedExprError = try errorTest("turn it", RoundExprBuilder.self, (1,7))
     }
 }

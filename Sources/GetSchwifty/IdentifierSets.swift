@@ -77,6 +77,9 @@ internal extension String {
     static var lowerIdentifiers: Set<String> {
         Set(["lower", "less", "smaller", "weaker"])
     }
+    static var roundIdentifiers: Set<String> {
+        Set(["round", "around"])
+    }
 
     static var letAssignIdentifiers: Set<String> { Set(["let"]) }
     static var putAssignIdentifiers: Set<String> { Set(["put"]) }
@@ -97,6 +100,7 @@ internal extension String {
     static var asIdentifiers: Set<String> { Set(["as"]) }
     static var thanIdentifiers: Set<String> { Set(["than"]) }
     static var likeIdentifiers: Set<String> { Set(["like"]) }
+    static var turnIdentifiers: Set<String> { Set(["turn"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers

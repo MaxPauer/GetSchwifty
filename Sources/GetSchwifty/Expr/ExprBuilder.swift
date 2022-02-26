@@ -189,6 +189,8 @@ internal class VanillaExprBuilder: SingleExprBuilder {
             return PopExprBuilder()
         case String.notIdentifiers:
             return UnArithExprBuilder(op: .not)
+        case String.turnIdentifiers:
+            return RoundExprBuilder()
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)
@@ -340,6 +342,43 @@ internal class PopExprBuilder:
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         source = try source.partialPush(lex)
         return self
+    }
+}
+
+internal class RoundExprBuilder:
+        SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+    lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
+    private var op: VoidCallExpr.Op?
+    var range: LexRange!
+
+    let expectedIdentifiers = String.upIdentifiers ∪ String.downIdentifiers ∪ String.roundIdentifiers
+
+    func build() throws -> ExprP {
+        guard let op = op else {
+            throw UnfinishedExprError(parsing: self, expecting: expectedIdentifiers)
+        }
+        let s: LocationExprP = try source.build(asChildOf: self)
+        return VoidCallExpr(head: op, target: s, source: s, arg: nil)
+    }
+
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        source = try source.partialPush(lex)
+        return self
+    }
+
+    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
+        if op == nil {
+            switch i.literal {
+            case String.upIdentifiers:    op = .ceil
+            case String.downIdentifiers:  op = .floor
+            case String.roundIdentifiers: op = .round
+            default:
+                return try pushThrough(i)
+            }
+            return self
+        }
+        return try pushThrough(i)
     }
 }
 

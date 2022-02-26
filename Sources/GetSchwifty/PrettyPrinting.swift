@@ -109,6 +109,9 @@ extension PushExprBuilder {
 extension PopExprBuilder {
     var prettyName: String { "Roll/Pop" }
 }
+extension RoundExprBuilder {
+    var prettyName: String { "Rounding" }
+}
 extension ArithExprBuilder {
     var prettyName: String { "Arithmetic: \(op)" }
 }

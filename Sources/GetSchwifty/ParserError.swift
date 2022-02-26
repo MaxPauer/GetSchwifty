@@ -62,3 +62,20 @@ internal struct UnexpectedExprError<Expecting>: ParserError {
         "encountered unexpected \(got) expression while parsing \(parsing) expression, expecting: \(Expecting.self)"
     }
 }
+
+internal struct UnfinishedExprError: ParserError {
+    var parsing: ExprBuilder
+    let expecting: Set<String>
+
+    var startPos: LexPos { parsing.range.end }
+
+    var expectingDescr: String {
+        expecting.map {
+            "‹\($0)›"
+        }.joined(separator: " or ")
+    }
+
+    var _description: String {
+        "unfinished \(parsing) expression, expecting: \(expectingDescr)"
+    }
+}
