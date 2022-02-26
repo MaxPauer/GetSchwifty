@@ -53,8 +53,8 @@ final class ParserErrorTests: XCTestCase {
     func testLetPutAssignmentFailure() throws {
         let _: UnexpectedIdentifierError = errorTest("let my life into false", AssignmentExprBuilder.self, (1,12))
         let _: UnexpectedIdentifierError = errorTest("put my life be true ", AssignmentExprBuilder.self, (1,12))
-        let _: UnexpectedIdentifierError = errorTest("let ' be nothing", AssignmentExprBuilder.self, (1,6))
-        let _: UnexpectedIdentifierError = errorTest("let ''' be nothing", AssignmentExprBuilder.self, (1,8))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("let ' be nothing", NopExpr.self, AssignmentExprBuilder.self, (1,16))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("let ''' be nothing", NopExpr.self, AssignmentExprBuilder.self, (1,18))
     }
 
     func testInputFailure() throws {
@@ -102,5 +102,10 @@ final class ParserErrorTests: XCTestCase {
     func testListFailure() throws {
         let _: UnexpectedLexemeError = errorTest("5, 6 & 7, and 8, 9 & and 10", NumberLex.self, VariableNameExprBuilder.self, (1,25))
         let _: UnexpectedExprError<ValueExprP> = try errorTest("5, 6 & 7, and 8, ", NopExpr.self, ListExprBuilder.self, (1,15))
+    }
+
+    func testLetWithAssignmentFailure() throws {
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("let the devil be between ", NopExpr.self, AssignmentExprBuilder.self, (1,25))
+        let _: UnexpectedLexemeError = errorTest("let the devil be 8 between", IdentifierLex.self, AssignmentExprBuilder.self, (1,19))
     }
 }
