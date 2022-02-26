@@ -78,7 +78,7 @@ internal class ListExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesSt
     }
 
     func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        takesAnd = true
+        takesAnd = d.literal == ","
         sources.pushBack(currSource)
         currSource = VanillaExprBuilder(parent: self)
         return self

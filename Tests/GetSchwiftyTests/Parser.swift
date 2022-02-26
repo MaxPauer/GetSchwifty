@@ -320,7 +320,7 @@ final class ParserTests: XCTestCase {
                 }
             }
         }
-        try testParse("5, 6 & 7, and 8, 9 & and 10", [5,6,7,8,9,10])
+        try testParse("5, 6 & 7, and 8, 9 & 10", [5,6,7,8,9,10])
         try testParse("5, 6 and 7, and 8", [5,[6,7],8])
     }
 
