@@ -85,6 +85,9 @@ extension InputExprBuilder {
 extension OutputExprBuilder {
     var prettyName: String { "Output" }
 }
+extension ListExprBuilder {
+    var prettyName: String { "List" }
+}
 extension StringExprBuilder {
     var prettyName: String { "String Value: \"\(literal)\"" }
 }

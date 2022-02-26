@@ -206,11 +206,20 @@ internal class VanillaExprBuilder: SingleExprBuilder {
 
 internal protocol ArithValueExprBuilder: SingleExprBuilder {
     var isStatement: Bool { get }
-    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
+    func preHandleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder?
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
 }
 
 extension ArithValueExprBuilder {
-func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func preHandleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder? {
+        nil
+    }
+
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        if let e = preHandleIdentifierLex(id) {
+            return e
+        }
+
         switch id.literal {
         case String.additionIdentifiers:
             return BiArithExprBuilder(op: .add, lhs: self)
@@ -233,9 +242,14 @@ func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
                 return PoeticNumberishAssignmentExprBuilder(target: self)
             }
             return BiArithExprBuilder(op: .eq, lhs: self)
+
         default:
-            return try handleOtherIdentifierLex(id)
+            return try postHandleIdentifierLex(id)
         }
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        return ListExprBuilder(first: self, isStatement: isStatement)
     }
 }
 
@@ -244,7 +258,7 @@ internal protocol FinalizedLocationExprBuilder: ArithValueExprBuilder {}
 extension FinalizedLocationExprBuilder {
     var canTerminate: Bool { true }
 
-    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         let word = id.literal
         switch word {
         case String.sayPoeticStringIdentifiers:
@@ -287,7 +301,7 @@ internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
 }
 
 internal class IndexingLocationExprBuilder:
-        ArithValueExprBuilder, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
+        ArithValueExprBuilder, PushesStringThrough, PushesNumberThrough {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
     let isStatement: Bool
@@ -303,7 +317,7 @@ internal class IndexingLocationExprBuilder:
         return self
     }
 
-    func handleOtherIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
         return try pushThrough(i)
     }
 
@@ -597,6 +611,54 @@ internal class OutputExprBuilder:
     }
 }
 
+internal class ListExprBuilder: ArithValueExprBuilder, PushesNumberThrough, PushesStringThrough {
+    var sources = DLinkedList<ExprBuilder>()
+    lazy var currSource: ExprBuilder = VanillaExprBuilder(parent: self)
+    var takesAnd: Bool
+    var isStatement: Bool
+    var range: LexRange!
+
+    init(first s: ExprBuilder, isStatement iss: Bool) {
+        sources.pushBack(s)
+        isStatement = iss
+        takesAnd = true
+    }
+
+    func build() throws -> ExprP {
+        var members: [ValueExprP] = []
+        while let member = sources.popFront() {
+            let m: ValueExprP = try member.build(asChildOf: self)
+            members.append(m)
+        }
+        return ListExpr(members: members)
+    }
+
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        takesAnd = false
+        currSource = try currSource.partialPush(lex)
+        return self
+    }
+
+    func preHandleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder? {
+        defer { takesAnd = false }
+        if case String.andIdentifiers = id.literal, takesAnd {
+            return self
+        }
+        return nil
+    }
+
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(id)
+    }
+
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
+        takesAnd = true
+        sources.pushBack(currSource)
+        currSource = self |=> VanillaExprBuilder(parent: self)
+        return self
+    }
+}
+
 internal class StringExprBuilder: ArithValueExprBuilder {
     let literal: String
     var range: LexRange!
@@ -608,7 +670,7 @@ internal class StringExprBuilder: ArithValueExprBuilder {
         return StringExpr(literal: literal)
     }
 
-    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.indexingIdentifiers:
             return IndexingLocationExprBuilder(target: self, isStatement: isStatement)
@@ -631,7 +693,7 @@ internal class NumberExprBuilder: ArithValueExprBuilder {
         return NumberExpr(literal: literal)
     }
 
-    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         throw UnexpectedLexemeError(got: id, parsing: self)
     }
 
@@ -658,7 +720,7 @@ internal class BoolExprBuilder: ArithValueExprBuilder {
         return BoolExpr(literal: literal)
     }
 
-    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         throw UnexpectedLexemeError(got: id, parsing: self)
     }
 }
@@ -671,7 +733,7 @@ internal class NullExprBuilder: ArithValueExprBuilder {
         return NullExpr()
     }
 
-    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         throw UnexpectedLexemeError(got: id, parsing: self)
     }
 }
@@ -684,7 +746,7 @@ internal class MysteriousExprBuilder: ArithValueExprBuilder {
         return MysteriousExpr()
     }
 
-    func handleOtherIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         throw UnexpectedLexemeError(got: id, parsing: self)
     }
 }
