@@ -164,19 +164,21 @@ final class ParserTests: XCTestCase {
     }
 
     func testPush() throws {
-        func testParse(_ inp: String, _ hasArg: Bool) throws {
+        func testParse(_ inp: String, _ val: Double?) throws {
             var p = try XCTUnwrap(self.parse(inp))
             let o = try XCTUnwrap(p.next() as? VoidCallExpr)
             XCTAssertEqual(o.head, .push)
             _ = try XCTUnwrap(o.target as? VariableNameExpr)
-            if hasArg {
-                _ = try XCTUnwrap(o.arg as? PronounExpr)
+            if let v = val {
+                let vv = try XCTUnwrap(o.arg as? NumberExpr)
+                XCTAssertEqual(vv.literal, v)
             }
         }
 
-        try testParse("rock the boat", false)
-        try testParse("rock the boat with her", true)
-        try testParse("(i) push my fingers (into my eyes)", false)
+        try testParse("rock the boat", nil)
+        try testParse("rock the boat with 5", 5)
+        try testParse("(i) push my fingers (into my eyes)", nil)
+        try testParse("rock the boat like a g .six", 11.3)
     }
 
     func testPop() throws {

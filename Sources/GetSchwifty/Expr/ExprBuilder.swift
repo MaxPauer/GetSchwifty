@@ -646,10 +646,21 @@ internal class PushExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Pushe
         switch id.literal {
         case String.withIdentifiers:
             expectingValue = true
+        case String.likeIdentifiers:
+            expectingValue = true
+            value = self |=> PoeticNumberExprBuilder()
         default:
             try pushThrough(id)
         }
         return self
+    }
+
+    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
+        return try pushThrough(w)
+    }
+
+    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder {
+        return try pushThrough(c)
     }
 }
 
