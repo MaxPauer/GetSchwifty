@@ -207,6 +207,7 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
     private(set) var expectingTarget: Bool
     private var expectingValue: Bool { !expectingTarget }
     private var gotSomeValue = false
+    private var gotSomeTarget = false
 
     init(expectingTarget et: Bool) {
         expectingTarget = et
@@ -228,6 +229,7 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
     @discardableResult
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         if expectingTarget {
+            gotSomeTarget = true
             target = try target.partialPush(lex)
         } else {
             gotSomeValue = true
@@ -239,13 +241,19 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.assignBeIdentifiers:
-            guard expectingTarget && !gotSomeValue else {
+            guard expectingTarget else {
                 throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.assignIntoIdentifiers)
+            }
+            guard gotSomeTarget else {
+                throw UnexpectedLexemeError(got: id, parsing: self)
             }
             expectingTarget = false
         case String.assignIntoIdentifiers:
-            guard expectingValue && !(value is VanillaExprBuilder) else {
+            guard expectingValue else {
                 throw UnexpectedIdentifierError(got: id, parsing: self, expecting: String.assignBeIdentifiers)
+            }
+            guard gotSomeValue else {
+                throw UnexpectedLexemeError(got: id, parsing: self)
             }
             expectingTarget = true
         case String.additionIdentifiers, String.subtractionIdentifiers,

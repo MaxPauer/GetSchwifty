@@ -53,8 +53,8 @@ final class ParserErrorTests: XCTestCase {
     func testLetPutAssignmentFailure() throws {
         let _: UnexpectedIdentifierError = errorTest("let my life into false", AssignmentExprBuilder.self, (1,12))
         let _: UnexpectedIdentifierError = errorTest("put my life be true ", AssignmentExprBuilder.self, (1,12))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("let ' be nothing", NopExpr.self, AssignmentExprBuilder.self, (1,16))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("let ''' be nothing", NopExpr.self, AssignmentExprBuilder.self, (1,18))
+        let _: UnexpectedLexemeError = errorTest("let ' be nothing", IdentifierLex.self, AssignmentExprBuilder.self, (1,6))
+        let _: UnexpectedLexemeError = errorTest("let ''' be nothing", IdentifierLex.self, AssignmentExprBuilder.self, (1,8))
     }
 
     func testInputFailure() throws {
