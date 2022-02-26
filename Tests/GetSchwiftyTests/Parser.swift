@@ -81,7 +81,7 @@ final class ParserTests: XCTestCase {
         let _: StringExpr = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
         let _: StringExpr = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
         let _: StringExpr = try assignParseTest("Mother says good \"night\" good(fright)\t good124.5e2", "mother", "good \"night\" good(fright)\t good124.5e2")
-        let _: StringExpr = try assignParseTest("Father say \\ lala 'sick hui'  ", "father", "\\ lala 'sick hui'  ")
+        let _: StringExpr = try assignParseTest("Father say  \\ lala 'sick hui'  ", "father", " \\ lala 'sick hui'  ")
         let _: StringExpr = try assignParseTest("brother say ", "brother", "")
         let _: StringExpr = try assignParseTest("my father said", "my father", "")
     }
