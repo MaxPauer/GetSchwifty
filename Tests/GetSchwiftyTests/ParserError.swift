@@ -101,7 +101,7 @@ final class ParserErrorTests: XCTestCase {
 
     func testListFailure() throws {
         let _: UnexpectedLexemeError = errorTest("5, 6 & 7, and 8, 9 & and 10", NumberLex.self, VariableNameExprBuilder.self, (1,25))
-        let _: UnexpectedExprError<ValueExprP> = try errorTest("5, 6 & 7, and 8, ", NopExpr.self, ListExprBuilder.self, (1,15))
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("5, 6 & 7, and 8, ", NopExpr.self, ListExprBuilder.self, (1,17))
     }
 
     func testLetWithAssignmentFailure() throws {

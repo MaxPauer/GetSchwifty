@@ -33,6 +33,8 @@ extension ExprBuilder {
         return rhs
     }
 
+    var isVanilla: Bool { self is VanillaExprBuilder }
+
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
         var newSelf: ExprBuilder = self
 
@@ -121,11 +123,21 @@ extension SingleExprBuilder {
 
 internal class VanillaExprBuilder: SingleExprBuilder {
     let parent: ExprBuilder?
-    var range: LexRange!
+    private var _range: LexRange?
+
+    var range: LexRange! {
+        get {
+            if _range == nil {
+                _range = -parent!.range.end
+            }
+            return _range!
+        } set{
+            _range = newValue
+        }
+    }
 
     init(parent p: ExprBuilder) {
         parent = p
-        range = -p.range.end
     }
 
     init(startPos: LexPos) {
@@ -206,8 +218,8 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
 
     private(set) var expectingTarget: Bool
     private var expectingValue: Bool { !expectingTarget }
-    private var gotSomeValue = false
-    private var gotSomeTarget = false
+    private var gotSomeValue: Bool { !value.isVanilla }
+    private var gotSomeTarget: Bool { !target.isVanilla }
 
     init(expectingTarget et: Bool) {
         expectingTarget = et
@@ -229,10 +241,8 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
     @discardableResult
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         if expectingTarget {
-            gotSomeTarget = true
             target = try target.partialPush(lex)
         } else {
-            gotSomeValue = true
             value = try value.partialPush(lex)
         }
         return self
@@ -271,17 +281,17 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
 
 internal class PushExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
-    lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
+    var value: ExprBuilder?
     var range: LexRange!
 
-    private(set) var expectingValue: Bool = false
+    private var expectingValue: Bool { value != nil }
 
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
         guard expectingValue else {
             return VoidCallExpr(head: .push, target: t, source: nil, arg: nil)
         }
-        let v: ValueExprP = try value.build(asChildOf: self)
+        let v: ValueExprP = try value!.build(asChildOf: self)
         return VoidCallExpr(head: .push, target: t, source: nil, arg: v)
     }
 
@@ -290,7 +300,7 @@ internal class PushExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Pushe
         if !expectingValue {
             target = try target.partialPush(lex)
         } else {
-            value = try value.partialPush(lex)
+            value = try value!.partialPush(lex)
         }
         return self
     }
@@ -298,9 +308,8 @@ internal class PushExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Pushe
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.withIdentifiers:
-            expectingValue = true
+            value = VanillaExprBuilder(parent: self)
         case String.likeIdentifiers:
-            expectingValue = true
             value = self |=> PoeticNumberExprBuilder()
         default:
             try pushThrough(id)
@@ -336,9 +345,9 @@ internal class PopExprBuilder:
 
 internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesStringThrough {
     var targetFinished: Bool = false
-    var isIncrement: Bool
+    let isIncrement: Bool
     var isDecrement: Bool { !isIncrement }
-    var value: Int = 0
+    private var value: Int = 0
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
@@ -386,13 +395,13 @@ internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, Pushe
 }
 
 internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
-    lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
-    var hasTarget = false
+    private var target: ExprBuilder?
+    private var hasTarget: Bool { target != nil }
     var range: LexRange!
 
     func build() throws -> ExprP {
         guard hasTarget else { return VoidCallExpr(head: .scan, target: nil, source: nil, arg: nil) }
-        let t: LocationExprP = try target.build(asChildOf: self)
+        let t: LocationExprP = try target!.build(asChildOf: self)
         return VoidCallExpr(head: .scan, target: t, source: nil, arg: nil)
     }
 
@@ -401,14 +410,14 @@ internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Push
         guard hasTarget else {
             throw UnexpectedLexemeError(got: lex, parsing: self)
         }
-        target = try target.partialPush(lex)
+        target = try target!.partialPush(lex)
         return self
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.toIdentifiers:
-            hasTarget = true
+            target = VanillaExprBuilder(parent: self)
         default:
             try pushThrough(id)
         }

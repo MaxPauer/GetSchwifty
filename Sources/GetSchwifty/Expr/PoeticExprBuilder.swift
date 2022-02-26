@@ -17,7 +17,6 @@ fileprivate extension IdentifierLex {
     }
 }
 
-
 internal class PoeticConstantExprBuilder: SingleExprBuilder {
     lazy private var constant: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
