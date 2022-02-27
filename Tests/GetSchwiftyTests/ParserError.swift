@@ -118,7 +118,7 @@ final class ParserErrorTests: XCTestCase {
 
     func testLetWithAssignmentFailure() throws {
         let _: UnexpectedExprError<ValueExprP> = try errorTest("let the devil be between ", NopExpr.self, AssignmentExprBuilder.self, (1,25))
-        let _: UnexpectedLexemeError = errorTest("let the devil be 8 between", IdentifierLex.self, AssignmentExprBuilder.self, (1,19))
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("let the devil be 8 between", NopExpr.self, BiArithExprBuilder.self, (1,26))
     }
 
     func testRoundingFailure() throws {

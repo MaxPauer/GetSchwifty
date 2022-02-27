@@ -280,10 +280,14 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
             expectingTarget = true
         case String.additionIdentifiers, String.subtractionIdentifiers,
              String.multiplicationIdentifiers, String.divisionIdentifiers:
-            guard expectingValue && !gotSomeValue else {
+            guard expectingValue else {
                 throw UnexpectedLexemeError(got: id, parsing: self)
             }
-            op = id.getOp()!
+            if !gotSomeValue {
+                op = id.getOp()!
+            } else {
+                try pushThrough(id)
+            }
         default:
             try pushThrough(id)
         }
