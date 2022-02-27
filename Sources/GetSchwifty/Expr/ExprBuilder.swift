@@ -197,6 +197,10 @@ internal class VanillaExprBuilder: SingleExprBuilder {
             return VoidCallExprBuilder(op: .split)
         case String.joinIdentifiers:
             return VoidCallExprBuilder(op: .join)
+        case String.whileIdentifiers:
+            return LoopExprBuilder(invertedLogic: false)
+        case String.untilIdentifiers:
+            return LoopExprBuilder(invertedLogic: true)
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)

@@ -121,6 +121,10 @@ extension ArithExprBuilder {
 extension FunctionCallExprBuilder {
     var prettyName: String { "Function Call" }
 }
+extension LoopExprBuilder {
+    var prettyName: String { "Loop" }
+}
+
 
 extension NopExpr {
     var prettyName: String { "Nop" }

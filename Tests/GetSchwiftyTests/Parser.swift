@@ -371,6 +371,32 @@ final class ParserTests: XCTestCase {
         try testParse("my life taking 5, and 6", VariableNameExpr.self, ListExpr.self)
     }
 
+    func testLoop() throws {
+        func testParse(_ inp: String, inverted: Bool, inner: Int, outer: Int) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? LoopExpr)
+            if inverted {
+                let c = try XCTUnwrap(i.condition as? FunctionCallExpr)
+                XCTAssertEqual(c.head, .not)
+            } else {
+                _ = try XCTUnwrap(i.condition as? ValueExprP)
+            }
+            XCTAssertEqual(i.loopBlock.count, inner)
+            for i in 0..<outer {
+                _ = try XCTUnwrap(p.next() as? ExprP)
+            }
+            XCTAssertNil(try p.next())
+        }
+        try testParse("while 1", inverted: false, inner: 0, outer: 0)
+        try testParse("while 1\n", inverted: false, inner: 0, outer: 0)
+        try testParse("while 1\n1", inverted: false, inner: 1, outer: 0)
+        try testParse("while 1\n1\n1", inverted: false, inner: 2, outer: 0)
+        try testParse("while 1\n\n1", inverted: false, inner: 0, outer: 2)
+        try testParse("while 1\n1\n\n1", inverted: false, inner: 1, outer: 2)
+        try testParse("while 1\n1\n1\n\n1", inverted: false, inner: 2, outer: 2)
+        try testParse("until 1", inverted: true, inner: 0, outer: 0)
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)

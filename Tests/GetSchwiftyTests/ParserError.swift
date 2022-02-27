@@ -138,4 +138,11 @@ final class ParserErrorTests: XCTestCase {
     func testFuncCallFailure() throws {
         let _: UnexpectedExprError<ValueExprP> = try errorTest("my life taking ", NopExpr.self, FunctionCallExprBuilder.self, (1,15))
     }
+
+    func testLoopFailure() throws {
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("until ", NopExpr.self, LoopExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("until listen", VoidCallExpr.self, LoopExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("until 1\ncast 5", NumberExpr.self, VoidCallExprBuilder.self, (2,5))
+
+    }
 }

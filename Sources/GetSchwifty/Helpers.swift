@@ -1,4 +1,4 @@
-internal struct DLinkedList<T> {
+internal class DLinkedList<T> {
     private class LLNode<T> {
         let value: T
         var previous: LLNode?
@@ -8,11 +8,19 @@ internal struct DLinkedList<T> {
             value = v
         }
     }
+    struct Sequencer<T>: IteratorProtocol, Sequence {
+        private(set) var _next: () -> T?
+        func next() -> T? { _next() }
+    }
 
     private var front: LLNode<T>?
     private var back: LLNode<T>?
 
-    mutating func pushFront(_ v: T?) {
+    var isEmpty: Bool {
+        front == nil
+    }
+
+    func pushFront(_ v: T?) {
         guard let v = v else { return }
         let node = LLNode(v)
         if front == nil {
@@ -25,7 +33,7 @@ internal struct DLinkedList<T> {
         }
     }
 
-    mutating func pushBack(_ v: T?) {
+    func pushBack(_ v: T?) {
         guard let v = v else { return }
         let node = LLNode(v)
         if back == nil {
@@ -41,7 +49,7 @@ internal struct DLinkedList<T> {
     func peekFront() -> T? { front?.value }
     func peekBack() -> T? { back?.value }
 
-    mutating func popFront() -> T? {
+    func popFront() -> T? {
         guard let oldFront = front else { return nil }
         if oldFront.next == nil {
             front = nil
@@ -53,7 +61,7 @@ internal struct DLinkedList<T> {
         return oldFront.value
     }
 
-    mutating func popBack() -> T? {
+    func popBack() -> T? {
         guard let oldBack = back else { return nil }
         if oldBack.previous == nil {
             front = nil
@@ -63,6 +71,10 @@ internal struct DLinkedList<T> {
             back = oldBack.previous!
         }
         return oldBack.value
+    }
+
+    var frontToBack: Sequencer<T> {
+        Sequencer{ self.popFront() }
     }
 }
 

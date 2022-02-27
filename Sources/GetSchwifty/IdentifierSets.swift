@@ -112,6 +112,8 @@ internal extension String {
     static var turnIdentifiers: Set<String> { Set(["turn"]) }
     static var intoIdentifiers: Set<String> { Set(["into"]) }
     static var takingIdentifiers: Set<String> { Set(["taking"]) }
+    static var whileIdentifiers: Set<String> { Set(["while"]) }
+    static var untilIdentifiers: Set<String> { Set(["until"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers

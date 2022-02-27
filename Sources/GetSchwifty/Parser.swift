@@ -1,6 +1,6 @@
 internal struct Parser {
     var lexemes: LexContractor
-    var currentExprBuilder: ExprBuilder = VanillaExprBuilder(startPos: LexPos.origin)
+    var currentExprBuilder: ExprBuilder? = VanillaExprBuilder(startPos: LexPos.origin)
 
     init(input inp: String) {
         let l = LexIterator(input: inp)
@@ -13,7 +13,7 @@ internal struct Parser {
 
             var partialExpr: PartialExpr!
             do {
-                partialExpr = try currentExprBuilder.push(l)
+                partialExpr = try currentExprBuilder!.push(l)
             } catch let err as ParserError {
                 throw err
             } catch {
@@ -29,6 +29,7 @@ internal struct Parser {
             }
         }
 
-        return try currentExprBuilder.build()
+        defer { currentExprBuilder = nil }
+        return try currentExprBuilder?.build()
     }
 }
