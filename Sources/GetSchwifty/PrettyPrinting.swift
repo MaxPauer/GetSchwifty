@@ -112,8 +112,8 @@ extension PopExprBuilder {
 extension RoundExprBuilder {
     var prettyName: String { "Rounding" }
 }
-extension CastExprBuilder {
-    var prettyName: String { "Casting" }
+extension VoidCallExprBuilder {
+    var prettyName: String { "Call: \(op)" }
 }
 extension ArithExprBuilder {
     var prettyName: String { "Arithmetic: \(op)" }

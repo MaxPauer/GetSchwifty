@@ -192,7 +192,11 @@ internal class VanillaExprBuilder: SingleExprBuilder {
         case String.turnIdentifiers:
             return RoundExprBuilder()
         case String.castIdentifiers:
-            return CastExprBuilder()
+            return VoidCallExprBuilder(op: .cast)
+        case String.splitIdentifiers:
+            return VoidCallExprBuilder(op: .split)
+        case String.joinIdentifiers:
+            return VoidCallExprBuilder(op: .join)
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)
@@ -384,18 +388,23 @@ internal class RoundExprBuilder:
     }
 }
 
-internal class CastExprBuilder:
+internal class VoidCallExprBuilder:
         SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
+    let op: VoidCallExpr.Op
     var source: ExprBuilder?
     var arg: ExprBuilder?
     var range: LexRange!
+
+    init(op o: VoidCallExpr.Op) {
+        op = o
+    }
 
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
         let s: ValueExprP? = try source?.build(asChildOf: self)
         let a: ValueExprP? = try arg?.build(asChildOf: self)
-        return VoidCallExpr(head: .cast, target: t, source: s, arg: a)
+        return VoidCallExpr(head: op, target: t, source: s, arg: a)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {

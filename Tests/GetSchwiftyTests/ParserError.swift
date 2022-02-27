@@ -128,11 +128,11 @@ final class ParserErrorTests: XCTestCase {
     }
 
     func testCastingFailure() throws {
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast ", NopExpr.self, CastExprBuilder.self, (1,5))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5", NumberExpr.self, CastExprBuilder.self, (1,5))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast my life into", NopExpr.self, CastExprBuilder.self, (1,17))
-        let _: UnexpectedExprError<ValueExprP?> = try errorTest("cast my life with", NopExpr.self, CastExprBuilder.self, (1,17))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5 into 5", NumberExpr.self, CastExprBuilder.self, (1,12))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast ", NopExpr.self, VoidCallExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5", NumberExpr.self, VoidCallExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast my life into", NopExpr.self, VoidCallExprBuilder.self, (1,17))
+        let _: UnexpectedExprError<ValueExprP?> = try errorTest("cast my life with", NopExpr.self, VoidCallExprBuilder.self, (1,17))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5 into 5", NumberExpr.self, VoidCallExprBuilder.self, (1,12))
     }
 
     func testFuncCallFailure() throws {

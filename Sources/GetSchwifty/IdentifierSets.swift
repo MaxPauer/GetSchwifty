@@ -83,6 +83,12 @@ internal extension String {
     static var castIdentifiers: Set<String> {
         Set(["cast", "burn"])
     }
+    static var splitIdentifiers: Set<String> {
+        Set(["split", "shatter", "cut"])
+    }
+    static var joinIdentifiers: Set<String> {
+        Set(["join", "unite"])
+    }
 
     static var letAssignIdentifiers: Set<String> { Set(["let"]) }
     static var putAssignIdentifiers: Set<String> { Set(["put"]) }
