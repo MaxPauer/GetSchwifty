@@ -34,7 +34,7 @@ internal class PronounExprBuilder: FinalizedLocationExprBuilder {
     }
 
     func build() -> ExprP {
-        return PronounExpr()
+        return PronounExpr(range: range)
     }
 }
 
@@ -62,7 +62,7 @@ internal class IndexingLocationExprBuilder:
     func build() throws -> ExprP {
         let t: IndexableExprP = try target.build(asChildOf: self)
         let i: ValueExprP = try index.build(asChildOf: self)
-        return IndexingExpr(source: t, operand: i)
+        return IndexingExpr(source: t, operand: i, range: range)
     }
 }
 
@@ -77,7 +77,7 @@ internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
     }
 
     func build() -> ExprP {
-        return VariableNameExpr(name: name)
+        return VariableNameExpr(name: name, range: range)
     }
 }
 
@@ -100,7 +100,7 @@ internal class CommonVariableNameExprBuilder: ExprBuilder {
 
     func build() throws -> ExprP {
         assertionFailure("must not be called")
-        return NopExpr()
+        return NopExpr(range: range)
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder {

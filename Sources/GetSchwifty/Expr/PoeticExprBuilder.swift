@@ -72,7 +72,7 @@ internal class PoeticNumberExprBuilder: SingleExprBuilder {
 
     func build() throws -> ExprP {
         pushPoeticDigit()
-        return value == 0 ? NopExpr() : NumberExpr(literal: Double(value))
+        return value == 0 ? NopExpr(range: range) : NumberExpr(literal: Double(value), range: range)
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -118,7 +118,7 @@ internal class PoeticNumberishAssignmentExprBuilder: SingleExprBuilder, PushesDe
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
         let s: ValueExprP = try source.build(asChildOf: self)
-        return VoidCallExpr(head: .assign, target: t, source: s, arg: nil)
+        return VoidCallExpr(head: .assign, target: t, source: s, arg: nil, range: range)
     }
 
     @discardableResult
@@ -149,7 +149,7 @@ internal class PoeticStringAssignmentExprBuilder:
 
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
-        return VoidCallExpr(head: .assign, target: t, source: StringExpr(literal: value), arg: nil)
+        return VoidCallExpr(head: .assign, target: t, source: StringExpr(literal: value, range: range), arg: nil, range: range)
     }
 
     func append(_ s: String) {

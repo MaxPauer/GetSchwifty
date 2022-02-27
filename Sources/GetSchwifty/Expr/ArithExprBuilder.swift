@@ -54,7 +54,7 @@ internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
     func build() throws -> ExprP {
         let l: ValueExprP = try lhs.build(asChildOf: self)
         let r: ValueExprP = try rhs.build(asChildOf: self)
-        return FunctionCallExpr(head: op, args: [l,r])
+        return FunctionCallExpr(head: op, args: [l,r], range: range)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
@@ -122,7 +122,7 @@ internal class UnArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
 
     func build() throws -> ExprP {
         let r: ValueExprP = try rhs.build(asChildOf: self)
-        return FunctionCallExpr(head: op, args: [r])
+        return FunctionCallExpr(head: op, args: [r], range: range)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {

@@ -146,7 +146,7 @@ internal class VanillaExprBuilder: SingleExprBuilder {
     }
 
     func build() -> ExprP {
-        return NopExpr()
+        return NopExpr(range: range)
     }
 
     private var bestErrorLocation: ExprBuilder { parent ?? self }
@@ -241,9 +241,9 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
         let t: LocationExprP = try target.build(asChildOf: self)
         var s: ValueExprP = try value.build(asChildOf: self)
         if let op = op {
-            s = FunctionCallExpr(head: op, args: [t,s])
+            s = FunctionCallExpr(head: op, args: [t,s], range: range)
         }
-        return VoidCallExpr(head: .assign, target: t, source: s, arg: nil)
+        return VoidCallExpr(head: .assign, target: t, source: s, arg: nil, range: range)
     }
 
     @discardableResult
@@ -297,10 +297,10 @@ internal class PushExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Pushe
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
         guard expectingValue else {
-            return VoidCallExpr(head: .push, target: t, source: nil, arg: nil)
+            return VoidCallExpr(head: .push, target: t, source: nil, arg: nil, range: range)
         }
         let v: ValueExprP = try value!.build(asChildOf: self)
-        return VoidCallExpr(head: .push, target: t, source: nil, arg: v)
+        return VoidCallExpr(head: .push, target: t, source: nil, arg: v, range: range)
     }
 
     @discardableResult
@@ -341,7 +341,7 @@ internal class PopExprBuilder:
 
     func build() throws -> ExprP {
         let s: LocationExprP = try source.build(asChildOf: self)
-        return FunctionCallExpr(head: .pop, args: [s])
+        return FunctionCallExpr(head: .pop, args: [s], range: range)
     }
 
     @discardableResult
@@ -364,7 +364,7 @@ internal class RoundExprBuilder:
             throw UnfinishedExprError(parsing: self, expecting: expectedIdentifiers)
         }
         let s: LocationExprP = try source.build(asChildOf: self)
-        return VoidCallExpr(head: op, target: s, source: s, arg: nil)
+        return VoidCallExpr(head: op, target: s, source: s, arg: nil, range: range)
     }
 
     @discardableResult
@@ -404,7 +404,7 @@ internal class VoidCallExprBuilder:
         let t: LocationExprP = try target.build(asChildOf: self)
         let s: ValueExprP? = try source?.build(asChildOf: self)
         let a: ValueExprP? = try arg?.build(asChildOf: self)
-        return VoidCallExpr(head: op, target: t, source: s, arg: a)
+        return VoidCallExpr(head: op, target: t, source: s, arg: a, range: range)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
@@ -449,8 +449,8 @@ internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, Pushe
 
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
-        let add = FunctionCallExpr(head: .add, args: [t, NumberExpr(literal: Double(value))])
-        return VoidCallExpr(head: .assign, target: t, source: add, arg: nil)
+        let add = FunctionCallExpr(head: .add, args: [t, NumberExpr(literal: Double(value), range: range)], range: range)
+        return VoidCallExpr(head: .assign, target: t, source: add, arg: nil, range: range)
     }
 
     @discardableResult
@@ -488,9 +488,9 @@ internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Push
     var range: LexRange!
 
     func build() throws -> ExprP {
-        guard hasTarget else { return VoidCallExpr(head: .scan, target: nil, source: nil, arg: nil) }
+        guard hasTarget else { return VoidCallExpr(head: .scan, target: nil, source: nil, arg: nil, range: range) }
         let t: LocationExprP = try target!.build(asChildOf: self)
-        return VoidCallExpr(head: .scan, target: t, source: nil, arg: nil)
+        return VoidCallExpr(head: .scan, target: t, source: nil, arg: nil, range: range)
     }
 
     @discardableResult
@@ -520,7 +520,7 @@ internal class OutputExprBuilder:
 
     func build() throws -> ExprP {
         let s: ValueExprP = try target.build(asChildOf: self)
-        return VoidCallExpr(head: .print, target: nil, source: s, arg: nil)
+        return VoidCallExpr(head: .print, target: nil, source: s, arg: nil, range: range)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
@@ -542,7 +542,7 @@ internal class FunctionCallExprBuilder:
     func build() throws -> ExprP {
         let h: LocationExprP = try head.build(asChildOf: self)
         let a: ValueExprP = try args.build(asChildOf: self)
-        return FunctionCallExpr(head: .custom, args: [h, a])
+        return FunctionCallExpr(head: .custom, args: [h, a], range: range)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {

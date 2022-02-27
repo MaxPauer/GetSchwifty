@@ -62,7 +62,7 @@ internal class ListExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesSt
             let m: ValueExprP = try member.build(asChildOf: self)
             members.append(m)
         }
-        return ListExpr(members: members)
+        return ListExpr(members: members, range: range)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
@@ -97,7 +97,7 @@ internal class StringExprBuilder: ArithValueExprBuilder {
     init(literal s: String) { literal = s }
 
     func build() -> ExprP {
-        return StringExpr(literal: literal)
+        return StringExpr(literal: literal, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -120,7 +120,7 @@ internal class NumberExprBuilder: ArithValueExprBuilder {
     let isStatement = false
 
     func build() -> ExprP {
-        return NumberExpr(literal: literal)
+        return NumberExpr(literal: literal, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -147,7 +147,7 @@ internal class BoolExprBuilder: ArithValueExprBuilder {
     init(literal b: Bool) { literal = b }
 
     func build() -> ExprP {
-        return BoolExpr(literal: literal)
+        return BoolExpr(literal: literal, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -160,7 +160,7 @@ internal class NullExprBuilder: ArithValueExprBuilder {
     let isStatement = false
 
     func build() -> ExprP {
-        return NullExpr()
+        return NullExpr(range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -173,7 +173,7 @@ internal class MysteriousExprBuilder: ArithValueExprBuilder {
     let isStatement = false
 
     func build() -> ExprP {
-        return MysteriousExpr()
+        return MysteriousExpr(range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
