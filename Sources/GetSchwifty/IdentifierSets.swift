@@ -89,6 +89,9 @@ internal extension String {
     static var joinIdentifiers: Set<String> {
         Set(["join", "unite"])
     }
+    static var takesIdentifiers: Set<String> {
+        Set(["takes", "wants"])
+    }
 
     static var letAssignIdentifiers: Set<String> { Set(["let"]) }
     static var putAssignIdentifiers: Set<String> { Set(["put"]) }

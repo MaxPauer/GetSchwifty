@@ -18,6 +18,8 @@ extension FinalizedLocationExprBuilder {
             return IndexingLocationExprBuilder(target: self, isStatement: isStatement)
         case String.takingIdentifiers:
             return FunctionCallExprBuilder(head: self)
+        case String.takesIdentifiers:
+            return FunctionDeclExprBuilder(head: self)
         default:
             throw UnexpectedIdentifierError(got: id, parsing: self, expecting:
                 String.isIdentifiers ∪ String.sayPoeticStringIdentifiers ∪ String.indexingIdentifiers ∪ String.takingIdentifiers)

@@ -397,6 +397,25 @@ final class ParserTests: XCTestCase {
         try testParse("until 1", inverted: true, inner: 0, outer: 0)
     }
 
+    func testFuncDecl() throws {
+        func testParse(_ inp: String, args: Int, inner: Int, outer: Int) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? FunctionDeclExpr)
+            XCTAssertEqual(i.args.count, args)
+            XCTAssertEqual(i.funBlock.count, inner)
+            for _ in 0..<outer {
+                XCTAssertNotNil(try? p.next())
+            }
+            XCTAssertNil(try p.next())
+        }
+        try testParse("my life takes work", args: 1, inner: 0, outer: 0)
+        try testParse("my life takes work\n", args: 1, inner: 0, outer: 0)
+        try testParse("my life takes work\n1", args: 1, inner: 1, outer: 0)
+        try testParse("my life takes work\n1\n1", args: 1, inner: 2, outer: 0)
+        try testParse("my life takes work\n1\n1\n\n1", args: 1, inner: 2, outer: 2)
+        try testParse("my life takes work, my sanity & money\n1", args: 3, inner: 1, outer: 0)
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)
@@ -405,7 +424,7 @@ final class ParserTests: XCTestCase {
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         XCTAssertThrowsError(try parseDiscardAll(fizzbuzz)) { error in
             let e = try! XCTUnwrap(error as? UnexpectedIdentifierError)
-            XCTAssertEqual(e.got.range.start, LexPos(line: 1, char: 9))
+            XCTAssertEqual(e.got.range.start, LexPos(line: 5, char: 5))
         }
         // XCTAssertEqual(parser.lines, 26)
     }

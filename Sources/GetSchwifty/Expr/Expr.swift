@@ -79,7 +79,8 @@ internal struct ReturnExpr: ExprP {
 }
 
 internal struct FunctionDeclExpr: ValueExprP {
-    let args: [String]
+    let head: VariableNameExpr
+    let args: [VariableNameExpr]
     let funBlock: [ExprP]
     let range: LexRange
 }

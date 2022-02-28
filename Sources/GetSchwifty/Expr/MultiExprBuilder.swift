@@ -46,3 +46,41 @@ internal class LoopExprBuilder: MultiExprBuilder {
         return LoopExpr(condition: cc, loopBlock: Array(subExprs.frontToBack), range: range)
     }
 }
+
+internal class FunctionDeclExprBuilder: MultiExprBuilder {
+    private let head: FinalizedLocationExprBuilder
+    internal var range: LexRange!
+    internal lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
+    internal var subExprs = DLinkedList<ExprP>()
+
+    init(head h: FinalizedLocationExprBuilder) {
+        head = h
+    }
+
+    func normalizeArgs(_ args: ExprP) throws -> [VariableNameExpr] {
+        switch args {
+        case let v as VariableNameExpr:
+            return [v]
+        case let l as ListExpr:
+            return try l.members.map {
+                guard let m = $0 as? VariableNameExpr else {
+                    throw UnexpectedExprError<VariableNameExpr>(got: $0, startPos: $0.range.start, parsing: self)
+                }
+                return m
+            }
+        default:
+            throw UnexpectedExprError<VariableNameExpr>(got: args, startPos: args.range.start, parsing: self)
+        }
+    }
+
+    func build() throws -> ExprP {
+        let curr: ExprP = try currentExpr.build()
+        if subExprs.isEmpty || !(curr is NopExpr) {
+            subExprs.pushBack(curr)
+        }
+
+        let head = try self.head.build() as! VariableNameExpr
+        let args = try normalizeArgs(subExprs.popFront()!)
+        return FunctionDeclExpr(head: head, args: args, funBlock: Array(subExprs.frontToBack), range: range)
+    }
+}

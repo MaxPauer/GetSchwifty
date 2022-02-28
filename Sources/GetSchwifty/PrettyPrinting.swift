@@ -124,6 +124,9 @@ extension FunctionCallExprBuilder {
 extension LoopExprBuilder {
     var prettyName: String { "Loop" }
 }
+extension FunctionDeclExprBuilder {
+    var prettyName: String { "Function Declaration" }
+}
 
 
 extension NopExpr {
