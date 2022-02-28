@@ -228,7 +228,7 @@ final class LexerTests: XCTestCase {
         let lexemes = LexIterator(input: fizzbuzz)
 
         let expected: [Any] = [
-            "Midnight", WS(), "takes", WS(), "your", WS(), "heart", WS(), "and", WS(), "your", WS(), "soul", NL(),
+            "Midnight", WS(), "takes", WS(), "your", WS(), "heart", SEP(), WS(), "and", WS(), "your", WS(), "soul", NL(),
             "While", WS(), "your", WS(), "heart", WS(), "is", WS(), "as", WS(), "high", WS(), "as", WS(), "your", WS(), "soul", NL(),
             "Put", WS(), "your", WS(), "heart", WS(), "without", WS(), "your", WS(), "soul", WS(), "into", WS(), "your", WS(), "heart", NL(),
             NL(),

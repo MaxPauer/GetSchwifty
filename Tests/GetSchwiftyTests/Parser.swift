@@ -421,8 +421,8 @@ final class ParserTests: XCTestCase {
         }
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         XCTAssertThrowsError(try parseDiscardAll(fizzbuzz)) { error in
-            let e = try! XCTUnwrap(error as? UnexpectedExprError<VariableNameExpr>)
-            XCTAssertEqual(e.got.range.start, LexPos(line: 1, char: 14))
+            let e = try! XCTUnwrap(error as? UnexpectedIdentifierError)
+            XCTAssertEqual(e.got.range.start, LexPos(line: 5, char: 5))
         }
         // XCTAssertEqual(parser.lines, 26)
     }
