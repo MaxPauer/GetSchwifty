@@ -149,5 +149,6 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedExprError<VariableNameExpr> = try errorTest("my life takes ", NopExpr.self, FunctionDeclExprBuilder.self, (1,13))
         let _: UnexpectedExprError<VariableNameExpr> = try errorTest("my life takes \n", NopExpr.self, FunctionDeclExprBuilder.self, (1,13))
         let _: UnexpectedExprError<VariableNameExpr> = try errorTest("my life takes her", PronounExpr.self, FunctionDeclExprBuilder.self, (1,13))
+        let _: UnexpectedExprError<VariableNameExpr> = try errorTest("Midnight takes your heart and your soul", FunctionCallExpr.self, FunctionDeclExprBuilder.self, (1,14))
     }
 }
