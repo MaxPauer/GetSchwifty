@@ -378,12 +378,10 @@ final class ParserTests: XCTestCase {
             if inverted {
                 let c = try XCTUnwrap(i.condition as? FunctionCallExpr)
                 XCTAssertEqual(c.head, .not)
-            } else {
-                _ = try XCTUnwrap(i.condition as? ValueExprP)
             }
             XCTAssertEqual(i.loopBlock.count, inner)
-            for i in 0..<outer {
-                _ = try XCTUnwrap(p.next() as? ExprP)
+            for _ in 0..<outer {
+                XCTAssertNotNil(try? p.next())
             }
             XCTAssertNil(try p.next())
         }
