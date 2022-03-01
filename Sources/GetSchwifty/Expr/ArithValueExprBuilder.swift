@@ -56,11 +56,16 @@ internal class ListExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesSt
     }
 
     func build() throws -> ExprP {
-        sources.pushBack(currSource)
+        if !currSource.isVanilla {
+            sources.pushBack(currSource)
+        }
         var members: [ValueExprP] = []
         while let member = sources.popFront() {
             let m: ValueExprP = try member.build(asChildOf: self)
             members.append(m)
+        }
+        if members.count == 1 {
+            return members.first!
         }
         return ListExpr(members: members, range: range)
     }

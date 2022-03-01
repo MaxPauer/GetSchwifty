@@ -322,6 +322,17 @@ final class ParserTests: XCTestCase {
         }
         try testParse("5, 6 & 7, and 8, 9 & 10", [5,6,7,8,9,10])
         try testParse("5, 6 and 7, and 8", [5,[6,7],8])
+        try testParse("5, 6 & 7, and 8, ", [5,6,7,8])
+        try testParse("5, 6 ", [5,6])
+    }
+
+    func testListReduction() throws {
+        func testParse(_ inp: String, _ exp: Double) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? NumberExpr)
+            XCTAssertEqual(i.literal, exp)
+        }
+        try testParse("5,", 5)
     }
 
     func testRounding() throws {
@@ -435,9 +446,10 @@ final class ParserTests: XCTestCase {
             while let _ = try p.next() {}
         }
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
+
         XCTAssertThrowsError(try parseDiscardAll(fizzbuzz)) { error in
-            let e = try! XCTUnwrap(error as? UnexpectedExprError<ValueExprP>)
-            XCTAssertEqual(e.got.range.start, LexPos(line: 11, char: 25))
+            let e = try! XCTUnwrap(error as? UnexpectedIdentifierError)
+            XCTAssertEqual(e.got.range.start, LexPos(line: 15, char: 5))
         }
         // XCTAssertEqual(parser.lines, 26)
     }
