@@ -4,7 +4,7 @@ internal extension String {
     }
 }
 
-internal protocol FinalizedLocationExprBuilder: ArithValueExprBuilder {}
+internal protocol FinalizedLocationExprBuilder: DelimiterToListArithValueExprBuilder {}
 
 extension FinalizedLocationExprBuilder {
     var canTerminate: Bool { true }
@@ -41,7 +41,7 @@ internal class PronounExprBuilder: FinalizedLocationExprBuilder {
 }
 
 internal class IndexingLocationExprBuilder:
-        ArithValueExprBuilder, PushesStringThrough, PushesNumberThrough {
+        DelimiterToListArithValueExprBuilder, PushesStringThrough, PushesNumberThrough {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
     let isStatement: Bool

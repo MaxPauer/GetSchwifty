@@ -247,6 +247,7 @@ final class ParserTests: XCTestCase {
                 case .geq: return ">="
                 case .lt:  return "<"
                 case .gt:  return ">"
+                case .custom: return ": "
                 default: return "?"
                 }
             }
@@ -254,10 +255,16 @@ final class ParserTests: XCTestCase {
                 switch e {
                 case let n as NumberExpr: return str(n)
                 case let f as FunctionCallExpr: return str(f)
+                case let v as VariableNameExpr: return str(v)
+                case let l as ListExpr: return str(l)
                 default: return "(?)"
                 }
             }
             func str(_ n: NumberExpr) -> String { String(Int(n.literal)) }
+            func str(_ v: VariableNameExpr) -> String { v.name }
+            func str(_ l: ListExpr) -> String {
+                l.members.map { str($0) }.joined(separator: ",")
+            }
             func str(_ f: FunctionCallExpr) -> String {
                 if f.args.count == 2 {
                     return "(\(str(f.args[0]))\(str(f.head))\(str(f.args[1])))"
@@ -297,6 +304,8 @@ final class ParserTests: XCTestCase {
         try testParse("3 over 4 is less than 5 between 6", "((3/4)<(5/6))")
         try testParse("3 over 4 is as small as 5 between 6", "((3/4)<=(5/6))")
         try testParse("3 over 4 is as high as 5 between 6", "((3/4)>=(5/6))")
+        try testParse("Midnight taking my world, Fire is 0 and Midnight taking my world, Hate is 0",
+            "(((midnight: my world,fire)==0)&&((midnight: my world,hate)==0))")
     }
 
     func testList() throws {

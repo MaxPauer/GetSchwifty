@@ -7,6 +7,7 @@ internal enum PartialExpr {
 
 internal protocol ExprBuilder: AnyObject, PrettyNamed {
     var range: LexRange! { get set }
+    var consumesAnd: Bool { get }
     func partialPush(_ lex: Lex) throws -> ExprBuilder
     func push(_ lex: Lex) throws -> PartialExpr
     func build() throws -> ExprP
@@ -34,6 +35,7 @@ extension ExprBuilder {
     }
 
     var isVanilla: Bool { self is VanillaExprBuilder }
+    var consumesAnd: Bool { false }
 
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
         var newSelf: ExprBuilder = self
@@ -540,10 +542,11 @@ internal class OutputExprBuilder:
 }
 
 internal class FunctionCallExprBuilder:
-        SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough, PushesNumberThrough, PushesStringThrough {
+        ArithValueExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
     var head: ExprBuilder
     lazy var args: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
+    var isStatement: Bool { false }
 
     init(head h: ExprBuilder) {
         head = h
@@ -558,6 +561,19 @@ internal class FunctionCallExprBuilder:
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         args = try args.partialPush(lex)
         return self
+    }
+
+    func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder? {
+        switch id.literal {
+        case String.andIdentifiers where args.consumesAnd:
+            return try pushThrough(id)
+        default:
+            return nil
+        }
+    }
+
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(id)
     }
 }
 
