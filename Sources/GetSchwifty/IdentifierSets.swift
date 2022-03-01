@@ -92,6 +92,9 @@ internal extension String {
     static var takesIdentifiers: Set<String> {
         Set(["takes", "wants"])
     }
+    static var returnIdentifiers: Set<String> {
+        Set(["return", "send"]) ∪ String.giveIdentifiers
+    }
 
     static var letAssignIdentifiers: Set<String> { Set(["let"]) }
     static var putAssignIdentifiers: Set<String> { Set(["put"]) }
@@ -117,6 +120,8 @@ internal extension String {
     static var takingIdentifiers: Set<String> { Set(["taking"]) }
     static var whileIdentifiers: Set<String> { Set(["while"]) }
     static var untilIdentifiers: Set<String> { Set(["until"]) }
+    static var giveIdentifiers: Set<String> { Set(["give"]) }
+    static var backIdentifiers: Set<String> { Set(["back"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers

@@ -151,4 +151,11 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedExprError<VariableNameExpr> = try errorTest("my life takes her", PronounExpr.self, FunctionDeclExprBuilder.self, (1,13))
         let _: UnexpectedExprError<VariableNameExpr> = try errorTest("Midnight takes your heart and your soul", FunctionCallExpr.self, FunctionDeclExprBuilder.self, (1,14))
     }
+
+    func testReturnFailure() throws {
+        let _: UnexpectedIdentifierError = errorTest("give back it back", ReturnExprBuilder.self, (1,13))
+        let _: UnexpectedIdentifierError = errorTest("send back it", ReturnExprBuilder.self, (1,5))
+        let _: UnexpectedIdentifierError = errorTest("return back it", ReturnExprBuilder.self, (1,7))
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("return listen", VoidCallExpr.self, ReturnExprBuilder.self, (1,7))
+    }
 }

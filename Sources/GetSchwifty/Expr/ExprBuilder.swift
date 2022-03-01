@@ -201,6 +201,8 @@ internal class VanillaExprBuilder: SingleExprBuilder {
             return LoopExprBuilder(invertedLogic: false)
         case String.untilIdentifiers:
             return LoopExprBuilder(invertedLogic: true)
+        case String.returnIdentifiers:
+            return ReturnExprBuilder(first: word)
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)
@@ -555,6 +557,44 @@ internal class FunctionCallExprBuilder:
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         args = try args.partialPush(lex)
+        return self
+    }
+}
+
+internal class ReturnExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+    let initialBackAllowed: Bool
+    var backReceived: Bool = false
+    lazy var arg: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
+
+    var backAllowed: Bool { (initialBackAllowed || !arg.isVanilla) && !backReceived }
+
+    init(first: String) {
+        initialBackAllowed = String.giveIdentifiers ~= first
+    }
+
+    func build() throws -> ExprP {
+        let a: ValueExprP = try arg.build(asChildOf: self)
+        return ReturnExpr(value: a, range: range)
+    }
+
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        arg = try arg.partialPush(lex)
+        return self
+    }
+
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        switch id.literal {
+        case String.backIdentifiers:
+            if backAllowed {
+                backReceived = true
+            } else {
+                throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set())
+            }
+        default:
+            try pushThrough(id)
+        }
         return self
     }
 }
