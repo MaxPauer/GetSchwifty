@@ -15,7 +15,7 @@ extension FinalizedLocationExprBuilder {
         case String.sayPoeticStringIdentifiers:
             return PoeticStringAssignmentExprBuilder(target: self)
         case String.indexingIdentifiers:
-            return IndexingLocationExprBuilder(target: self, isStatement: isStatement)
+            return IndexingExprBuilder(target: self, isStatement: isStatement)
         case String.takingIdentifiers:
             return FunctionCallExprBuilder(head: self)
         case String.takesIdentifiers:
@@ -37,34 +37,6 @@ internal class PronounExprBuilder: FinalizedLocationExprBuilder {
 
     func build() -> ExprP {
         return PronounExpr(range: range)
-    }
-}
-
-internal class IndexingLocationExprBuilder:
-        DelimiterToListArithValueExprBuilder, PushesStringThrough, PushesNumberThrough {
-    let target: ExprBuilder
-    lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
-    let isStatement: Bool
-    var range: LexRange!
-
-    init(target t: ExprBuilder, isStatement iss: Bool) {
-        target = t
-        isStatement = iss
-    }
-
-    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
-        index = try index.partialPush(lex)
-        return self
-    }
-
-    func postHandleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
-        return try pushThrough(i)
-    }
-
-    func build() throws -> ExprP {
-        let t: IndexableExprP = try target.build(asChildOf: self)
-        let i: ValueExprP = try index.build(asChildOf: self)
-        return IndexingExpr(source: t, operand: i, range: range)
     }
 }
 

@@ -1,7 +1,3 @@
-fileprivate extension DelimiterLex {
-    var isComma: Bool { literal == "," }
-}
-
 internal protocol ArithValueExprBuilder: SingleExprBuilder {
     var isStatement: Bool { get }
     func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder?
@@ -57,57 +53,67 @@ extension ArithValueExprBuilder {
     }
 }
 
-internal class ListExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesStringThrough {
-    var sources = DLinkedList<ExprBuilder>()
-    lazy var currSource: ExprBuilder = VanillaExprBuilder(parent: self)
-    var takesAnd: Bool
-    var isStatement: Bool
+internal class IndexingExprBuilder:
+        DelimiterToListArithValueExprBuilder, PushesStringThrough, PushesNumberThrough {
+    let target: ExprBuilder
+    lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
+    let isStatement: Bool
     var range: LexRange!
 
-    var consumesAnd: Bool { takesAnd }
-
-    init(first s: ExprBuilder, isStatement iss: Bool) {
-        sources.pushBack(s)
+    init(target t: ExprBuilder, isStatement iss: Bool) {
+        target = t
         isStatement = iss
-        takesAnd = true
-    }
-
-    func build() throws -> ExprP {
-        if !currSource.isVanilla {
-            sources.pushBack(currSource)
-        }
-        var members: [ValueExprP] = []
-        while let member = sources.popFront() {
-            let m: ValueExprP = try member.build(asChildOf: self)
-            members.append(m)
-        }
-        if members.count == 1 {
-            return members.first!
-        }
-        return ListExpr(members: members, range: range)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
-        takesAnd = false
-        currSource = try currSource.partialPush(lex)
+        index = try index.partialPush(lex)
         return self
     }
 
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(i)
+    }
+
+    func build() throws -> ExprP {
+        let t: IndexableExprP = try target.build(asChildOf: self)
+        let i: ValueExprP = try index.build(asChildOf: self)
+        return IndexingExpr(source: t, operand: i, range: range)
+    }
+}
+
+internal class FunctionCallExprBuilder:
+        ArithValueExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+    var head: ExprBuilder
+    lazy var args: ExprBuilder = VanillaExprBuilder(parent: self)
+    var range: LexRange!
+    var isStatement: Bool { false }
+
+    init(head h: ExprBuilder) {
+        head = h
+    }
+
+    func build() throws -> ExprP {
+        let h: LocationExprP = try head.build(asChildOf: self)
+        let a: ValueExprP = try args.build(asChildOf: self)
+        return FunctionCallExpr(head: .custom, args: [h, a], range: range)
+    }
+
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        args = try args.partialPush(lex)
+        return self
+    }
+
+    func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder? {
         switch id.literal {
-        case String.andIdentifiers where takesAnd:
-            takesAnd = false
-            return self
-        default:
+        case String.andIdentifiers where args.consumesAnd:
             return try pushThrough(id)
+        default:
+            return nil
         }
     }
 
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        takesAnd = d.isComma
-        sources.pushBack(currSource)
-        currSource = VanillaExprBuilder(parent: self)
-        return self
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(id)
     }
 }
 
@@ -125,7 +131,7 @@ internal class StringExprBuilder: DelimiterToListArithValueExprBuilder {
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         switch id.literal {
         case String.indexingIdentifiers:
-            return IndexingLocationExprBuilder(target: self, isStatement: isStatement)
+            return IndexingExprBuilder(target: self, isStatement: isStatement)
         default:
             throw UnexpectedLexemeError(got: id, parsing: self)
         }

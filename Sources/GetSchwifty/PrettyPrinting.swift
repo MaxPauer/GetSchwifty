@@ -52,7 +52,7 @@ extension PronounExprBuilder {
 extension VariableNameExprBuilder {
     var prettyName: String { "Variable Name: \(name)" }
 }
-extension IndexingLocationExprBuilder {
+extension IndexingExprBuilder {
     var prettyName: String { "Indexing: \(target)[\(index)]" }
 }
 extension CommonVariableNameExprBuilder {
