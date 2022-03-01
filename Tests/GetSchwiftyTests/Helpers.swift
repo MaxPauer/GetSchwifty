@@ -3,7 +3,7 @@ import XCTest
 
 final class DLinkedListTests: XCTestCase {
     func test1() throws {
-        var ll = DLinkedList<Int>()
+        let ll = DLinkedList<Int>()
 
         ll.pushBack(1)
         XCTAssertEqual(ll.popFront(), 1)
@@ -22,7 +22,7 @@ final class DLinkedListTests: XCTestCase {
     }
 
     func test2() throws {
-        var ll = DLinkedList<Int>()
+        let ll = DLinkedList<Int>()
 
         ll.pushBack(1)
         ll.pushBack(2)
@@ -46,8 +46,8 @@ final class DLinkedListTests: XCTestCase {
         XCTAssertNil(ll.popBack())
     }
 
-        func test3() throws {
-        var ll = DLinkedList<Int>()
+    func test3() throws {
+        let ll = DLinkedList<Int>()
 
         ll.pushBack(1)
         ll.pushBack(2)
@@ -59,8 +59,8 @@ final class DLinkedListTests: XCTestCase {
         XCTAssertNil(ll.popBack())
     }
 
-        func test11() throws {
-        var ll = DLinkedList<Int>()
+    func test11() throws {
+        let ll = DLinkedList<Int>()
 
         ll.pushFront(1)
         XCTAssertEqual(ll.popFront(), 1)
@@ -79,7 +79,7 @@ final class DLinkedListTests: XCTestCase {
     }
 
     func test12() throws {
-        var ll = DLinkedList<Int>()
+        let ll = DLinkedList<Int>()
 
         ll.pushFront(1)
         ll.pushFront(2)
@@ -103,8 +103,8 @@ final class DLinkedListTests: XCTestCase {
         XCTAssertNil(ll.popBack())
     }
 
-        func test13() throws {
-        var ll = DLinkedList<Int>()
+    func test13() throws {
+        let ll = DLinkedList<Int>()
 
         ll.pushFront(1)
         ll.pushFront(2)
