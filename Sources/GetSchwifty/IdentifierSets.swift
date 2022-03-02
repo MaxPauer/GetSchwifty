@@ -122,6 +122,7 @@ internal extension String {
     static var untilIdentifiers: Set<String> { Set(["until"]) }
     static var giveIdentifiers: Set<String> { Set(["give"]) }
     static var backIdentifiers: Set<String> { Set(["back"]) }
+    static var elseIdentifiers: Set<String> { Set(["else"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers

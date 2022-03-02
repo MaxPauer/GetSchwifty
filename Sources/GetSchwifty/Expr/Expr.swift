@@ -78,6 +78,10 @@ internal struct ReturnExpr: ExprP {
     let range: LexRange
 }
 
+internal struct ElseExpr: ExprP {
+    let range: LexRange
+}
+
 internal struct FunctionDeclExpr: ValueExprP {
     let head: VariableNameExpr
     let args: [VariableNameExpr]

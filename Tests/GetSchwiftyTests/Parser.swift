@@ -449,6 +449,11 @@ final class ParserTests: XCTestCase {
         try testParse("return it back")
     }
 
+    func testElse() throws {
+        var p = try XCTUnwrap(self.parse("else"))
+        _ = try XCTUnwrap(p.next() as? ElseExpr)
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)

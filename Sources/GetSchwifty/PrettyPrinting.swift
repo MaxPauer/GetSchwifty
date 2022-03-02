@@ -130,6 +130,9 @@ extension FunctionDeclExprBuilder {
 extension ReturnExprBuilder {
     var prettyName: String { "Return" }
 }
+extension ElseExprBuilder {
+    var prettyName: String { "Else" }
+}
 
 
 extension NopExpr {
@@ -170,6 +173,9 @@ extension LoopExpr {
 }
 extension ReturnExpr {
     var prettyName: String { "Return" }
+}
+extension ElseExpr {
+    var prettyName: String { "Else" }
 }
 extension FunctionDeclExpr {
     var prettyName: String { "Function Declaration" }

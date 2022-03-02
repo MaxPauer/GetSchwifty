@@ -153,6 +153,8 @@ internal class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, Ignore
             return LoopExprBuilder(invertedLogic: true)
         case String.returnIdentifiers:
             return ReturnExprBuilder(first: word)
+        case String.elseIdentifiers:
+            return ElseExprBuilder()
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)
@@ -584,5 +586,13 @@ internal class ReturnExprBuilder:
             try pushThrough(id)
         }
         return self
+    }
+}
+
+internal class ElseExprBuilder:
+        SingleExprBuilder, ThrowsDelimiterLexP, ThrowsIdentifierLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+    var range: LexRange!
+    func build() -> ExprP {
+        return ElseExpr(range: range)
     }
 }
