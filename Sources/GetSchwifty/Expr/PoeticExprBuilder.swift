@@ -72,7 +72,10 @@ internal class PoeticNumberExprBuilder: SingleExprBuilder {
 
     func build() throws -> ExprP {
         pushPoeticDigit()
-        return value == 0 ? NopExpr(range: range) : NumberExpr(literal: Double(value), range: range)
+        guard value != 0 else {
+            throw UnfinishedExprError(parsing: self, expecting: Set())
+        }
+        return NumberExpr(literal: Double(value), range: range)
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
