@@ -4,16 +4,6 @@ internal protocol ArithValueExprBuilder: SingleExprBuilder {
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
 }
 
-internal protocol DelimiterToListArithValueExprBuilder: ArithValueExprBuilder {
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder
-}
-
-extension DelimiterToListArithValueExprBuilder {
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return ListExprBuilder(first: self, isStatement: isStatement)
-    }
-}
-
 extension ArithValueExprBuilder {
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         if let pre = try preHandleIdentifierLex(id) {
@@ -54,7 +44,7 @@ extension ArithValueExprBuilder {
 }
 
 internal class IndexingExprBuilder:
-        DelimiterToListArithValueExprBuilder, PushesStringThrough, PushesNumberThrough {
+        DelimiterLexToListP, PushesStringLexThroughP, PushesNumberLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
     let isStatement: Bool
@@ -82,7 +72,7 @@ internal class IndexingExprBuilder:
 }
 
 internal class FunctionCallExprBuilder:
-        ArithValueExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+        ArithValueExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresWhitespaceLexP, IgnoresCommentLexP {
     var head: ExprBuilder
     lazy var args: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
@@ -117,7 +107,8 @@ internal class FunctionCallExprBuilder:
     }
 }
 
-internal class StringExprBuilder: DelimiterToListArithValueExprBuilder {
+internal class StringExprBuilder:
+        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP {
     let literal: String
     var range: LexRange!
     let isStatement = false
@@ -142,7 +133,8 @@ internal class StringExprBuilder: DelimiterToListArithValueExprBuilder {
     }
 }
 
-internal class NumberExprBuilder: DelimiterToListArithValueExprBuilder {
+internal class NumberExprBuilder:
+        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let literal: Double
     var range: LexRange!
     let isStatement = false
@@ -167,7 +159,8 @@ internal class NumberExprBuilder: DelimiterToListArithValueExprBuilder {
     }
 }
 
-internal class BoolExprBuilder: DelimiterToListArithValueExprBuilder {
+internal class BoolExprBuilder:
+        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let literal: Bool
     var range: LexRange!
     let isStatement = false
@@ -183,7 +176,8 @@ internal class BoolExprBuilder: DelimiterToListArithValueExprBuilder {
     }
 }
 
-internal class NullExprBuilder: DelimiterToListArithValueExprBuilder {
+internal class NullExprBuilder:
+        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     var range: LexRange!
     let isStatement = false
 
@@ -196,7 +190,8 @@ internal class NullExprBuilder: DelimiterToListArithValueExprBuilder {
     }
 }
 
-internal class MysteriousExprBuilder: DelimiterToListArithValueExprBuilder {
+internal class MysteriousExprBuilder:
+        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     var range: LexRange!
     let isStatement = false
 

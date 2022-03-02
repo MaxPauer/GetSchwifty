@@ -15,13 +15,6 @@ internal protocol ExprBuilder: AnyObject, PrettyNamed {
     func partialPush(_ lex: Lex) throws -> ExprBuilder
     func push(_ lex: Lex) throws -> PartialExpr
     func build() throws -> ExprP
-
-    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder
-    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder
-    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder
 }
 
 extension ExprBuilder {
@@ -40,6 +33,24 @@ extension ExprBuilder {
 
     var isVanilla: Bool { self is VanillaExprBuilder }
     var consumesAnd: Bool { false }
+}
+
+internal protocol SingleExprBuilder: ExprBuilder {
+    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder
+    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder
+    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder
+    func handleStringLex(_ s: StringLex) throws -> ExprBuilder
+    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder
+    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder
+}
+
+extension SingleExprBuilder {
+    func push(_ lex: Lex) throws -> PartialExpr {
+        if lex is NewlineLex {
+            return .expr(try build())
+        }
+        return .builder(try partialPush(lex))
+    }
 
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
         var newSelf: ExprBuilder = self
@@ -58,76 +69,9 @@ extension ExprBuilder {
         newSelf.range = self.range + lex.range
         return newSelf
     }
-
-    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
-        return self
-    }
-
-    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder {
-        return self
-    }
-
-    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
-        throw UnexpectedLexemeError(got: i, parsing: self)
-    }
-
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        throw UnexpectedLexemeError(got: s, parsing: self)
-    }
-
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
-        throw UnexpectedLexemeError(got: n, parsing: self)
-    }
-
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        throw UnexpectedLexemeError(got: d, parsing: self)
-    }
 }
 
-internal protocol CanPushThrough: ExprBuilder {
-    func pushThrough(_ lex: Lex) throws -> ExprBuilder
-}
-internal protocol PushesIdentifierThrough: CanPushThrough {}
-internal protocol PushesStringThrough: CanPushThrough {}
-internal protocol PushesNumberThrough: CanPushThrough {}
-internal protocol PushesDelimiterThrough: CanPushThrough {}
-
-internal extension PushesIdentifierThrough {
-    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
-        return try pushThrough(i)
-    }
-}
-
-internal extension PushesStringThrough {
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
-        return try pushThrough(s)
-    }
-}
-
-internal extension PushesNumberThrough {
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder {
-        return try pushThrough(n)
-    }
-}
-
-internal extension PushesDelimiterThrough {
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return try pushThrough(d)
-    }
-}
-
-internal protocol SingleExprBuilder: ExprBuilder {}
-
-extension SingleExprBuilder {
-    func push(_ lex: Lex) throws -> PartialExpr {
-        if lex is NewlineLex {
-            return .expr(try build())
-        }
-        return .builder(try partialPush(lex))
-    }
-}
-
-internal class VanillaExprBuilder: SingleExprBuilder {
+internal class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let parent: ExprBuilder?
     private var _range: LexRange?
 
@@ -230,7 +174,8 @@ internal class VanillaExprBuilder: SingleExprBuilder {
     }
 }
 
-internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+internal class AssignmentExprBuilder:
+        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
     var op: FunctionCallExpr.Op?
@@ -303,7 +248,8 @@ internal class AssignmentExprBuilder: SingleExprBuilder, PushesDelimiterThrough,
     }
 }
 
-internal class PushExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+internal class PushExprBuilder:
+        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var value: ExprBuilder?
     var range: LexRange!
@@ -351,7 +297,7 @@ internal class PushExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Pushe
 }
 
 internal class PopExprBuilder:
-        SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough, PushesIdentifierThrough {
+        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, PushesIdentifierLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
@@ -368,7 +314,7 @@ internal class PopExprBuilder:
 }
 
 internal class RoundExprBuilder:
-        SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
     private var op: VoidCallExpr.Op?
     var range: LexRange!
@@ -405,7 +351,7 @@ internal class RoundExprBuilder:
 }
 
 internal class VoidCallExprBuilder:
-        SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP  {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     let op: VoidCallExpr.Op
     var source: ExprBuilder?
@@ -447,7 +393,8 @@ internal class VoidCallExprBuilder:
     }
 }
 
-internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesStringThrough {
+internal class CrementExprBuilder:
+        SingleExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var targetFinished: Bool = false
     let isIncrement: Bool
     var isDecrement: Bool { !isIncrement }
@@ -498,7 +445,8 @@ internal class CrementExprBuilder: SingleExprBuilder, PushesNumberThrough, Pushe
     }
 }
 
-internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+internal class InputExprBuilder:
+        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP  {
     private var target: ExprBuilder?
     private var hasTarget: Bool { target != nil }
     var range: LexRange!
@@ -530,7 +478,7 @@ internal class InputExprBuilder: SingleExprBuilder, PushesDelimiterThrough, Push
 }
 
 internal class OutputExprBuilder:
-        SingleExprBuilder, PushesDelimiterThrough, PushesIdentifierThrough, PushesNumberThrough, PushesStringThrough {
+        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, PushesIdentifierLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
@@ -545,7 +493,8 @@ internal class OutputExprBuilder:
     }
 }
 
-internal class ListExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesStringThrough {
+internal class ListExprBuilder:
+        SingleExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var sources = DLinkedList<ExprBuilder>()
     lazy var currSource: ExprBuilder = VanillaExprBuilder(parent: self)
     var takesAnd: Bool
@@ -599,7 +548,8 @@ internal class ListExprBuilder: SingleExprBuilder, PushesNumberThrough, PushesSt
     }
 }
 
-internal class ReturnExprBuilder: SingleExprBuilder, PushesDelimiterThrough, PushesNumberThrough, PushesStringThrough {
+internal class ReturnExprBuilder:
+        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let initialBackAllowed: Bool
     var backReceived: Bool = false
     lazy var arg: ExprBuilder = VanillaExprBuilder(parent: self)

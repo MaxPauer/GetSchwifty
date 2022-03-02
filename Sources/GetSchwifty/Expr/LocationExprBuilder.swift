@@ -4,7 +4,7 @@ internal extension String {
     }
 }
 
-internal protocol FinalizedLocationExprBuilder: DelimiterToListArithValueExprBuilder {}
+internal protocol FinalizedLocationExprBuilder: DelimiterLexToListP {}
 
 extension FinalizedLocationExprBuilder {
     var canTerminate: Bool { true }
@@ -27,7 +27,8 @@ extension FinalizedLocationExprBuilder {
     }
 }
 
-internal class PronounExprBuilder: FinalizedLocationExprBuilder {
+internal class PronounExprBuilder:
+        FinalizedLocationExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let isStatement: Bool
     var range: LexRange!
 
@@ -40,7 +41,8 @@ internal class PronounExprBuilder: FinalizedLocationExprBuilder {
     }
 }
 
-internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
+internal class VariableNameExprBuilder:
+        FinalizedLocationExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsStringLexP, ThrowsNumberLexP {
     let name: String
     let isStatement: Bool
     var range: LexRange!
@@ -55,7 +57,8 @@ internal class VariableNameExprBuilder: FinalizedLocationExprBuilder {
     }
 }
 
-internal class CommonVariableNameExprBuilder: ExprBuilder {
+internal class CommonVariableNameExprBuilder:
+        SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let first: String
     var range: LexRange!
     let isStatement: Bool
@@ -83,7 +86,8 @@ internal class CommonVariableNameExprBuilder: ExprBuilder {
     }
 }
 
-internal class ProperVariableNameExprBuilder: SingleExprBuilder, PushesDelimiterThrough {
+internal class ProperVariableNameExprBuilder:
+        SingleExprBuilder, PushesDelimiterLexThroughP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresWhitespaceLexP, IgnoresCommentLexP {
     private(set) var words: [String]
     var range: LexRange!
     let isStatement: Bool

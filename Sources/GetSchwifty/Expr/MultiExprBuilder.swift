@@ -18,6 +18,11 @@ extension MultiExprBuilder {
         }
         return .builder(self)
     }
+
+    func partialPush(_ lex: Lex) throws -> ExprBuilder {
+        assertionFailure("should never be called")
+        return self
+    }
 }
 
 internal class LoopExprBuilder: MultiExprBuilder {

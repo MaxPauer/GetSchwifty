@@ -38,7 +38,8 @@ extension IdentifierLex {
     }
 }
 
-internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
+internal class BiArithExprBuilder:
+        ArithExprBuilder, PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var op: FunctionCallExpr.Op
     var opMustContinueWith: Set<String> = Set()
     var hasRhs: Bool = false
@@ -111,7 +112,8 @@ internal class BiArithExprBuilder: ArithExprBuilder, PushesStringThrough, Pushes
     }
 }
 
-internal class UnArithExprBuilder: ArithExprBuilder, PushesStringThrough, PushesNumberThrough, PushesDelimiterThrough {
+internal class UnArithExprBuilder:
+        ArithExprBuilder, PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var op: FunctionCallExpr.Op
     lazy var rhs: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
