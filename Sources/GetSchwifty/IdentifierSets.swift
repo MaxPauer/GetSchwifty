@@ -123,6 +123,7 @@ internal extension String {
     static var giveIdentifiers: Set<String> { Set(["give"]) }
     static var backIdentifiers: Set<String> { Set(["back"]) }
     static var elseIdentifiers: Set<String> { Set(["else"]) }
+    static var ifIdentifiers: Set<String> { Set(["if"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers

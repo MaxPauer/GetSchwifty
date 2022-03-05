@@ -155,6 +155,8 @@ internal class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, Ignore
             return ReturnExprBuilder(first: word)
         case String.elseIdentifiers:
             return ElseExprBuilder()
+        case String.ifIdentifiers:
+            return ConditionalExprBuilder()
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)

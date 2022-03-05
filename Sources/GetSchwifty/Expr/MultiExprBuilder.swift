@@ -84,7 +84,7 @@ internal class FunctionDeclExprBuilder: MultiExprBuilder {
         }
     }
 
-        func push(_ expr: ExprP) throws {
+    func push(_ expr: ExprP) throws {
         if args == nil {
             args = try normalizeArgs(expr)
         } else if !(expr is NopExpr) {
@@ -97,5 +97,37 @@ internal class FunctionDeclExprBuilder: MultiExprBuilder {
 
         let head = try self.head.build() as! VariableNameExpr
         return FunctionDeclExpr(head: head, args: args!, funBlock: Array(subExprs.frontToBack), range: range)
+    }
+}
+
+internal class ConditionalExprBuilder: MultiExprBuilder {
+    internal var range: LexRange!
+    internal lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
+    internal var condition: ValueExprP?
+    internal var ifBlockExprs = DLinkedList<ExprP>()
+    internal var elseBlockExprs = DLinkedList<ExprP>()
+    internal var ifBlockFinished = false
+
+    func push(_ expr: ExprP) throws {
+        if condition == nil {
+            guard let c = expr as? ValueExprP else {
+                throw UnexpectedExprError<ValueExprP>(got: expr, startPos: expr.range.start, parsing: self)
+            }
+            condition = c
+        } else if expr is NopExpr {
+            return
+        } else if expr is ElseExpr {
+            ifBlockFinished = true
+        } else if !ifBlockFinished {
+            ifBlockExprs.pushBack(expr)
+        } else {
+            elseBlockExprs.pushBack(expr)
+        }
+    }
+
+    func build() throws -> ExprP {
+        try push(currentExpr.build())
+        let cc = condition!
+        return ConditionalExpr(condition: cc, trueBlock: Array(ifBlockExprs.frontToBack), falseBlock: Array(elseBlockExprs.frontToBack), range: range)
     }
 }

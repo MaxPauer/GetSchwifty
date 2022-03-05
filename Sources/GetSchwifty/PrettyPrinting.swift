@@ -133,6 +133,9 @@ extension ReturnExprBuilder {
 extension ElseExprBuilder {
     var prettyName: String { "Else" }
 }
+extension ConditionalExprBuilder {
+    var prettyName: String { "Conditional" }
+}
 
 
 extension NopExpr {

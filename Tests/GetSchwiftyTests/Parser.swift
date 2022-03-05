@@ -415,6 +415,26 @@ final class ParserTests: XCTestCase {
         try testParse("until 1", inverted: true, inner: 0, outer: 0)
     }
 
+    func testCondition() throws {
+        func testParse(_ inp: String, if iff: Int, else lse: Int, outer: Int) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            let i = try XCTUnwrap(p.next() as? ConditionalExpr)
+            XCTAssertEqual(i.trueBlock.count, iff)
+            XCTAssertEqual(i.falseBlock.count, lse)
+            for _ in 0..<outer {
+                XCTAssertNotNil(try? p.next())
+            }
+            XCTAssertNil(try p.next())
+        }
+        try testParse("if 0", if: 0, else: 0, outer: 0)
+        try testParse("if 0\n1", if: 1, else: 0, outer: 0)
+        try testParse("if 0\n1\n1", if: 2, else: 0, outer: 0)
+        try testParse("if 0\n1\n1\nelse\n1", if: 2, else: 1, outer: 0)
+        try testParse("if 0\n1\nelse\n1\n1", if: 1, else: 2, outer: 0)
+        try testParse("if 0\nelse\n1\n1\n1", if: 0, else: 3, outer: 0)
+        try testParse("if 0\n\nelse\n1\n1\n1", if: 0, else: 0, outer: 5)
+    }
+
     func testFuncDecl() throws {
         func testParse(_ inp: String, args: Int, inner: Int, outer: Int) throws {
             var p = try XCTUnwrap(self.parse(inp))

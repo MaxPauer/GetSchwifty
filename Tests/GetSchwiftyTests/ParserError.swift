@@ -157,4 +157,9 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedIdentifierError = errorTest("return back it", ReturnExprBuilder.self, (1,7))
         let _: UnexpectedExprError<ValueExprP> = try errorTest("return listen", VoidCallExpr.self, ReturnExprBuilder.self, (1,7))
     }
+
+    func testConditionalFailure() throws {
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("if ", NopExpr.self, ConditionalExprBuilder.self, (1,2))
+        let _: UnexpectedExprError<ValueExprP> = try errorTest("if listen", VoidCallExpr.self, ConditionalExprBuilder.self, (1,2))
+    }
 }
