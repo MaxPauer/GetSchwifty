@@ -90,7 +90,7 @@ internal struct ContinueExpr: ExprP {
     let range: LexRange
 }
 
-internal struct FunctionDeclExpr: ValueExprP {
+internal struct FunctionDeclExpr: ExprP {
     let head: VariableNameExpr
     let args: [VariableNameExpr]
     let funBlock: [ExprP]
