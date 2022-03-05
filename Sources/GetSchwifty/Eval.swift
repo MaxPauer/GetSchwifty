@@ -3,30 +3,33 @@ internal protocol EvalContext {
 }
 
 extension EvalContext {
-    subscript(_ i: LocationExprP) -> Any? {
-        set {
-            switch i {
-            case let v as VariableNameExpr:
-                variables[v.name] = newValue
-            case _ as PronounExpr:
-                return // TODO
-            case _ as IndexingExpr:
-                return // TODO
-            default:
-                assertionFailure("unhandled LocationExprP")
+    mutating func set(_ i: LocationExprP, _ newValue: Any) {
+        switch i {
+        case let v as VariableNameExpr:
+            variables[v.name] = newValue
+        case _ as PronounExpr:
+            return // TODO
+        case _ as IndexingExpr:
+            return // TODO
+        default:
+            assertionFailure("unhandled LocationExprP")
+        }
+    }
+
+    func get(_ i: LocationExprP) throws -> Any {
+        switch i {
+        case let v as VariableNameExpr:
+            guard let value = variables[v.name] else {
+                throw VariableReadError(variable: v)
             }
-        } get {
-            switch i {
-            case let v as VariableNameExpr:
-                return variables[v.name]
-            case _ as PronounExpr:
-                return nil // TODO
-            case _ as IndexingExpr:
-                return nil // TODO
-            default:
-                assertionFailure("unhandled LocationExprP")
-                return nil
-            }
+            return value
+        case _ as PronounExpr:
+            return NullExpr.NullValue() // TODO
+        case _ as IndexingExpr:
+            return NullExpr.NullValue() // TODO
+        default:
+            assertionFailure("unhandled LocationExprP")
+            return NullExpr.NullValue()
         }
     }
 
@@ -34,22 +37,22 @@ extension EvalContext {
         expr.literal
     }
 
-    func eval(_ expr: ValueExprP) -> Any? {
+    func eval(_ expr: ValueExprP) throws -> Any {
         switch expr {
         case let b as BoolExpr:
             let bb: Bool = eval(b)
             return bb
         case let l as LocationExprP:
-            return self[l]
+            return try get(l)
         default: // TODO
             assertionFailure("unhandled ValueExprP")
-            return nil
+            return NullExpr.NullValue()
         }
     }
 
     mutating func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
-        case .assign: self[expr.target!] = eval(expr.source!)
+        case .assign: set(expr.target!, try eval(expr.source!))
         case .print:  break // TODO
         case .scan:   break // TODO
         case .push:   break // TODO

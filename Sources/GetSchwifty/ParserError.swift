@@ -1,7 +1,10 @@
-internal protocol ParserError: Error, CustomStringConvertible {
+internal protocol RockstarError: Error, CustomStringConvertible {
     var _description: String { get }
-    var parsing: ExprBuilder { get }
     var startPos: LexPos { get }
+}
+
+internal protocol ParserError: RockstarError {
+    var parsing: ExprBuilder { get }
 }
 
 extension ParserError {
@@ -77,5 +80,23 @@ internal struct UnfinishedExprError: ParserError {
 
     var _description: String {
         "unfinished \(parsing) expression, expecting: \(expectingDescr)"
+    }
+}
+
+internal protocol RuntimeError: RockstarError {}
+
+extension RuntimeError {
+    var description: String {
+        return "Runtime error on line \(startPos.line):\(startPos.char): \(_description)"
+    }
+}
+
+internal struct VariableReadError: RuntimeError {
+    let variable: VariableNameExpr
+
+    var startPos: LexPos { variable.range.start }
+
+    var _description: String {
+        "reading variable \"\(variable)\" before assignment"
     }
 }

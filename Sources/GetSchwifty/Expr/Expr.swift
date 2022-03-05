@@ -40,12 +40,14 @@ internal struct StringExpr: LiteralExprP, IndexableExprP {
 }
 
 internal struct NullExpr: LiteralExprP {
-    let literal: Int? = nil
+    struct NullValue: Equatable {}
+    let literal = NullValue()
     let range: LexRange
 }
 
 internal struct MysteriousExpr: LiteralExprP {
-    let literal: Int? = nil
+    struct MysteriousValue: Equatable {}
+    let literal = MysteriousValue()
     let range: LexRange
 }
 
