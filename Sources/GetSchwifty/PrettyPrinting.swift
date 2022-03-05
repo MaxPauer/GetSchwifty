@@ -133,6 +133,12 @@ extension ReturnExprBuilder {
 extension ElseExprBuilder {
     var prettyName: String { "Else" }
 }
+extension BreakExprBuilder {
+    var prettyName: String { "Break" }
+}
+extension ContinueExprBuilder {
+    var prettyName: String { "Continue" }
+}
 extension ConditionalExprBuilder {
     var prettyName: String { "Conditional" }
 }
@@ -179,6 +185,12 @@ extension ReturnExpr {
 }
 extension ElseExpr {
     var prettyName: String { "Else" }
+}
+extension BreakExpr {
+    var prettyName: String { "Break" }
+}
+extension ContinueExpr {
+    var prettyName: String { "Continue" }
 }
 extension FunctionDeclExpr {
     var prettyName: String { "Function Declaration" }

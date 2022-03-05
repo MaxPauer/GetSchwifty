@@ -157,6 +157,12 @@ internal class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, Ignore
             return ElseExprBuilder()
         case String.ifIdentifiers:
             return ConditionalExprBuilder()
+        case String.breakIdentifiers:
+            return BreakExprBuilder()
+        case String.continueIdentifiers:
+            return ContinueExprBuilder()
+        case String.takeIdentifiers:
+            return ContinueExprBuilder(itToTheTop:true)
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)
@@ -596,5 +602,68 @@ internal class ElseExprBuilder:
     var range: LexRange!
     func build() -> ExprP {
         return ElseExpr(range: range)
+    }
+}
+
+internal class BreakExprBuilder:
+        SingleExprBuilder, ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+    var range: LexRange!
+    var acceptsIt: Bool = true
+    var requiresDown: Bool = false
+
+    func build() throws -> ExprP {
+        guard !requiresDown else { throw UnfinishedExprError(parsing: self, expecting: String.downIdentifiers) }
+        return BreakExpr(range: range)
+    }
+
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        switch id.literal {
+        case String.itIdentifiers where acceptsIt:
+            acceptsIt = false
+            requiresDown = true
+            return self
+        case String.downIdentifiers where requiresDown:
+            requiresDown = false
+            return self
+        default:
+            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: acceptsIt ? String.itIdentifiers : requiresDown ? String.downIdentifiers : Set())
+        }
+    }
+}
+
+internal class ContinueExprBuilder:
+        SingleExprBuilder, ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+    var range: LexRange!
+    var requires: DLinkedList<Set<String>>
+
+    init() {
+        requires = DLinkedList()
+    }
+    convenience init(itToTheTop: Bool) {
+        self.init()
+        if (itToTheTop) {
+            requires.pushBack(String.itIdentifiers)
+            requires.pushBack(String.toIdentifiers)
+            requires.pushBack(String.theIdentifiers)
+            requires.pushBack(String.topIdentifiers)
+        }
+    }
+
+    func build() throws -> ExprP {
+        guard requires.isEmpty else { throw UnfinishedExprError(parsing: self, expecting: requires.popFront()!) }
+        return ContinueExpr(range: range)
+    }
+
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        guard !requires.isEmpty else {
+            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: Set())
+        }
+        switch id.literal {
+        case requires.peekFront()!:
+            _ = requires.popFront()
+            return self
+        default:
+            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: requires.popFront()!)
+        }
     }
 }

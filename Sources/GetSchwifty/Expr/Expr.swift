@@ -82,6 +82,14 @@ internal struct ElseExpr: ExprP {
     let range: LexRange
 }
 
+internal struct BreakExpr: ExprP {
+    let range: LexRange
+}
+
+internal struct ContinueExpr: ExprP {
+    let range: LexRange
+}
+
 internal struct FunctionDeclExpr: ValueExprP {
     let head: VariableNameExpr
     let args: [VariableNameExpr]

@@ -474,6 +474,24 @@ final class ParserTests: XCTestCase {
         _ = try XCTUnwrap(p.next() as? ElseExpr)
     }
 
+    func testBreak() throws {
+        func testParse(_ inp: String) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            _ = try XCTUnwrap(p.next() as? BreakExpr)
+        }
+        try testParse("break")
+        try testParse("break it down")
+    }
+
+    func testContinue() throws {
+        func testParse(_ inp: String) throws {
+            var p = try XCTUnwrap(self.parse(inp))
+            _ = try XCTUnwrap(p.next() as? ContinueExpr)
+        }
+        try testParse("continue")
+        try testParse("take it to the top")
+    }
+
     func testFizzBuzz() throws {
         func parseDiscardAll(_ inp: String) throws {
             var p = Parser(input: inp)
@@ -481,10 +499,6 @@ final class ParserTests: XCTestCase {
         }
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
 
-        XCTAssertThrowsError(try parseDiscardAll(fizzbuzz)) { error in
-            let e = try! XCTUnwrap(error as? UnexpectedIdentifierError)
-            XCTAssertEqual(e.got.range.start, LexPos(line: 15, char: 5))
-        }
-        // XCTAssertEqual(parser.lines, 26)
+        try parseDiscardAll(fizzbuzz)
     }
 }

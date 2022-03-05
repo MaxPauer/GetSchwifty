@@ -162,4 +162,14 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedExprError<ValueExprP> = try errorTest("if ", NopExpr.self, ConditionalExprBuilder.self, (1,2))
         let _: UnexpectedExprError<ValueExprP> = try errorTest("if listen", VoidCallExpr.self, ConditionalExprBuilder.self, (1,2))
     }
+
+    func testBreakFailure() throws {
+        let _: UnfinishedExprError = try errorTest("break it ", BreakExprBuilder.self, (1,9))
+        let _: UnexpectedIdentifierError = errorTest("break it up", BreakExprBuilder.self, (1,9))
+    }
+
+    func testContinueFailure() throws {
+        let _: UnfinishedExprError = try errorTest("take ", ContinueExprBuilder.self, (1,5))
+        let _: UnexpectedIdentifierError = errorTest("take her", ContinueExprBuilder.self, (1,5))
+    }
 }

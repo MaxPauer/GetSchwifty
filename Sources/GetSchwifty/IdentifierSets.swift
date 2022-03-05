@@ -45,7 +45,7 @@ internal extension String {
         Set(["in", "into"])
     }
     static var pronounIdentifiers: Set<String> {
-        Set(["it", "he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"])
+        Set(["he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"]) ∪ String.itIdentifiers
     }
     static var pushIdentifiers: Set<String> {
         Set(["rock", "push"])
@@ -124,6 +124,12 @@ internal extension String {
     static var backIdentifiers: Set<String> { Set(["back"]) }
     static var elseIdentifiers: Set<String> { Set(["else"]) }
     static var ifIdentifiers: Set<String> { Set(["if"]) }
+    static var breakIdentifiers: Set<String> { Set(["break"]) }
+    static var continueIdentifiers: Set<String> { Set(["continue"]) }
+    static var takeIdentifiers: Set<String> { Set(["take"]) }
+    static var itIdentifiers: Set<String> { Set(["it"]) }
+    static var theIdentifiers: Set<String> { Set(["the"]) }
+    static var topIdentifiers: Set<String> { Set(["top"]) }
 
     static var constantIdentifiers: Set<String> {
         String.emptyStringIdentifiers
