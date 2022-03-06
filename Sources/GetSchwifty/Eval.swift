@@ -67,6 +67,22 @@ extension EvalContext {
         return op(ll, rr)
     }
 
+    func evalAdd(_ lhs: ValueExprP, _ rhs: ValueExprP) throws -> Any {
+        let l = try eval(lhs)
+        let r = try eval(rhs)
+        switch (l, r) {
+        case (let ll as Double, let rr as Double):
+            return ll+rr
+        case (_, is String),
+             (is String, _):
+            return "\(l)\(r)"
+        case (_, is Double):
+            throw NonNumericExprError(expr: lhs, val: l)
+        default:
+            throw NonNumericExprError(expr: rhs, val: r)
+        }
+    }
+
     func eval(_ expr: FunctionCallExpr) throws -> Any {
         switch expr.head {
         case .not: return try !evalTruthiness(expr.args[0])
@@ -79,7 +95,7 @@ extension EvalContext {
         case .lt:  return try evalMath(expr.args[0], expr.args[1], {$0 < $1})
         case .geq: return try evalMath(expr.args[0], expr.args[1], {$0 >= $1})
         case .leq: return try evalMath(expr.args[0], expr.args[1], {$0 <= $1})
-        case .add: return NullExpr.NullValue() // TODO
+        case .add: return try evalAdd(expr.args[0], expr.args[1])
         case .sub: return try evalMath(expr.args[0], expr.args[1], {$0 - $1})
         case .mul: return try evalMath(expr.args[0], expr.args[1], {$0 * $1})
         case .div: return try evalMath(expr.args[0], expr.args[1], {$0 / $1})

@@ -75,9 +75,27 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testMath() throws {
+        var c = MainEvalContext(input: "let my life be 5 minus 3\nlet it be 2 plus \"foo\"\nlet it be \"foo\" with \"fighters\"\nlet it be 10 over 2")
+        try step(&c) {
+            try assertVariable($0, "my life", 2.0)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", "2.0foo")
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", "foofighters")
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", 5.0)
+        }
+    }
+
     func testErrors() throws {
         let _: VariableReadError = try errorTest("put my heart into my soul", (1,4))
         let _: PronoundUsedBeforeAssignmentError = try errorTest("it is nothing", (1,0))
         let _: NonNumericExprError = try errorTest("let my life be 5 is greater than \"4\"", (1,32))
+        let _: NonNumericExprError = try errorTest("let my life be 5 without \"4\"", (1,24))
+        let _: NonNumericExprError = try errorTest("let my life be true without false", (1,15))
     }
 }
