@@ -101,7 +101,7 @@ internal struct VariableReadError: RuntimeError {
     }
 }
 
-internal struct PronoundUsedBeforeAssignmentError: RuntimeError {
+internal struct PronounUsedBeforeAssignmentError: RuntimeError {
     let startPos: LexPos
 
     var _description: String {

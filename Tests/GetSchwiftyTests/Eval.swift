@@ -101,7 +101,7 @@ final class EvalTests: XCTestCase {
 
     func testErrors() throws {
         let _: VariableReadError = try errorTest("put my heart into my soul", (1,4))
-        let _: PronoundUsedBeforeAssignmentError = try errorTest("it is nothing", (1,0))
+        let _: PronounUsedBeforeAssignmentError = try errorTest("it is nothing", (1,0))
         let _: NonNumericExprError = try errorTest("let my life be 5 is greater than \"4\"", (1,32))
         let _: NonNumericExprError = try errorTest("let my life be 5 without \"4\"", (1,24))
         let _: NonNumericExprError = try errorTest("let my life be true without false", (1,15))

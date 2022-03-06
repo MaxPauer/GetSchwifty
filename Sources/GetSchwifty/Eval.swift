@@ -13,7 +13,7 @@ extension EvalContext {
             lastVariable = v
         case _ as PronounExpr:
             guard let lv = lastVariable else {
-                throw PronoundUsedBeforeAssignmentError(startPos: i.range.start)
+                throw PronounUsedBeforeAssignmentError(startPos: i.range.start)
             }
             try set(lv, newValue)
         case _ as IndexingExpr:
@@ -32,7 +32,7 @@ extension EvalContext {
             return value
         case _ as PronounExpr:
             guard let lv = lastVariable else {
-                throw PronoundUsedBeforeAssignmentError(startPos: i.range.start)
+                throw PronounUsedBeforeAssignmentError(startPos: i.range.start)
             }
             return try get(lv)
         case _ as IndexingExpr:
