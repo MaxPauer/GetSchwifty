@@ -1,14 +1,19 @@
 internal protocol EvalContext {
     var variables: [String: Any] { get set }
+    var lastVariable: VariableNameExpr? { get set }
 }
 
 extension EvalContext {
-    mutating func set(_ i: LocationExprP, _ newValue: Any) {
+    mutating func set(_ i: LocationExprP, _ newValue: Any) throws {
         switch i {
         case let v as VariableNameExpr:
             variables[v.name] = newValue
+            lastVariable = v
         case _ as PronounExpr:
-            return // TODO
+            guard let lv = lastVariable else {
+                throw PronoundUsedBeforeAssignmentError(startPos: i.range.start)
+            }
+            try set(lv, newValue)
         case _ as IndexingExpr:
             return // TODO
         default:
@@ -24,7 +29,10 @@ extension EvalContext {
             }
             return value
         case _ as PronounExpr:
-            return NullExpr.NullValue() // TODO
+            guard let lv = lastVariable else {
+                throw PronoundUsedBeforeAssignmentError(startPos: i.range.start)
+            }
+            return try get(lv)
         case _ as IndexingExpr:
             return NullExpr.NullValue() // TODO
         default:
@@ -52,7 +60,7 @@ extension EvalContext {
 
     mutating func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
-        case .assign: set(expr.target!, try eval(expr.source!))
+        case .assign: try set(expr.target!, try eval(expr.source!))
         case .print:  break // TODO
         case .scan:   break // TODO
         case .push:   break // TODO
@@ -93,6 +101,7 @@ extension EvalContext {
 
 internal struct MainEvalContext: EvalContext {
     var variables = [String: Any]()
+    var lastVariable: VariableNameExpr? = nil
     var parser: Parser
 
     init(input inp: String) {

@@ -100,3 +100,11 @@ internal struct VariableReadError: RuntimeError {
         "reading variable \"\(variable)\" before assignment"
     }
 }
+
+internal struct PronoundUsedBeforeAssignmentError: RuntimeError {
+    let startPos: LexPos
+
+    var _description: String {
+        "pronoun used before any variable was assigned"
+    }
+}
