@@ -1,3 +1,5 @@
+import Foundation
+
 internal protocol EvalContext {
     var variables: [String: Any] { get set }
     var lastVariable: VariableNameExpr? { get set }
@@ -164,6 +166,12 @@ extension EvalContext {
         }
     }
 
+    func evalMath(_ opnd: ValueExprP, _ op: (Double) -> Any) throws -> Any {
+        let o = try eval(opnd)
+        guard let oo = o as? Double else { throw NonNumericExprError(expr: opnd, val: o) }
+        return op(oo)
+    }
+
     mutating func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
         case .assign: try set(expr.target!, try eval(expr.source!))
@@ -173,9 +181,9 @@ extension EvalContext {
         case .split:  break // TODO
         case .join:   break // TODO
         case .cast:   break // TODO
-        case .ceil:   break // TODO
-        case .floor:  break // TODO
-        case .round:  break // TODO
+        case .ceil:   try set(expr.target!, evalMath(expr.source!, { ceil($0) }))
+        case .floor:  try set(expr.target!, evalMath(expr.source!, { floor($0) }))
+        case .round:  try set(expr.target!, evalMath(expr.source!, { round($0) }))
         }
     }
 

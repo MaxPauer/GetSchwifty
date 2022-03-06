@@ -15,7 +15,6 @@ extension ParserError {
 
 internal protocol LexemeError: ParserError {
     var got: Lex { get }
-
 }
 
 extension LexemeError {

@@ -91,6 +91,28 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testMathRound() throws {
+        var c = MainEvalContext(input: "let my life be 5.3\nturn it around\nlet my life be 5.3\nturn it up\nlet my life be 5.3\nturn it down\n")
+        try step(&c) {
+            try assertVariable($0, "my life", 5.3)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", 5.0)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", 5.3)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", 6.0)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", 5.3)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", 5.0)
+        }
+    }
+
     func testInOut() throws {
         var result: Any?
         var c = MainEvalContext(input: "listen to your heart\nshout it", stdin: {"noice"}, stdout: { result = $0 })
