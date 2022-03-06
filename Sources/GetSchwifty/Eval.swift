@@ -48,7 +48,23 @@ extension EvalContext {
         if i is String { return true }
         if i is NullExpr.NullValue { return false }
         if i is MysteriousExpr.MysteriousValue { return false }
-        throw NonBooleanExprError(startPos: expr.range.start)
+        throw NonBooleanExprError(expr: expr)
+    }
+
+    func evalEq(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (AnyHashable, AnyHashable) -> Bool) throws -> Bool {
+        let l = try eval(lhs)
+        guard let ll = l as? AnyHashable else { throw NonEquatableExprError(expr: lhs, val: l) }
+        let r = try eval(rhs)
+        guard let rr = r as? AnyHashable else { throw NonEquatableExprError(expr: rhs, val: r) }
+        return op(ll, rr)
+    }
+
+    func evalComp(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Bool) throws -> Bool {
+        let l = try eval(lhs)
+        guard let ll = l as? Double else { throw NonComparableExprError(expr: lhs, val: l) }
+        let r = try eval(rhs)
+        guard let rr = r as? Double else { throw NonComparableExprError(expr: rhs, val: r) }
+        return op(ll, rr)
     }
 
     func eval(_ expr: FunctionCallExpr) throws -> Any {
@@ -57,12 +73,12 @@ extension EvalContext {
         case .and: return try evalTruthiness(expr.args[0]) && evalTruthiness(expr.args[1])
         case .orr: return try evalTruthiness(expr.args[0]) || evalTruthiness(expr.args[1])
         case .nor: return try !(evalTruthiness(expr.args[0]) || evalTruthiness(expr.args[1]))
-        case .eq:  return NullExpr.NullValue() // TODO
-        case .neq: return NullExpr.NullValue() // TODO
-        case .gt:  return NullExpr.NullValue() // TODO
-        case .lt:  return NullExpr.NullValue() // TODO
-        case .geq: return NullExpr.NullValue() // TODO
-        case .leq: return NullExpr.NullValue() // TODO
+        case .eq:  return try evalEq(expr.args[0], expr.args[1], {$0 == $1})
+        case .neq: return try evalEq(expr.args[0], expr.args[1], {$0 != $1})
+        case .gt:  return try evalComp(expr.args[0], expr.args[1], {$0 > $1})
+        case .lt:  return try evalComp(expr.args[0], expr.args[1], {$0 < $1})
+        case .geq: return try evalComp(expr.args[0], expr.args[1], {$0 >= $1})
+        case .leq: return try evalComp(expr.args[0], expr.args[1], {$0 <= $1})
         case .add: return NullExpr.NullValue() // TODO
         case .sub: return NullExpr.NullValue() // TODO
         case .mul: return NullExpr.NullValue() // TODO

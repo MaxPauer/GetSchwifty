@@ -110,9 +110,27 @@ internal struct PronoundUsedBeforeAssignmentError: RuntimeError {
 }
 
 internal struct NonBooleanExprError: RuntimeError {
-    let startPos: LexPos
-
+    let expr: ExprP
+    var startPos: LexPos { expr.range.start }
     var _description: String {
-        "expression cannot be evaluated to Bool"
+        "expression \(expr) cannot be evaluated to Bool"
+    }
+}
+
+internal struct NonEquatableExprError: RuntimeError {
+    let expr: ExprP
+    let val: Any
+    var startPos: LexPos { expr.range.start }
+    var _description: String {
+        "expression \(expr), evaluated to \(val) cannot be equated"
+    }
+}
+
+internal struct NonComparableExprError: RuntimeError {
+    let expr: ExprP
+    let val: Any
+    var startPos: LexPos { expr.range.start }
+    var _description: String {
+        "expression \(expr), evaluated to \(val) cannot be compared"
     }
 }

@@ -56,8 +56,28 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testBooleanLogicAssignment() throws {
+        var c = MainEvalContext(input: "let my life be not mysterious\nlet it be right and wrong\nlet it be 5 is greater than 4\nlet it be 5 ain't 5\nlet it be 5 is as great as 1")
+        try step(&c) {
+            try assertVariable($0, "my life", true)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", false)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", true)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", false)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", true)
+        }
+    }
+
     func testErrors() throws {
         let _: VariableReadError = try errorTest("put my heart into my soul", (1,4))
         let _: PronoundUsedBeforeAssignmentError = try errorTest("it is nothing", (1,0))
+        let _: NonComparableExprError = try errorTest("let my life be 5 is greater than \"4\"", (1,32))
     }
 }
