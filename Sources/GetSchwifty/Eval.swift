@@ -41,18 +41,25 @@ extension EvalContext {
         }
     }
 
-    func eval<T>(_ expr: T)-> T.LiteralT where T: LiteralExprP {
-        expr.literal
-    }
-
     func eval(_ expr: ValueExprP) throws -> Any {
         switch expr {
         case let b as BoolExpr:
-            let bb: Bool = eval(b)
-            return bb
+            return b.literal
+        case let n as NumberExpr:
+            return n.literal
+        case let s as StringExpr:
+            return s.literal
+        case let n as NullExpr:
+            return n.literal
+        case let m as MysteriousExpr:
+            return m.literal
         case let l as LocationExprP:
             return try get(l)
-        default: // TODO
+        case let l as ListExpr:
+            return NullExpr.NullValue() // TODO
+        case let f as FunctionCallExpr:
+            return NullExpr.NullValue() // TODO
+        default:
             assertionFailure("unhandled ValueExprP")
             return NullExpr.NullValue()
         }
