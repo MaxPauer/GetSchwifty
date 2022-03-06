@@ -126,11 +126,11 @@ internal struct NonEquatableExprError: RuntimeError {
     }
 }
 
-internal struct NonComparableExprError: RuntimeError {
+internal struct NonNumericExprError: RuntimeError {
     let expr: ExprP
     let val: Any
     var startPos: LexPos { expr.range.start }
     var _description: String {
-        "expression \(expr), evaluated to \(val) cannot be compared"
+        "expression \(expr), evaluated to \(val) cannot be used for numeric operations"
     }
 }

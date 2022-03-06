@@ -59,11 +59,11 @@ extension EvalContext {
         return op(ll, rr)
     }
 
-    func evalComp(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Bool) throws -> Bool {
+    func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
         let l = try eval(lhs)
-        guard let ll = l as? Double else { throw NonComparableExprError(expr: lhs, val: l) }
+        guard let ll = l as? Double else { throw NonNumericExprError(expr: lhs, val: l) }
         let r = try eval(rhs)
-        guard let rr = r as? Double else { throw NonComparableExprError(expr: rhs, val: r) }
+        guard let rr = r as? Double else { throw NonNumericExprError(expr: rhs, val: r) }
         return op(ll, rr)
     }
 
@@ -75,14 +75,14 @@ extension EvalContext {
         case .nor: return try !(evalTruthiness(expr.args[0]) || evalTruthiness(expr.args[1]))
         case .eq:  return try evalEq(expr.args[0], expr.args[1], {$0 == $1})
         case .neq: return try evalEq(expr.args[0], expr.args[1], {$0 != $1})
-        case .gt:  return try evalComp(expr.args[0], expr.args[1], {$0 > $1})
-        case .lt:  return try evalComp(expr.args[0], expr.args[1], {$0 < $1})
-        case .geq: return try evalComp(expr.args[0], expr.args[1], {$0 >= $1})
-        case .leq: return try evalComp(expr.args[0], expr.args[1], {$0 <= $1})
+        case .gt:  return try evalMath(expr.args[0], expr.args[1], {$0 > $1})
+        case .lt:  return try evalMath(expr.args[0], expr.args[1], {$0 < $1})
+        case .geq: return try evalMath(expr.args[0], expr.args[1], {$0 >= $1})
+        case .leq: return try evalMath(expr.args[0], expr.args[1], {$0 <= $1})
         case .add: return NullExpr.NullValue() // TODO
-        case .sub: return NullExpr.NullValue() // TODO
-        case .mul: return NullExpr.NullValue() // TODO
-        case .div: return NullExpr.NullValue() // TODO
+        case .sub: return try evalMath(expr.args[0], expr.args[1], {$0 - $1})
+        case .mul: return try evalMath(expr.args[0], expr.args[1], {$0 * $1})
+        case .div: return try evalMath(expr.args[0], expr.args[1], {$0 / $1})
         case .pop: return NullExpr.NullValue() // TODO
         case .custom: return NullExpr.NullValue() // TODO
         }
