@@ -49,7 +49,7 @@ final class EvalTests: XCTestCase {
             try assertVariable($0, "my father", "to me A wealthy man had the things I wanted")
         }
         try step(&c) {
-            try assertVariable($0, "my father", NullExpr.NullValue())
+            try assertVariable($0, "my father", Rockstar.null)
         }
         try step(&c) {
             try assertVariable($0, "my father", 74164.0)

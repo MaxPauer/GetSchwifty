@@ -40,10 +40,10 @@ extension EvalContext {
             }
             return try get(lv)
         case _ as IndexingExpr:
-            return NullExpr.NullValue() // TODO
+            return Rockstar.null // TODO
         default:
             assertionFailure("unhandled LocationExprP")
-            return NullExpr.NullValue()
+            return Rockstar.null
         }
     }
 
@@ -52,8 +52,8 @@ extension EvalContext {
         if let b = i as? Bool { return b }
         if let d = i as? Double { return d != 0 }
         if i is String { return true }
-        if i is NullExpr.NullValue { return false }
-        if i is MysteriousExpr.MysteriousValue { return false }
+        if i is Rockstar.Null { return false }
+        if i is Rockstar.Mysterious{ return false }
         throw NonBooleanExprError(expr: expr)
     }
 
@@ -101,18 +101,18 @@ extension EvalContext {
         switch h {
         case let swiftFun as () throws -> Void:
             try swiftFun()
-            return NullExpr.NullValue()
+            return Rockstar.null
         case let swiftFun as ([Any]) throws -> Void:
             try swiftFun(a)
-            return NullExpr.NullValue()
+            return Rockstar.null
         case let swiftFun as () throws -> Any:
             return try swiftFun()
         case let swiftFun as () throws -> Any?:
-            return try swiftFun() ?? NullExpr.NullValue()
+            return try swiftFun() ?? Rockstar.null
         case let swiftFun as ([Any]) throws -> Any:
             return try swiftFun(a)
         case let swiftFun as ([Any]) throws -> Any?:
-            return try swiftFun(a) ?? NullExpr.NullValue()
+            return try swiftFun(a) ?? Rockstar.null
         // case let rockFun as // TODO
         default:
             throw UncallableLocationError(expr: head, val: h)
@@ -135,7 +135,7 @@ extension EvalContext {
         case .sub: return try evalMath(expr.args[0], expr.args[1], {$0 - $1})
         case .mul: return try evalMath(expr.args[0], expr.args[1], {$0 * $1})
         case .div: return try evalMath(expr.args[0], expr.args[1], {$0 / $1})
-        case .pop: return NullExpr.NullValue() // TODO
+        case .pop: return Rockstar.null// TODO
         case .custom: return try call(expr.args[0] as! LocationExprP, expr.args[1])
         }
     }
@@ -160,7 +160,7 @@ extension EvalContext {
             return try eval(f)
         default:
             assertionFailure("unhandled ValueExprP")
-            return NullExpr.NullValue()
+            return Rockstar.null
         }
     }
 
@@ -215,7 +215,7 @@ internal struct MainEvalContext: EvalContext {
     var _listen: () -> Any
     var _shout: (Any) -> Void
 
-    init(input inp: String, stdin: @escaping () -> Any = { NullExpr.NullValue() }, stdout: @escaping (Any) -> Void = {_ in}) {
+    init(input inp: String, stdin: @escaping () -> Any = { Rockstar.null }, stdout: @escaping (Any) -> Void = {_ in}) {
         parser = Parser(input: inp)
         _listen = stdin
         _shout = stdout

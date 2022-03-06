@@ -70,9 +70,9 @@ final class ParserTests: XCTestCase {
     }
 
     func testPoeticConstantLiteral() throws {
-        let _: NullExpr = try assignParseTest("My life's gone", "my life", NullExpr.NullValue())
+        let _: NullExpr = try assignParseTest("My life's gone", "my life", Rockstar.null)
         let _: BoolExpr = try assignParseTest("My life's lies lol", "my life", false)
-        let _: MysteriousExpr = try assignParseTest("My life's mysterious", "my life", MysteriousExpr.MysteriousValue())
+        let _: MysteriousExpr = try assignParseTest("My life's mysterious", "my life", Rockstar.mysterious)
     }
 
     func testPoeticStringLiteral() throws {
@@ -91,8 +91,8 @@ final class ParserTests: XCTestCase {
         let _: NumberExpr = try assignParseTest("let my life be 42.0", "my life", 42.0)
         let _: BoolExpr = try assignParseTest("let The Devil be right", "the devil", true)
         let _: BoolExpr = try assignParseTest("let The Devil be wrong", "the devil", false)
-        let _: NullExpr = try assignParseTest("let hate be nothing", "hate", NullExpr.NullValue())
-        let _: MysteriousExpr = try assignParseTest("let dragons be mysterious", "dragons", MysteriousExpr.MysteriousValue())
+        let _: NullExpr = try assignParseTest("let hate be nothing", "hate", Rockstar.null)
+        let _: MysteriousExpr = try assignParseTest("let dragons be mysterious", "dragons", Rockstar.mysterious)
     }
 
     func testPutAssignment() throws {
