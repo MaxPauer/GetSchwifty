@@ -1,6 +1,8 @@
 internal protocol EvalContext {
     var variables: [String: Any] { get set }
     var lastVariable: VariableNameExpr? { get set }
+    func shout(_: Any)
+    func listen() -> Any
 }
 
 extension EvalContext {
@@ -131,8 +133,8 @@ extension EvalContext {
     mutating func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
         case .assign: try set(expr.target!, try eval(expr.source!))
-        case .print:  break // TODO
-        case .scan:   break // TODO
+        case .print:  try shout(eval(expr.source!))
+        case .scan:   try set(expr.target!, listen())
         case .push:   break // TODO
         case .split:  break // TODO
         case .join:   break // TODO
@@ -173,9 +175,13 @@ internal struct MainEvalContext: EvalContext {
     var variables = [String: Any]()
     var lastVariable: VariableNameExpr? = nil
     var parser: Parser
+    var _listen: () -> Any
+    var _shout: (Any) -> Void
 
-    init(input inp: String) {
+    init(input inp: String, stdin: @escaping () -> Any = { NullExpr.NullValue() }, stdout: @escaping (Any) -> Void = {_ in}) {
         parser = Parser(input: inp)
+        _listen = stdin
+        _shout = stdout
     }
 
     mutating func step() throws -> Bool {
@@ -187,4 +193,7 @@ internal struct MainEvalContext: EvalContext {
     mutating func run() throws {
         while try step() { }
     }
+
+    func shout(_ v: Any) { _shout(v) }
+    func listen() -> Any { _listen() }
 }

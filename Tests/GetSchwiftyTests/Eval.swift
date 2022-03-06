@@ -91,6 +91,14 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testInOut() throws {
+        var result: Any?
+        var c = MainEvalContext(input: "listen to your heart\nshout it", stdin: {"noice"}, stdout: { result = $0 })
+        try c.run()
+        let r = try XCTUnwrap(result as? String)
+        XCTAssertEqual(r, "noice")
+    }
+
     func testErrors() throws {
         let _: VariableReadError = try errorTest("put my heart into my soul", (1,4))
         let _: PronoundUsedBeforeAssignmentError = try errorTest("it is nothing", (1,0))
