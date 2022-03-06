@@ -142,3 +142,12 @@ internal struct StrayExprError: RuntimeError {
         "stray \(expr) expression"
     }
 }
+
+internal struct UncallableLocationError: RuntimeError {
+    let expr: ExprP
+    let val: Any
+    var startPos: LexPos { expr.range.start }
+    var _description: String {
+        "location \(expr), evaluated to \(val) cannot be called"
+    }
+}

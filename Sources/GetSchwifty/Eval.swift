@@ -89,6 +89,36 @@ extension EvalContext {
         }
     }
 
+    func call(_ head: LocationExprP, _ args: ValueExprP) throws -> Any {
+        func normalizeArgs() throws -> [Any] {
+            let a = try eval(args)
+            if let a = a as? [Any] { return a }
+            return [a]
+        }
+        let a = try normalizeArgs()
+        let h = try get(head)
+
+        switch h {
+        case let swiftFun as () throws -> Void:
+            try swiftFun()
+            return NullExpr.NullValue()
+        case let swiftFun as ([Any]) throws -> Void:
+            try swiftFun(a)
+            return NullExpr.NullValue()
+        case let swiftFun as () throws -> Any:
+            return try swiftFun()
+        case let swiftFun as () throws -> Any?:
+            return try swiftFun() ?? NullExpr.NullValue()
+        case let swiftFun as ([Any]) throws -> Any:
+            return try swiftFun(a)
+        case let swiftFun as ([Any]) throws -> Any?:
+            return try swiftFun(a) ?? NullExpr.NullValue()
+        // case let rockFun as // TODO
+        default:
+            throw UncallableLocationError(expr: head, val: h)
+        }
+    }
+
     func eval(_ expr: FunctionCallExpr) throws -> Any {
         switch expr.head {
         case .not: return try !evalTruthiness(expr.args[0])
@@ -106,7 +136,7 @@ extension EvalContext {
         case .mul: return try evalMath(expr.args[0], expr.args[1], {$0 * $1})
         case .div: return try evalMath(expr.args[0], expr.args[1], {$0 / $1})
         case .pop: return NullExpr.NullValue() // TODO
-        case .custom: return NullExpr.NullValue() // TODO
+        case .custom: return try call(expr.args[0] as! LocationExprP, expr.args[1])
         }
     }
 
@@ -125,7 +155,7 @@ extension EvalContext {
         case let l as LocationExprP:
             return try get(l)
         case let l as ListExpr:
-            return NullExpr.NullValue() // TODO
+            return try l.members.map{ try eval($0) }
         case let f as FunctionCallExpr:
             return try eval(f)
         default:

@@ -99,6 +99,16 @@ final class EvalTests: XCTestCase {
         XCTAssertEqual(r, "noice")
     }
 
+    func testSwiftFun() throws {
+        var result: Any?
+        var c = MainEvalContext(input: "put \"hallo\" into my world\nlisten to my life\nshout my life taking \"hallo\", my world",
+                                stdin: { { (args: [Any]) -> Any in "\(args[0]) \(args[1])" } },
+                               stdout: { result = $0 })
+        try c.run()
+        let r = try XCTUnwrap(result as? String)
+        XCTAssertEqual(r, "hallo hallo")
+    }
+
     func testErrors() throws {
         let _: VariableReadError = try errorTest("put my heart into my soul", (1,4))
         let _: PronounUsedBeforeAssignmentError = try errorTest("it is nothing", (1,0))
@@ -109,5 +119,6 @@ final class EvalTests: XCTestCase {
         let _: StrayExprError = try errorTest("else", (1,0))
         let _: StrayExprError = try errorTest("take it to the top", (1,0))
         let _: StrayExprError = try errorTest("break it down", (1,0))
+        let _: UncallableLocationError = try errorTest("my life is nothing\nmy life taking 1", (2,0))
     }
 }
