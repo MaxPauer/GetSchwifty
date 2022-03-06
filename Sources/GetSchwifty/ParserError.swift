@@ -108,3 +108,11 @@ internal struct PronoundUsedBeforeAssignmentError: RuntimeError {
         "pronoun used before any variable was assigned"
     }
 }
+
+internal struct NonBooleanExprError: RuntimeError {
+    let startPos: LexPos
+
+    var _description: String {
+        "expression cannot be evaluated to Bool"
+    }
+}

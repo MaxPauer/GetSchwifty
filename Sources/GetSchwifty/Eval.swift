@@ -41,6 +41,37 @@ extension EvalContext {
         }
     }
 
+    func evalTruthiness(_ expr: ValueExprP) throws -> Bool {
+        let i = try eval(expr)
+        if let b = i as? Bool { return b }
+        if let d = i as? Double { return d != 0 }
+        if i is String { return true }
+        if i is NullExpr.NullValue { return false }
+        if i is MysteriousExpr.MysteriousValue { return false }
+        throw NonBooleanExprError(startPos: expr.range.start)
+    }
+
+    func eval(_ expr: FunctionCallExpr) throws -> Any {
+        switch expr.head {
+        case .not: return try !evalTruthiness(expr.args[0])
+        case .and: return try evalTruthiness(expr.args[0]) && evalTruthiness(expr.args[1])
+        case .orr: return try evalTruthiness(expr.args[0]) || evalTruthiness(expr.args[1])
+        case .nor: return try !(evalTruthiness(expr.args[0]) || evalTruthiness(expr.args[1]))
+        case .eq:  return NullExpr.NullValue() // TODO
+        case .neq: return NullExpr.NullValue() // TODO
+        case .gt:  return NullExpr.NullValue() // TODO
+        case .lt:  return NullExpr.NullValue() // TODO
+        case .geq: return NullExpr.NullValue() // TODO
+        case .leq: return NullExpr.NullValue() // TODO
+        case .add: return NullExpr.NullValue() // TODO
+        case .sub: return NullExpr.NullValue() // TODO
+        case .mul: return NullExpr.NullValue() // TODO
+        case .div: return NullExpr.NullValue() // TODO
+        case .pop: return NullExpr.NullValue() // TODO
+        case .custom: return NullExpr.NullValue() // TODO
+        }
+    }
+
     func eval(_ expr: ValueExprP) throws -> Any {
         switch expr {
         case let b as BoolExpr:
@@ -58,7 +89,7 @@ extension EvalContext {
         case let l as ListExpr:
             return NullExpr.NullValue() // TODO
         case let f as FunctionCallExpr:
-            return NullExpr.NullValue() // TODO
+            return try eval(f)
         default:
             assertionFailure("unhandled ValueExprP")
             return NullExpr.NullValue()
@@ -88,8 +119,8 @@ extension EvalContext {
             break // TODO
         case _ as LoopExpr:
             break // TODO
-        case _ as FunctionCallExpr:
-            break // TODO
+        case let f as FunctionCallExpr:
+            _ = try eval(f)
         case _ as FunctionDeclExpr:
             break // TODO
         case is ReturnExpr,
