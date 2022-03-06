@@ -3,6 +3,10 @@ internal protocol EvalContext {
     var lastVariable: VariableNameExpr? { get set }
     func shout(_: Any)
     func listen() -> Any
+
+    func doReturn(_ r: ReturnExpr) throws
+    func doBreak(_ b: BreakExpr) throws
+    func doContinue(_ c: ContinueExpr) throws
 }
 
 extension EvalContext {
@@ -157,11 +161,14 @@ extension EvalContext {
             _ = try eval(f)
         case _ as FunctionDeclExpr:
             break // TODO
-        case is ReturnExpr,
-             is ElseExpr,
-             is BreakExpr,
-             is ContinueExpr:
-            break // TODO
+        case let r as ReturnExpr:
+            try doReturn(r)
+        case let e as ElseExpr:
+            throw StrayExprError(expr: e)
+        case let b as BreakExpr:
+            try doBreak(b)
+        case let c as ContinueExpr:
+            try doContinue(c)
         case is ValueExprP,
              is NopExpr:
             break
@@ -196,4 +203,8 @@ internal struct MainEvalContext: EvalContext {
 
     func shout(_ v: Any) { _shout(v) }
     func listen() -> Any { _listen() }
+
+    func doReturn(_ r: ReturnExpr) throws { throw StrayExprError(expr: r) }
+    func doBreak(_ b: BreakExpr) throws { throw StrayExprError(expr: b) }
+    func doContinue(_ c: ContinueExpr) throws { throw StrayExprError(expr: c) }
 }

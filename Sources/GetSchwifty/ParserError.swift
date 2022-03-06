@@ -134,3 +134,11 @@ internal struct NonNumericExprError: RuntimeError {
         "expression \(expr), evaluated to \(val) cannot be used for numeric operations"
     }
 }
+
+internal struct StrayExprError: RuntimeError {
+    let expr: ExprP
+    var startPos: LexPos { expr.range.start }
+    var _description: String {
+        "stray \(expr) expression"
+    }
+}

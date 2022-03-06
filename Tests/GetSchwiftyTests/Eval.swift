@@ -105,5 +105,9 @@ final class EvalTests: XCTestCase {
         let _: NonNumericExprError = try errorTest("let my life be 5 is greater than \"4\"", (1,32))
         let _: NonNumericExprError = try errorTest("let my life be 5 without \"4\"", (1,24))
         let _: NonNumericExprError = try errorTest("let my life be true without false", (1,15))
+        let _: StrayExprError = try errorTest("give it back", (1,0))
+        let _: StrayExprError = try errorTest("else", (1,0))
+        let _: StrayExprError = try errorTest("take it to the top", (1,0))
+        let _: StrayExprError = try errorTest("break it down", (1,0))
     }
 }
