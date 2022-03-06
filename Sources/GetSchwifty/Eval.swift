@@ -12,41 +12,69 @@ internal protocol EvalContext {
 }
 
 extension EvalContext {
-    mutating func set(_ i: LocationExprP, _ newValue: Any) throws {
-        switch i {
+    mutating func _set(_ v: VariableNameExpr, _ newValue: Any) throws {
+        variables[v.name] = newValue
+        lastVariable = v
+    }
+
+    mutating func _set(_ p: PronounExpr, _ newValue: Any) throws {
+        guard let lv = lastVariable else {
+            throw PronounUsedBeforeAssignmentError(startPos: p.range.start)
+        }
+        try set(lv, newValue)
+    }
+
+    mutating func _set(_ i: IndexingExpr, _ newValue: Any) throws {
+        return // TODO
+    }
+
+    mutating func set(_ l: LocationExprP, _ newValue: Any) throws {
+        switch l {
         case let v as VariableNameExpr:
-            variables[v.name] = newValue
-            lastVariable = v
-        case _ as PronounExpr:
-            guard let lv = lastVariable else {
-                throw PronounUsedBeforeAssignmentError(startPos: i.range.start)
-            }
-            try set(lv, newValue)
-        case _ as IndexingExpr:
-            return // TODO
+            return try _set(v, newValue)
+        case let p as PronounExpr:
+            return try _set(p, newValue)
+        case let i as IndexingExpr:
+            return try _set(i, newValue)
         default:
             assertionFailure("unhandled LocationExprP")
         }
     }
 
-    func get(_ i: LocationExprP) throws -> Any {
-        switch i {
+    func _get(_ v: VariableNameExpr) throws -> Any {
+        guard let value = variables[v.name] else {
+            throw VariableReadError(variable: v)
+        }
+        return value
+    }
+
+    func _get(_ p: PronounExpr) throws -> Any {
+        guard let lv = lastVariable else {
+            throw PronounUsedBeforeAssignmentError(startPos: p.range.start)
+        }
+        return try _get(lv)
+    }
+
+    func _get(_ i: IndexingExpr) throws -> Any {
+        return Rockstar.null // TODO
+    }
+
+    func _get(_ l: LocationExprP) throws -> Any {
+        switch l {
         case let v as VariableNameExpr:
-            guard let value = variables[v.name] else {
-                throw VariableReadError(variable: v)
-            }
-            return value
-        case _ as PronounExpr:
-            guard let lv = lastVariable else {
-                throw PronounUsedBeforeAssignmentError(startPos: i.range.start)
-            }
-            return try get(lv)
-        case _ as IndexingExpr:
-            return Rockstar.null // TODO
+            return try _get(v)
+        case let p as PronounExpr:
+            return try _get(p)
+        case let i as IndexingExpr:
+            return try _get(i)
         default:
             assertionFailure("unhandled LocationExprP")
             return Rockstar.null
         }
+    }
+
+    func get(_ l: LocationExprP) throws -> Any {
+        return try _get(l)
     }
 
     func evalTruthiness(_ expr: ValueExprP) throws -> Bool {
