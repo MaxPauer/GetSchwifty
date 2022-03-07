@@ -19,13 +19,39 @@ extension EvalContext {
 
     mutating func _set(_ p: PronounExpr, _ newValue: Any) throws {
         guard let lv = lastVariable else {
-            throw PronounUsedBeforeAssignmentError(startPos: p.range.start)
+            throw LocationError(location: p, op: .write)
         }
         try set(lv, newValue)
     }
 
+    mutating func _set(_ ix: IndexableExprP, _ newValue: Any) throws {
+        switch ix {
+        case let l as LocationExprP:
+            try set(l, newValue)
+        case is StringExpr:
+            assertionFailure("trying to modify string")
+            return
+        default:
+            assertionFailure("unhandled IndexableExprP")
+            return
+        }
+    }
+
     mutating func _set(_ i: IndexingExpr, _ newValue: Any) throws {
-        return // TODO
+        let source = try _get(i.source)
+        let index = try eval(i.operand)
+        guard let ii = index as? AnyHashable else {
+            throw InvalidIndexError(expr: i, index: index)
+        }
+        switch source {
+        case var dict as [AnyHashable: Any]:
+            dict[ii] = newValue
+            try _set(i.source, dict)
+        default:
+            var dict: [AnyHashable: Any] = [0: source]
+            dict[ii] = newValue
+            try _set(i.source, dict)
+        }
     }
 
     mutating func set(_ l: LocationExprP, _ newValue: Any) throws {
@@ -43,20 +69,47 @@ extension EvalContext {
 
     func _get(_ v: VariableNameExpr) throws -> Any {
         guard let value = variables[v.name] else {
-            throw VariableReadError(variable: v)
+            throw LocationError(location: v, op: .read)
         }
         return value
     }
 
     func _get(_ p: PronounExpr) throws -> Any {
         guard let lv = lastVariable else {
-            throw PronounUsedBeforeAssignmentError(startPos: p.range.start)
+            throw LocationError(location: p, op: .read)
         }
         return try _get(lv)
     }
 
+    func _get(_ ix: IndexableExprP) throws -> Any {
+        switch ix {
+        case let v as LocationExprP:
+            return try _get(v)
+        case let s as StringExpr:
+            return s.literal
+        default:
+            assertionFailure("unhandled IndexableExprP")
+            return Rockstar.null
+        }
+    }
+
     func _get(_ i: IndexingExpr) throws -> Any {
-        return Rockstar.null // TODO
+        let source = try _get(i.source)
+        let index = try eval(i.operand)
+        guard let ii = index as? AnyHashable else {
+            throw InvalidIndexError(expr: i, index: index)
+        }
+        switch source {
+        case let dict as [AnyHashable: Any]:
+            guard let val = dict[ii] else {
+                throw LocationError(location: i, op: .read)
+            }
+            return val
+        case let str as String:
+            return Rockstar.null // TODO
+        default:
+            throw NonIndexableLocationError(expr: i, val: source)
+        }
     }
 
     func _get(_ l: LocationExprP) throws -> Any {
@@ -74,7 +127,11 @@ extension EvalContext {
     }
 
     func get(_ l: LocationExprP) throws -> Any {
-        return try _get(l)
+        let val = try _get(l)
+        if let dict = val as? [AnyHashable: Any] {
+            return Double(dict.count)
+        }
+        return val
     }
 
     func evalTruthiness(_ expr: ValueExprP) throws -> Bool {
@@ -235,8 +292,9 @@ extension EvalContext {
             try doBreak(b)
         case let c as ContinueExpr:
             try doContinue(c)
-        case is ValueExprP,
-             is NopExpr:
+        case let v as ValueExprP:
+            _ = try eval(v)
+        case is NopExpr:
             break
         default:
             assertionFailure("unhandled ExprP")

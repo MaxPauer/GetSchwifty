@@ -90,21 +90,22 @@ extension RuntimeError {
     }
 }
 
-internal struct VariableReadError: RuntimeError {
-    let variable: VariableNameExpr
-
-    var startPos: LexPos { variable.range.start }
-
-    var _description: String {
-        "reading variable \"\(variable)\" before assignment"
+internal struct LocationError: RuntimeError {
+    enum Op: CustomStringConvertible {
+        case read
+        case write
+        var description: String {
+            switch self {
+            case .read: return "reading"
+            case .write: return "writing"
+            }
+        }
     }
-}
-
-internal struct PronounUsedBeforeAssignmentError: RuntimeError {
-    let startPos: LexPos
-
+    let location: LocationExprP
+    let op: Op
+    var startPos: LexPos { location.range.start }
     var _description: String {
-        "pronoun used before any variable was assigned"
+        "\(op) location \(location) before assignment"
     }
 }
 
@@ -148,5 +149,23 @@ internal struct UncallableLocationError: RuntimeError {
     var startPos: LexPos { expr.range.start }
     var _description: String {
         "location \(expr), evaluated to \(val) cannot be called"
+    }
+}
+
+internal struct NonIndexableLocationError: RuntimeError {
+    let expr: IndexingExpr
+    let val: Any
+    var startPos: LexPos { expr.range.start }
+    var _description: String {
+        "location \(expr), evaluated to \(val) cannot be indexed"
+    }
+}
+
+internal struct InvalidIndexError: RuntimeError {
+    let expr: IndexingExpr
+    let index: Any
+    var startPos: LexPos { expr.range.start }
+    var _description: String {
+        "location \(expr) cannot be indexed with \(index)"
     }
 }
