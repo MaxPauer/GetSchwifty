@@ -24,19 +24,6 @@ extension EvalContext {
         try set(lv, newValue)
     }
 
-    mutating func _set(_ ix: IndexableExprP, _ newValue: Any) throws {
-        switch ix {
-        case let l as LocationExprP:
-            try set(l, newValue)
-        case is StringExpr:
-            assertionFailure("trying to modify string")
-            return
-        default:
-            assertionFailure("unhandled IndexableExprP")
-            return
-        }
-    }
-
     mutating func _set(_ i: IndexingExpr, _ newValue: Any) throws {
         let source = try _get(i.source)
         let index = try eval(i.operand)
@@ -46,11 +33,11 @@ extension EvalContext {
         switch source {
         case var dict as [AnyHashable: Any]:
             dict[ii] = newValue
-            try _set(i.source, dict)
+            try set(i.source, dict)
         default:
             var dict: [AnyHashable: Any] = [0: source]
             dict[ii] = newValue
-            try _set(i.source, dict)
+            try set(i.source, dict)
         }
     }
 
@@ -81,18 +68,6 @@ extension EvalContext {
         return try _get(lv)
     }
 
-    func _get(_ ix: IndexableExprP) throws -> Any {
-        switch ix {
-        case let v as LocationExprP:
-            return try _get(v)
-        case let s as StringExpr:
-            return s.literal
-        default:
-            assertionFailure("unhandled IndexableExprP")
-            return Rockstar.null
-        }
-    }
-
     func _get(_ i: IndexingExpr) throws -> Any {
         let source = try _get(i.source)
         let index = try eval(i.operand)
@@ -105,8 +80,6 @@ extension EvalContext {
                 throw LocationError(location: i, op: .read)
             }
             return val
-        case let str as String:
-            return Rockstar.null // TODO
         default:
             throw NonIndexableLocationError(expr: i, val: source)
         }

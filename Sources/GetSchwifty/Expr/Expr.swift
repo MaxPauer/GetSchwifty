@@ -3,8 +3,7 @@ internal protocol ExprP: PrettyNamed {
 }
 
 internal protocol ValueExprP: ExprP {}
-internal protocol IndexableExprP: ValueExprP {}
-internal protocol LocationExprP: IndexableExprP {}
+internal protocol LocationExprP: ValueExprP {}
 
 internal protocol LiteralExprP: ValueExprP {
     associatedtype LiteralT
@@ -34,7 +33,7 @@ internal struct NumberExpr: LiteralExprP {
     let range: LexRange
 }
 
-internal struct StringExpr: LiteralExprP, IndexableExprP {
+internal struct StringExpr: LiteralExprP {
     let literal: String
     let range: LexRange
 }
@@ -50,7 +49,7 @@ internal struct MysteriousExpr: LiteralExprP {
 }
 
 internal struct IndexingExpr: LocationExprP {
-    let source: IndexableExprP
+    let source: LocationExprP
     let operand: ValueExprP
     let range: LexRange
 }

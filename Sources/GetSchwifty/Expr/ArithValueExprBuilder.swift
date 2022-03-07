@@ -65,7 +65,7 @@ internal class IndexingExprBuilder:
     }
 
     func build() throws -> ExprP {
-        let t: IndexableExprP = try target.build(asChildOf: self)
+        let t: LocationExprP = try target.build(asChildOf: self)
         let i: ValueExprP = try index.build(asChildOf: self)
         return IndexingExpr(source: t, operand: i, range: range)
     }

@@ -225,8 +225,6 @@ final class ParserTests: XCTestCase {
         let _: (VariableNameExpr, NumberExpr) = try testParse("A horse at 5")
         let _: (PronounExpr, PronounExpr) = try testParse("him at her")
         let _: (VariableNameExpr, StringExpr) = try testParse("heaven at \"hell\"")
-        let _: (StringExpr, StringExpr) = try testParse("\"heaven\" at \"hell\"")
-        let _: (StringExpr, VariableNameExpr) = try testParse("\"heaven\" at hell")
     }
 
     func testArithmetic() throws {
