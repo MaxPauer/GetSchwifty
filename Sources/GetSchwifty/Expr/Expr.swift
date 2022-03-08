@@ -111,7 +111,7 @@ internal struct FunctionCallExpr: ValueExprP {
 internal struct VoidCallExpr: ExprP {
     enum Op {
         case assign; case print; case scan; case push
-        case split; case join; case cast
+        case split; case join; case cast; case pop
         case ceil; case floor; case round
     }
 

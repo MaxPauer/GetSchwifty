@@ -190,6 +190,10 @@ extension EvalContext {
         }
     }
 
+    mutating func evalPop(_ target: LocationExprP, _ source: LocationExprP) throws {
+        try set(target, evalPop(source))
+    }
+
     mutating func eval(_ expr: FunctionCallExpr) throws -> Any {
         switch expr.head {
         case .not: return try !evalTruthiness(expr.args[0])
@@ -276,6 +280,7 @@ extension EvalContext {
         case .print:  try shout(eval(expr.source!))
         case .scan:   try set(expr.target!, listen())
         case .push:   try evalPush(expr.target!, expr.arg)
+        case .pop:    try evalPop(expr.target!, expr.source! as! LocationExprP)
         case .split:  break // TODO
         case .join:   break // TODO
         case .cast:   break // TODO
