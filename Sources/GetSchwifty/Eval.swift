@@ -274,6 +274,23 @@ extension EvalContext {
         }
     }
 
+    mutating func split(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
+        let sourceVal = source != nil ? try eval(source!) : try _get(target)
+        guard let s = sourceVal as? String else {
+            throw NonStringExprError(expr: source ?? target, val: sourceVal)
+        }
+        if let arg = arg {
+            let a = try eval(arg)
+            guard let a = a as? String else {
+                throw NonStringExprError(expr: arg, val: a)
+            }
+            let split = s.components(separatedBy: a)
+            try set(target, RockstarArray(split))
+            return
+        }
+        try set(target, RockstarArray(Array(s).map{ String($0) }))
+    }
+
     mutating func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
         case .assign: try set(expr.target!, try eval(expr.source!))
@@ -281,7 +298,7 @@ extension EvalContext {
         case .scan:   try set(expr.target!, listen())
         case .push:   try evalPush(expr.target!, expr.arg)
         case .pop:    try evalPop(expr.target!, expr.source! as! LocationExprP)
-        case .split:  break // TODO
+        case .split:  try split(expr.target!, expr.source, expr.arg)
         case .join:   break // TODO
         case .cast:   break // TODO
         case .ceil:   try set(expr.target!, evalMath(expr.source!, { ceil($0) }))

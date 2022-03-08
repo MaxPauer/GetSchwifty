@@ -306,6 +306,31 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testSplit() throws {
+        var x = MainEvalContext(input: """
+            cut "my life" into pieces
+            cut "my life" into pieces with " "
+            let my life be "123"
+            cut my life
+            let my life be "1,2,3"
+            cut my life with ","
+            """)
+        try step(&x) {
+            try assertDict($0, "pieces", [0: "m", 1: "y", 2: " ", 3: "l", 4: "i", 5: "f", 6: "e"])
+        }
+        try step(&x) {
+            try assertDict($0, "pieces", [0: "my", 1: "life"])
+        }
+        _ = try x.step()
+        try step(&x) {
+            try assertDict($0, "my life", [0: "1", 1: "2", 2: "3"])
+        }
+        _ = try x.step()
+        try step(&x) {
+            try assertDict($0, "my life", [0: "1", 1: "2", 2: "3"])
+        }
+    }
+
     func testErrors() throws {
         let _: LocationError = try errorTest("put my heart into my soul", (1,4))
         let _: LocationError = try errorTest("it is nothing", (1,0))
@@ -323,5 +348,8 @@ final class EvalTests: XCTestCase {
         let _: LocationError = try errorTest("let my heart at 0 be 1", (1,4))
         let _: NonIndexableLocationError = try errorTest("let my life be 4,5\nmy life at 5,5", (2,0))
         let _: InvalidIndexError = try errorTest("let my life be 5\nlet my life at 1 be 0\nmy life at nothing", (3,0))
+        let _: NonStringExprError = try errorTest("cut 5 into pieces", (1,4))
+        let _: NonStringExprError = try errorTest("let my life be 5\ncut my life into pieces", (2,4))
+        let _: NonStringExprError = try errorTest("cut \"my life\" into pieces with 5", (1,31))
     }
 }

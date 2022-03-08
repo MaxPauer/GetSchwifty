@@ -150,4 +150,10 @@ internal struct RockstarArray {
             }
         }
     }
+
+    init(_ arr: [Any]) {
+        arr.forEach{ self.push($0) }
+    }
+
+    init() {}
 }
