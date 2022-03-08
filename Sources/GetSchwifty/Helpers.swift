@@ -101,3 +101,41 @@ internal struct Fifo<T: IteratorProtocol> {
         ll.peekFront()
     }
 }
+
+internal struct RockstarArray {
+    private var dict = [AnyHashable: Any]()
+    private var insertionOrder = DLinkedList<AnyHashable>()
+    private var nextIndex: Int = 0
+
+    var length: Int { nextIndex }
+    internal var count: Int { dict.count }
+
+    mutating private func set(int i: Int, _ newValue: Any) {
+        set(any: i, newValue)
+        if i >= nextIndex {
+            nextIndex = i+1
+        }
+    }
+
+    mutating private func set(any i: AnyHashable, _ newValue: Any) {
+        let hadKey = dict[i] != nil
+        dict[i] = newValue
+        if !hadKey {
+            insertionOrder.pushBack(i)
+        }
+    }
+
+    subscript(i: AnyHashable) -> Any {
+        get { dict[i] ?? Rockstar.mysterious }
+        set {
+            switch i {
+            case let d as Double:
+                if let ii = Int(exactly: d) {
+                    set(int: ii, newValue)
+                }
+            default:
+                set(any: i, newValue)
+            }
+        }
+    }
+}

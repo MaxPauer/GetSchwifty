@@ -20,7 +20,7 @@ final class EvalTests: XCTestCase {
     }
 
     func assertDict(_ c: EvalContext, _ v: String, _ val: [AnyHashable: Any]) throws {
-        let vval = try XCTUnwrap(c.variables[v] as? [AnyHashable: Any])
+        let vval = try XCTUnwrap(c.variables[v] as? RockstarArray)
         XCTAssertEqual(vval.count, val.count)
         for (rk, rv) in val {
             let v = try XCTUnwrap(rv as? AnyHashable)
@@ -156,8 +156,11 @@ final class EvalTests: XCTestCase {
             let my world at 0 be "nice"
             let my world at "hello" be "cool"
             put my world into my soul
+            let my world at 100 be "bad"
+            put my world into my soul
             let my heart be my world at "hello"
             let foo be 1,2,3,4
+            let bar be my world at 2
             """)
         try step(&c) {
             try assertVariable($0, "my world", 5.0)
@@ -172,13 +175,20 @@ final class EvalTests: XCTestCase {
             try assertDict($0, "my world", [0: "nice", 1: 4.0, "hello": "cool"])
         }
         try step(&c) {
-            try assertVariable($0, "my soul", 3.0)
+            try assertVariable($0, "my soul", 2.0)
+        }
+        _ = try c.step()
+        try step(&c) {
+            try assertVariable($0, "my soul", 101.0)
         }
         try step(&c) {
             try assertVariable($0, "my heart", "cool")
         }
         try step(&c) {
             try assertArray($0, "foo", [1.0,2.0,3.0,4.0])
+        }
+        try step(&c) {
+            try assertVariable($0, "bar", Rockstar.mysterious)
         }
     }
 

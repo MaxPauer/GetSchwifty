@@ -31,13 +31,14 @@ extension EvalContext {
             throw InvalidIndexError(expr: i, index: index)
         }
         switch source {
-        case var dict as [AnyHashable: Any]:
-            dict[ii] = newValue
-            try set(i.source, dict)
+        case var arr as RockstarArray:
+            arr[ii] = newValue
+            try set(i.source, arr)
         default:
-            var dict: [AnyHashable: Any] = [0: source]
-            dict[ii] = newValue
-            try set(i.source, dict)
+            var arr = RockstarArray()
+            arr[0] = source
+            arr[ii] = newValue
+            try set(i.source, arr)
         }
     }
 
@@ -75,11 +76,8 @@ extension EvalContext {
             throw InvalidIndexError(expr: i, index: index)
         }
         switch source {
-        case let dict as [AnyHashable: Any]:
-            guard let val = dict[ii] else {
-                throw LocationError(location: i, op: .read)
-            }
-            return val
+        case let arr as RockstarArray:
+            return arr[ii]
         default:
             throw NonIndexableLocationError(expr: i, val: source)
         }
@@ -101,8 +99,8 @@ extension EvalContext {
 
     func get(_ l: LocationExprP) throws -> Any {
         let val = try _get(l)
-        if let dict = val as? [AnyHashable: Any] {
-            return Double(dict.count)
+        if let arr = val as? RockstarArray {
+            return Double(arr.length)
         }
         return val
     }
