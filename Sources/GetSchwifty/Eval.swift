@@ -55,21 +55,21 @@ extension EvalContext {
         }
     }
 
-    func _get(_ v: VariableNameExpr) throws -> Any {
+    mutating func _get(_ v: VariableNameExpr) throws -> Any {
         guard let value = variables[v.name] else {
             throw LocationError(location: v, op: .read)
         }
         return value
     }
 
-    func _get(_ p: PronounExpr) throws -> Any {
+    mutating func _get(_ p: PronounExpr) throws -> Any {
         guard let lv = lastVariable else {
             throw LocationError(location: p, op: .read)
         }
         return try _get(lv)
     }
 
-    func _get(_ i: IndexingExpr) throws -> Any {
+    mutating func _get(_ i: IndexingExpr) throws -> Any {
         let source = try _get(i.source)
         let index = try eval(i.operand)
         guard let ii = index as? AnyHashable else {
@@ -83,7 +83,7 @@ extension EvalContext {
         }
     }
 
-    func _get(_ l: LocationExprP) throws -> Any {
+    mutating func _get(_ l: LocationExprP) throws -> Any {
         switch l {
         case let v as VariableNameExpr:
             return try _get(v)
@@ -97,7 +97,7 @@ extension EvalContext {
         }
     }
 
-    func get(_ l: LocationExprP) throws -> Any {
+    mutating func get(_ l: LocationExprP) throws -> Any {
         let val = try _get(l)
         if let arr = val as? RockstarArray {
             return Double(arr.length)
@@ -105,7 +105,7 @@ extension EvalContext {
         return val
     }
 
-    func evalTruthiness(_ expr: ValueExprP) throws -> Bool {
+    mutating func evalTruthiness(_ expr: ValueExprP) throws -> Bool {
         let i = try eval(expr)
         if let b = i as? Bool { return b }
         if let d = i as? Double { return d != 0 }
@@ -115,7 +115,7 @@ extension EvalContext {
         throw NonBooleanExprError(expr: expr)
     }
 
-    func evalEq(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (AnyHashable, AnyHashable) -> Bool) throws -> Bool {
+    mutating func evalEq(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (AnyHashable, AnyHashable) -> Bool) throws -> Bool {
         let l = try eval(lhs)
         guard let ll = l as? AnyHashable else { throw NonEquatableExprError(expr: lhs, val: l) }
         let r = try eval(rhs)
@@ -123,7 +123,7 @@ extension EvalContext {
         return op(ll, rr)
     }
 
-    func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
+    mutating func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
         let l = try eval(lhs)
         guard let ll = l as? Double else { throw NonNumericExprError(expr: lhs, val: l) }
         let r = try eval(rhs)
@@ -131,7 +131,7 @@ extension EvalContext {
         return op(ll, rr)
     }
 
-    func evalAdd(_ lhs: ValueExprP, _ rhs: ValueExprP) throws -> Any {
+    mutating func evalAdd(_ lhs: ValueExprP, _ rhs: ValueExprP) throws -> Any {
         let l = try eval(lhs)
         let r = try eval(rhs)
         switch (l, r) {
@@ -147,7 +147,7 @@ extension EvalContext {
         }
     }
 
-    func call(_ head: LocationExprP, _ args: ValueExprP) throws -> Any {
+    mutating func call(_ head: LocationExprP, _ args: ValueExprP) throws -> Any {
         func normalizeArgs() throws -> [Any] {
             let a = try eval(args)
             if let a = a as? [Any] { return a }
@@ -177,7 +177,20 @@ extension EvalContext {
         }
     }
 
-    func eval(_ expr: FunctionCallExpr) throws -> Any {
+    mutating func evalPop(_ expr: LocationExprP) throws -> Any {
+        let source = try _get(expr)
+        switch source {
+        case var arr as RockstarArray:
+            let val = arr.pop()
+            try set(expr, arr)
+            return val
+        default:
+            try set(expr, Rockstar.null)
+            return source
+        }
+    }
+
+    mutating func eval(_ expr: FunctionCallExpr) throws -> Any {
         switch expr.head {
         case .not: return try !evalTruthiness(expr.args[0])
         case .and: return try evalTruthiness(expr.args[0]) && evalTruthiness(expr.args[1])
@@ -193,12 +206,12 @@ extension EvalContext {
         case .sub: return try evalMath(expr.args[0], expr.args[1], {$0 - $1})
         case .mul: return try evalMath(expr.args[0], expr.args[1], {$0 * $1})
         case .div: return try evalMath(expr.args[0], expr.args[1], {$0 / $1})
-        case .pop: return Rockstar.null// TODO
+        case .pop: return try evalPop(expr.args[0] as! LocationExprP)
         case .custom: return try call(expr.args[0] as! LocationExprP, expr.args[1])
         }
     }
 
-    func eval(_ expr: ValueExprP) throws -> Any {
+    mutating func eval(_ expr: ValueExprP) throws -> Any {
         switch expr {
         case let b as BoolExpr:
             return b.literal
@@ -222,7 +235,7 @@ extension EvalContext {
         }
     }
 
-    func evalMath(_ opnd: ValueExprP, _ op: (Double) -> Any) throws -> Any {
+    mutating func evalMath(_ opnd: ValueExprP, _ op: (Double) -> Any) throws -> Any {
         let o = try eval(opnd)
         guard let oo = o as? Double else { throw NonNumericExprError(expr: opnd, val: o) }
         return op(oo)

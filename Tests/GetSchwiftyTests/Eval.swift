@@ -192,6 +192,61 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testPop() throws {
+        var c = MainEvalContext(input: """
+            put 5 into my world
+            let my world at 1 be 4
+            let my world at 2 be "nice"
+            let my world at "xyz" be "fool"
+            let my world at "hello" be "cool"
+            let my soul be pop my world
+            let my soul be pop my world
+            let my soul be pop my world
+            let my soul be pop my world
+            let my soul be pop my world
+            let my soul be pop my world
+            """)
+        try step(&c) {
+            try assertVariable($0, "my world", 5.0)
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [0: 5.0, 1: 4.0])
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [0: 5.0, 1: 4.0, 2: "nice"])
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [0: 5.0, 1: 4.0, 2: "nice", "xyz": "fool"])
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [0: 5.0, 1: 4.0, 2: "nice", "hello": "cool", "xyz": "fool"])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", 5.0)
+            try assertDict($0, "my world", [1: 4.0, 2: "nice", "hello": "cool", "xyz": "fool"])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", 4.0)
+            try assertDict($0, "my world", [2: "nice", "hello": "cool", "xyz": "fool"])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", "nice")
+            try assertDict($0, "my world", ["hello": "cool", "xyz": "fool"])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", "fool")
+            try assertDict($0, "my world", ["hello": "cool"])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", "cool")
+            try assertDict($0, "my world", [:])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", Rockstar.null)
+            try assertDict($0, "my world", [:])
+        }
+    }
+
     func testErrors() throws {
         let _: LocationError = try errorTest("put my heart into my soul", (1,4))
         let _: LocationError = try errorTest("it is nothing", (1,0))

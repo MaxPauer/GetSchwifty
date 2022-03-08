@@ -110,6 +110,14 @@ internal struct RockstarArray {
     var length: Int { nextIndex }
     internal var count: Int { dict.count }
 
+    mutating func pop() -> Any {
+        guard let i = insertionOrder.popFront() else {
+            return Rockstar.null
+        }
+        defer { dict.removeValue(forKey: i) }
+        return dict[i]!
+    }
+
     mutating private func set(int i: Int, _ newValue: Any) {
         set(any: i, newValue)
         if i >= nextIndex {
