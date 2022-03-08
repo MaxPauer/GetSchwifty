@@ -261,6 +261,7 @@ final class EvalTests: XCTestCase {
             rock my world with my soul
             roll my world
             roll my world into my soul
+            let my soul be roll my world with 2
             """)
         try step(&c) {
             try assertVariable($0, "my world", 5.0)
@@ -298,6 +299,10 @@ final class EvalTests: XCTestCase {
         try step(&c) {
             try assertVariable($0, "my soul", 2.0)
             try assertDict($0, "my world", [2: 3, 3: "monkey", 4: 4, 101: 200, 102: 102])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", 5.0)
+            try assertDict($0, "my world", [3: "monkey", 4: 4, 101: 200, 102: 102])
         }
     }
 

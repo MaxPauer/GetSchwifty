@@ -307,11 +307,12 @@ internal class PushExprBuilder:
 }
 
 internal class PopExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+        ArithValueExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var expectsTarget: Bool = false
     var range: LexRange!
+    let isStatement: Bool = false
 
     func build() throws -> ExprP {
         let s: LocationExprP = try source.build(asChildOf: self)
@@ -332,7 +333,7 @@ internal class PopExprBuilder:
         return self
     }
 
-    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
+    func postHandleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
         switch i.literal {
         case String.intoIdentifiers:
             expectsTarget = true
