@@ -241,12 +241,41 @@ extension EvalContext {
         return op(oo)
     }
 
+    mutating func evalPush(_ l: LocationExprP, _ arg: ValueExprP?) throws {
+        func pushVal(_ arr: RockstarArray, _ val: Any) throws {
+            var arr = arr
+            switch val {
+            case let list as [Any]:
+                list.forEach{ arr.push($0) }
+            default:
+                arr.push(val)
+            }
+            try set(l, arr)
+        }
+
+        guard let arg = arg else {
+            try set(l, RockstarArray())
+            return
+        }
+
+        let a = try eval(arg)
+        let target = try _get(l)
+        switch target {
+        case let arr as RockstarArray:
+            try pushVal(arr, a)
+        default:
+            var arr = RockstarArray()
+            arr[0] = target
+            try pushVal(arr, a)
+        }
+    }
+
     mutating func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
         case .assign: try set(expr.target!, try eval(expr.source!))
         case .print:  try shout(eval(expr.source!))
         case .scan:   try set(expr.target!, listen())
-        case .push:   break // TODO
+        case .push:   try evalPush(expr.target!, expr.arg)
         case .split:  break // TODO
         case .join:   break // TODO
         case .cast:   break // TODO

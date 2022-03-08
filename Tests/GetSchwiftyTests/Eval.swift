@@ -247,6 +247,60 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testPush() throws {
+        var c = MainEvalContext(input: """
+            put 5 into my world
+            rock my world
+            put my world into my soul
+            rock my world like a hurricane
+            put my world into my soul
+            rock my world with 2,3,"monkey" & 4
+            put my world into my soul
+            let my world at 101 be 200
+            put my world into my soul
+            rock my world with my soul
+            roll my world
+            (roll my world into my soul)
+            """)
+        try step(&c) {
+            try assertVariable($0, "my world", 5.0)
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [:])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", 0.0)
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [0: 19])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", 1.0)
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [0: 19, 1: 2, 2: 3, 3: "monkey", 4: 4])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", 5.0)
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [0: 19, 1: 2, 2: 3, 3: "monkey", 4: 4, 101: 200])
+        }
+        try step(&c) {
+            try assertVariable($0, "my soul", 102.0)
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [0: 19, 1: 2, 2: 3, 3: "monkey", 4: 4, 101: 200, 102: 102])
+        }
+        try step(&c) {
+            try assertDict($0, "my world", [1: 2, 2: 3, 3: "monkey", 4: 4, 101: 200, 102: 102])
+        }
+        // try step(&c) {
+        //     try assertVariable($0, "my soul", 2)
+        //     try assertDict($0, "my world", [2: 3, 3: "monkey", 4: 4, 101: 200, 102: 102])
+        // }
+    }
+
     func testErrors() throws {
         let _: LocationError = try errorTest("put my heart into my soul", (1,4))
         let _: LocationError = try errorTest("it is nothing", (1,0))

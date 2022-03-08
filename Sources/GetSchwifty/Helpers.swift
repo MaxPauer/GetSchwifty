@@ -118,6 +118,10 @@ internal struct RockstarArray {
         return dict[i]!
     }
 
+    mutating func push(_ value: Any) {
+        set(int: nextIndex, value)
+    }
+
     mutating private func set(int i: Int, _ newValue: Any) {
         set(any: i, newValue)
         if i >= nextIndex {
