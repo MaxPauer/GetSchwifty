@@ -14,6 +14,16 @@ final class EvalTests: XCTestCase {
         return err
     }
 
+    func errorTest(_ inp: String, _ op: UnfitExprError.Op, _ pos: (UInt,UInt)) throws {
+        let err: UnfitExprError = try errorTest(inp, pos)
+        XCTAssertEqual(err.op, op)
+    }
+
+    func errorTest(_ inp: String, _ op: LocationError.Op, _ pos: (UInt,UInt)) throws {
+        let err: LocationError = try errorTest(inp, pos)
+        XCTAssertEqual(err.op, op)
+    }
+
     func assertVariable<T>(_ c: EvalContext, _ v: String, _ val: T) throws where T: Equatable {
         let vval = try XCTUnwrap(c.variables[v] as? T)
         XCTAssertEqual(vval, val)
@@ -361,27 +371,27 @@ final class EvalTests: XCTestCase {
     }
 
     func testErrors() throws {
-        let _: LocationError = try errorTest("put my heart into my soul", (1,4))
-        let _: LocationError = try errorTest("it is nothing", (1,0))
-        let _: NonNumericExprError = try errorTest("let my life be 5 is greater than \"4\"", (1,32))
-        let _: NonNumericExprError = try errorTest("let my life be 5 without \"4\"", (1,24))
-        let _: NonNumericExprError = try errorTest("let my life be true without false", (1,15))
+        try errorTest("put my heart into my soul", .read, (1,4))
+        try errorTest("it is nothing", .writePronoun, (1,0))
+        try errorTest("let my life be 5 is greater than \"4\"", .numeric, (1,32))
+        try errorTest("let my life be 5 without \"4\"", .numeric, (1,24))
+        try errorTest("let my life be true without false", .numeric, (1,15))
         let _: StrayExprError = try errorTest("give it back", (1,0))
         let _: StrayExprError = try errorTest("else", (1,0))
         let _: StrayExprError = try errorTest("take it to the top", (1,0))
         let _: StrayExprError = try errorTest("break it down", (1,0))
-        let _: UncallableLocationError = try errorTest("my life is nothing\nmy life taking 1", (2,0))
-        let _: NonIndexableLocationError = try errorTest("let my life be 4\nmy life at 5", (2,0))
-        let _: LocationError = try errorTest("it at 0 is nothing", (1,0))
-        let _: LocationError = try errorTest("put my heart at 5 into my soul", (1,4))
-        let _: LocationError = try errorTest("let my heart at 0 be 1", (1,4))
-        let _: NonIndexableLocationError = try errorTest("let my life be 4,5\nmy life at 5,5", (2,0))
+        try errorTest("my life is nothing\nmy life taking 1", .call, (2,0))
+        try errorTest("let my life be 4\nmy life at 5", .index, (2,0))
+        try errorTest("it at 0 is nothing", .readPronoun, (1,0))
+        try errorTest("put my heart at 5 into my soul", .read, (1,4))
+        try errorTest("let my heart at 0 be 1", .read, (1,4))
+        try errorTest("let my life be 4,5\nmy life at 5,5", .index, (2,0))
         let _: InvalidIndexError = try errorTest("let my life be 5\nlet my life at 1 be 0\nmy life at nothing", (3,0))
-        let _: NonStringExprError = try errorTest("cut 5 into pieces", (1,4))
-        let _: NonStringExprError = try errorTest("let my life be 5\ncut my life into pieces", (2,4))
-        let _: NonStringExprError = try errorTest("cut \"my life\" into pieces with 5", (1,31))
-        let _: NonArrayExprError = try errorTest("join 5 into pieces", (1,5))
-        let _: NonStringExprError = try errorTest("rock my life\nrock my life with 5,6\njoin my life into pieces", (3,5))
-        let _: NonStringExprError = try errorTest("rock my life\nrock my life with \"a\",\"b\"\njoin my life with 5", (3,18))
+        try errorTest("cut 5 into pieces", .string, (1,4))
+        try errorTest("let my life be 5\ncut my life into pieces", .string, (2,4))
+        try errorTest("cut \"my life\" into pieces with 5", .string, (1,31))
+        try errorTest("join 5 into pieces", .array, (1,5))
+        try errorTest("rock my life\nrock my life with 5,6\njoin my life into pieces", .string, (3,5))
+        try errorTest("rock my life\nrock my life with \"a\",\"b\"\njoin my life with 5", .string, (3,18))
     }
 }

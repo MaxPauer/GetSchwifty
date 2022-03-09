@@ -19,7 +19,7 @@ extension EvalContext {
 
     mutating func _set(_ p: PronounExpr, _ newValue: Any) throws {
         guard let lv = lastVariable else {
-            throw LocationError(location: p, op: .write)
+            throw LocationError(location: p, op: .writePronoun)
         }
         try set(lv, newValue)
     }
@@ -28,7 +28,7 @@ extension EvalContext {
         let source = try _get(i.source)
         let index = try eval(i.operand)
         guard let ii = index as? AnyHashable else {
-            throw InvalidIndexError(expr: i, index: index)
+            throw InvalidIndexError(expr: i.source, index: index)
         }
         switch source {
         case var arr as RockstarArray:
@@ -64,7 +64,7 @@ extension EvalContext {
 
     mutating func _get(_ p: PronounExpr) throws -> Any {
         guard let lv = lastVariable else {
-            throw LocationError(location: p, op: .read)
+            throw LocationError(location: p, op: .readPronoun)
         }
         return try _get(lv)
     }
@@ -73,13 +73,13 @@ extension EvalContext {
         let source = try _get(i.source)
         let index = try eval(i.operand)
         guard let ii = index as? AnyHashable else {
-            throw InvalidIndexError(expr: i, index: index)
+            throw InvalidIndexError(expr: i.source, index: index)
         }
         switch source {
         case let arr as RockstarArray:
             return arr[ii]
         default:
-            throw NonIndexableLocationError(expr: i, val: source)
+            throw UnfitExprError(expr: i, val: source, op: .index)
         }
     }
 
@@ -112,22 +112,22 @@ extension EvalContext {
         if i is String { return true }
         if i is Rockstar.Null { return false }
         if i is Rockstar.Mysterious{ return false }
-        throw NonBooleanExprError(expr: expr)
+        throw UnfitExprError(expr: expr, val: i, op: .bool)
     }
 
     mutating func evalEq(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (AnyHashable, AnyHashable) -> Bool) throws -> Bool {
         let l = try eval(lhs)
-        guard let ll = l as? AnyHashable else { throw NonEquatableExprError(expr: lhs, val: l) }
+        guard let ll = l as? AnyHashable else { throw UnfitExprError(expr: lhs, val: l, op: .equation) }
         let r = try eval(rhs)
-        guard let rr = r as? AnyHashable else { throw NonEquatableExprError(expr: rhs, val: r) }
+        guard let rr = r as? AnyHashable else { throw UnfitExprError(expr: rhs, val: r, op: .equation) }
         return op(ll, rr)
     }
 
     mutating func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
         let l = try eval(lhs)
-        guard let ll = l as? Double else { throw NonNumericExprError(expr: lhs, val: l) }
+        guard let ll = l as? Double else { throw UnfitExprError(expr: lhs, val: l, op: .numeric) }
         let r = try eval(rhs)
-        guard let rr = r as? Double else { throw NonNumericExprError(expr: rhs, val: r) }
+        guard let rr = r as? Double else { throw UnfitExprError(expr: rhs, val: r, op: .numeric) }
         return op(ll, rr)
     }
 
@@ -141,9 +141,9 @@ extension EvalContext {
              (is String, _):
             return "\(l)\(r)"
         case (_, is Double):
-            throw NonNumericExprError(expr: lhs, val: l)
+            throw UnfitExprError(expr: lhs, val: l, op: .numeric)
         default:
-            throw NonNumericExprError(expr: rhs, val: r)
+            throw UnfitExprError(expr: rhs, val: r, op: .numeric)
         }
     }
 
@@ -173,7 +173,7 @@ extension EvalContext {
             return try swiftFun(a) ?? Rockstar.null
         // case let rockFun as // TODO
         default:
-            throw UncallableLocationError(expr: head, val: h)
+            throw UnfitExprError(expr: head, val: h, op: .call)
         }
     }
 
@@ -241,7 +241,7 @@ extension EvalContext {
 
     mutating func evalMath(_ opnd: ValueExprP, _ op: (Double) -> Any) throws -> Any {
         let o = try eval(opnd)
-        guard let oo = o as? Double else { throw NonNumericExprError(expr: opnd, val: o) }
+        guard let oo = o as? Double else { throw UnfitExprError(expr: opnd, val: o, op: .numeric) }
         return op(oo)
     }
 
@@ -277,12 +277,12 @@ extension EvalContext {
     mutating func split(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
         let sourceVal = source != nil ? try eval(source!) : try _get(target)
         guard let s = sourceVal as? String else {
-            throw NonStringExprError(expr: source ?? target, val: sourceVal)
+            throw UnfitExprError(expr: source ?? target, val: sourceVal, op: .string)
         }
         if let arg = arg {
             let a = try eval(arg)
             guard let a = a as? String else {
-                throw NonStringExprError(expr: arg, val: a)
+                throw UnfitExprError(expr: arg, val: a, op: .string)
             }
             let split = s.components(separatedBy: a)
             try set(target, RockstarArray(split))
@@ -305,15 +305,15 @@ extension EvalContext {
         }()
 
         guard var s = sourceVal as? RockstarArray else {
-            throw NonArrayExprError(expr: sourceExpr, val: sourceVal)
+            throw UnfitExprError(expr: sourceExpr, val: sourceVal, op: .array)
         }
         guard let s = s.values() as? [String] else {
-            throw NonStringExprError(expr: sourceExpr, val: sourceVal)
+            throw UnfitExprError(expr: sourceExpr, val: sourceVal, op: .string)
         }
         if let arg = arg {
             let a = try eval(arg)
             guard let a = a as? String else {
-                throw NonStringExprError(expr: arg, val: a)
+                throw UnfitExprError(expr: arg, val: a, op: .string)
             }
             let joint = s.joined(separator: a)
             try set(target, joint)

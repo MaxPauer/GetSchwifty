@@ -92,12 +92,15 @@ extension RuntimeError {
 
 internal struct LocationError: RuntimeError {
     enum Op: CustomStringConvertible {
-        case read
-        case write
+        case read; case write
+        case readPronoun; case writePronoun
+
         var description: String {
             switch self {
-            case .read: return "reading"
-            case .write: return "writing"
+            case .read: return "reading location"
+            case .write: return "writing location"
+            case .readPronoun: return "reading pronoun"
+            case .writePronoun: return "writing pronoun"
             }
         }
     }
@@ -105,54 +108,36 @@ internal struct LocationError: RuntimeError {
     let op: Op
     var startPos: LexPos { location.range.start }
     var _description: String {
-        "\(op) location \(location) before assignment"
+        "\(op) \(location) before assignment"
     }
 }
 
-internal struct NonBooleanExprError: RuntimeError {
-    let expr: ExprP
-    var startPos: LexPos { expr.range.start }
-    var _description: String {
-        "expression \(expr) cannot be evaluated to Bool"
-    }
-}
+internal struct UnfitExprError: RuntimeError {
+    enum Op: CustomStringConvertible {
+        case bool; case equation; case numeric
+        case string; case array; case call; case index
 
-internal struct NonEquatableExprError: RuntimeError {
-    let expr: ExprP
-    let val: Any
-    var startPos: LexPos { expr.range.start }
-    var _description: String {
-        "expression \(expr), evaluated to \(val) cannot be equated"
+        var description: String {
+            switch self {
+            case .bool: return "boolean"
+            case .equation: return "equation"
+            case .numeric: return "numeric"
+            case .string: return "string"
+            case .array: return "array"
+            case .call: return "function call"
+            case .index: return "indexing"
+            }
+        }
     }
-}
 
-internal struct NonNumericExprError: RuntimeError {
-    let expr: ExprP
-    let val: Any
-    var startPos: LexPos { expr.range.start }
-    var _description: String {
-        "expression \(expr), evaluated to \(val) cannot be used for numeric operations"
-    }
-}
-
-internal struct NonStringExprError: RuntimeError {
     let expr: ExprP
     let val: Any
+    let op: Op
     var startPos: LexPos { expr.range.start }
     var _description: String {
-        "expression \(expr), evaluated to \(val) cannot be used for String operations"
+        "expression \(expr) evaluated to \(val) cannot be used for \(op) operations"
     }
 }
-
-internal struct NonArrayExprError: RuntimeError {
-    let expr: ExprP
-    let val: Any
-    var startPos: LexPos { expr.range.start }
-    var _description: String {
-        "expression \(expr), evaluated to \(val) cannot be used for array operations"
-    }
-}
-
 
 internal struct StrayExprError: RuntimeError {
     let expr: ExprP
@@ -162,26 +147,8 @@ internal struct StrayExprError: RuntimeError {
     }
 }
 
-internal struct UncallableLocationError: RuntimeError {
-    let expr: ExprP
-    let val: Any
-    var startPos: LexPos { expr.range.start }
-    var _description: String {
-        "location \(expr), evaluated to \(val) cannot be called"
-    }
-}
-
-internal struct NonIndexableLocationError: RuntimeError {
-    let expr: IndexingExpr
-    let val: Any
-    var startPos: LexPos { expr.range.start }
-    var _description: String {
-        "location \(expr), evaluated to \(val) cannot be indexed"
-    }
-}
-
 internal struct InvalidIndexError: RuntimeError {
-    let expr: IndexingExpr
+    let expr: LocationExprP
     let index: Any
     var startPos: LexPos { expr.range.start }
     var _description: String {
