@@ -3,7 +3,7 @@ import XCTest
 
 final class EvalTests: XCTestCase {
     func errorTest<T>(_ inp: String, _ pos: (UInt,UInt)) throws -> T where T: RuntimeError {
-        var c = MainEvalContext(input: inp)
+        let c = MainEvalContext(input: inp)
         var error: Error?
         XCTAssertThrowsError(try c.run()) { (e: Error) in
             error = e
@@ -25,12 +25,12 @@ final class EvalTests: XCTestCase {
     }
 
     func assertVariable<T>(_ c: EvalContext, _ v: String, _ val: T) throws where T: Equatable {
-        let vval = try XCTUnwrap(c.variables[v] as? T)
+        let vval = try XCTUnwrap(c.getVariable(v) as? T)
         XCTAssertEqual(vval, val)
     }
 
     func assertDict(_ c: EvalContext, _ v: String, _ val: [AnyHashable: Any]) throws {
-        let vval = try XCTUnwrap(c.variables[v] as? RockstarArray)
+        let vval = try XCTUnwrap(c.getVariable(v) as? RockstarArray)
         XCTAssertEqual(vval.count, val.count)
         for (rk, rv) in val {
             let v = try XCTUnwrap(rv as? AnyHashable)
@@ -40,7 +40,7 @@ final class EvalTests: XCTestCase {
     }
 
     func assertArray(_ c: EvalContext, _ v: String, _ val: [AnyHashable]) throws {
-        let vval = try XCTUnwrap(c.variables[v] as? [AnyHashable])
+        let vval = try XCTUnwrap(c.getVariable(v) as? [AnyHashable])
         XCTAssertEqual(vval.count, val.count)
         for (l,r) in zip(val, vval) {
             XCTAssertEqual(l,r)
@@ -143,7 +143,7 @@ final class EvalTests: XCTestCase {
 
     func testInOut() throws {
         var result: Any?
-        var c = MainEvalContext(input: "listen to your heart\nshout it", stdin: {"noice"}, stdout: { result = $0 })
+        let c = MainEvalContext(input: "listen to your heart\nshout it", stdin: {"noice"}, stdout: { result = $0 })
         try c.run()
         let r = try XCTUnwrap(result as? String)
         XCTAssertEqual(r, "noice")
@@ -151,7 +151,7 @@ final class EvalTests: XCTestCase {
 
     func testSwiftFun() throws {
         var result: Any?
-        var c = MainEvalContext(input: "put \"hallo\" into my world\nlisten to my life\nshout my life taking \"hallo\", my world",
+        let c = MainEvalContext(input: "put \"hallo\" into my world\nlisten to my life\nshout my life taking \"hallo\", my world",
                                 stdin: { { (args: [Any]) -> Any in "\(args[0]) \(args[1])" } },
                                stdout: { result = $0 })
         try c.run()
@@ -403,6 +403,57 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testIf() throws {
+        var x = MainEvalContext(input: """
+            let x be mysterious
+            if 1
+            let x be "nice"
+            else
+            let x be "not nice"
+
+            let x be mysterious
+            if 0
+            let x be "nice"
+            else
+            let x be "not nice"
+
+            let x be mysterious
+            if 0
+            let x be "nice"
+
+            let x be mysterious
+            if 1
+            let x be "nice"
+
+            let x be 5
+            if x is greater than 3
+            if x is smaller than 4
+            let x be "]3;4["
+            else
+            let x be "[4;["
+            """)
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", "nice")
+        }
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", "not nice")
+        }
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", Rockstar.mysterious)
+        }
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", "nice")
+        }
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", "[4;[")
+        }
+    }
+
     func testErrors() throws {
         try errorTest("put my heart into my soul", .read, (1,4))
         try errorTest("it is nothing", .writePronoun, (1,0))
@@ -434,5 +485,6 @@ final class EvalTests: XCTestCase {
         try errorTest("cast \"10\" into x with mysterious", .castIntRadix, (1,22))
         try errorTest("cast \"10\" into x with 37", .castIntRadix, (1,22))
         try errorTest("cast \"foo\" into x with 10", .castInt, (1,5))
+        let _: StrayExprError = try errorTest("if 1\nbreak", (2,0))
     }
 }

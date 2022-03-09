@@ -1,8 +1,12 @@
 import Foundation
 
-internal protocol EvalContext {
-    var variables: [String: Any] { get set }
-    var lastVariable: VariableNameExpr? { get set }
+internal protocol EvalContext: AnyObject {
+    var lastVariable: String? { get set }
+
+    func getVariableOwner(_ n: String) -> EvalContext?
+    func getVariable(_ n: String) -> Any?
+    func setVariable(_ n: String, _ v: Any)
+
     func shout(_: Any)
     func listen() -> Any
 
@@ -12,19 +16,19 @@ internal protocol EvalContext {
 }
 
 extension EvalContext {
-    mutating func _set(_ v: VariableNameExpr, _ newValue: Any) throws {
-        variables[v.name] = newValue
-        lastVariable = v
+    func _set(_ v: VariableNameExpr, _ newValue: Any) throws {
+        setVariable(v.name, newValue)
+        lastVariable = v.name
     }
 
-    mutating func _set(_ p: PronounExpr, _ newValue: Any) throws {
+    func _set(_ p: PronounExpr, _ newValue: Any) throws {
         guard let lv = lastVariable else {
             throw LocationError(location: p, op: .writePronoun)
         }
-        try set(lv, newValue)
+        setVariable(lv, newValue)
     }
 
-    mutating func _set(_ i: IndexingExpr, _ newValue: Any) throws {
+    func _set(_ i: IndexingExpr, _ newValue: Any) throws {
         let source = try _get(i.source)
         let index = try eval(i.operand)
         guard let ii = index as? AnyHashable else {
@@ -42,7 +46,7 @@ extension EvalContext {
         }
     }
 
-    mutating func set(_ l: LocationExprP, _ newValue: Any) throws {
+    func set(_ l: LocationExprP, _ newValue: Any) throws {
         switch l {
         case let v as VariableNameExpr:
             return try _set(v, newValue)
@@ -55,21 +59,21 @@ extension EvalContext {
         }
     }
 
-    mutating func _get(_ v: VariableNameExpr) throws -> Any {
-        guard let value = variables[v.name] else {
+    func _get(_ v: VariableNameExpr) throws -> Any {
+        guard let value = getVariable(v.name) else {
             throw LocationError(location: v, op: .read)
         }
         return value
     }
 
-    mutating func _get(_ p: PronounExpr) throws -> Any {
+    func _get(_ p: PronounExpr) throws -> Any {
         guard let lv = lastVariable else {
             throw LocationError(location: p, op: .readPronoun)
         }
-        return try _get(lv)
+        return getVariable(lv)!
     }
 
-    mutating func _get(_ i: IndexingExpr) throws -> Any {
+    func _get(_ i: IndexingExpr) throws -> Any {
         let source = try _get(i.source)
         let index = try eval(i.operand)
         guard let ii = index as? AnyHashable else {
@@ -83,7 +87,7 @@ extension EvalContext {
         }
     }
 
-    mutating func _get(_ l: LocationExprP) throws -> Any {
+    func _get(_ l: LocationExprP) throws -> Any {
         switch l {
         case let v as VariableNameExpr:
             return try _get(v)
@@ -97,7 +101,7 @@ extension EvalContext {
         }
     }
 
-    mutating func get(_ l: LocationExprP) throws -> Any {
+    func get(_ l: LocationExprP) throws -> Any {
         let val = try _get(l)
         if let arr = val as? RockstarArray {
             return Double(arr.length)
@@ -105,7 +109,7 @@ extension EvalContext {
         return val
     }
 
-    mutating func evalTruthiness(_ expr: ValueExprP) throws -> Bool {
+    func evalTruthiness(_ expr: ValueExprP) throws -> Bool {
         let i = try eval(expr)
         if let b = i as? Bool { return b }
         if let d = i as? Double { return d != 0 }
@@ -115,7 +119,7 @@ extension EvalContext {
         throw UnfitExprError(expr: expr, val: i, op: .bool)
     }
 
-    mutating func evalEq(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (AnyHashable, AnyHashable) -> Bool) throws -> Bool {
+    func evalEq(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (AnyHashable, AnyHashable) -> Bool) throws -> Bool {
         let l = try eval(lhs)
         guard let ll = l as? AnyHashable else { throw UnfitExprError(expr: lhs, val: l, op: .equation) }
         let r = try eval(rhs)
@@ -123,7 +127,7 @@ extension EvalContext {
         return op(ll, rr)
     }
 
-    mutating func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
+    func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
         let l = try eval(lhs)
         guard let ll = l as? Double else { throw UnfitExprError(expr: lhs, val: l, op: .numeric) }
         let r = try eval(rhs)
@@ -131,7 +135,7 @@ extension EvalContext {
         return op(ll, rr)
     }
 
-    mutating func evalAdd(_ lhs: ValueExprP, _ rhs: ValueExprP) throws -> Any {
+    func evalAdd(_ lhs: ValueExprP, _ rhs: ValueExprP) throws -> Any {
         let l = try eval(lhs)
         let r = try eval(rhs)
         switch (l, r) {
@@ -147,7 +151,7 @@ extension EvalContext {
         }
     }
 
-    mutating func call(_ head: LocationExprP, _ args: ValueExprP) throws -> Any {
+    func call(_ head: LocationExprP, _ args: ValueExprP) throws -> Any {
         func normalizeArgs() throws -> [Any] {
             let a = try eval(args)
             if let a = a as? [Any] { return a }
@@ -177,7 +181,7 @@ extension EvalContext {
         }
     }
 
-    mutating func evalPop(_ expr: LocationExprP) throws -> Any {
+    func evalPop(_ expr: LocationExprP) throws -> Any {
         let source = try _get(expr)
         switch source {
         case var arr as RockstarArray:
@@ -190,11 +194,11 @@ extension EvalContext {
         }
     }
 
-    mutating func evalPop(_ target: LocationExprP, _ source: LocationExprP) throws {
+    func evalPop(_ target: LocationExprP, _ source: LocationExprP) throws {
         try set(target, evalPop(source))
     }
 
-    mutating func eval(_ expr: FunctionCallExpr) throws -> Any {
+    func eval(_ expr: FunctionCallExpr) throws -> Any {
         switch expr.head {
         case .not: return try !evalTruthiness(expr.args[0])
         case .and: return try evalTruthiness(expr.args[0]) && evalTruthiness(expr.args[1])
@@ -215,7 +219,7 @@ extension EvalContext {
         }
     }
 
-    mutating func eval(_ expr: ValueExprP) throws -> Any {
+    func eval(_ expr: ValueExprP) throws -> Any {
         switch expr {
         case let b as BoolExpr:
             return b.literal
@@ -239,13 +243,13 @@ extension EvalContext {
         }
     }
 
-    mutating func evalMath(_ opnd: ValueExprP, _ op: (Double) -> Any) throws -> Any {
+    func evalMath(_ opnd: ValueExprP, _ op: (Double) -> Any) throws -> Any {
         let o = try eval(opnd)
         guard let oo = o as? Double else { throw UnfitExprError(expr: opnd, val: o, op: .numeric) }
         return op(oo)
     }
 
-    mutating func evalPush(_ l: LocationExprP, _ arg: ValueExprP?) throws {
+    func evalPush(_ l: LocationExprP, _ arg: ValueExprP?) throws {
         func pushVal(_ arr: RockstarArray, _ val: Any) throws {
             var arr = arr
             switch val {
@@ -274,7 +278,7 @@ extension EvalContext {
         }
     }
 
-    mutating func split(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
+    func split(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
         let sourceVal = source != nil ? try eval(source!) : try _get(target)
         guard let s = sourceVal as? String else {
             throw UnfitExprError(expr: source ?? target, val: sourceVal, op: .string)
@@ -291,7 +295,7 @@ extension EvalContext {
         try set(target, RockstarArray(Array(s).map{ String($0) }))
     }
 
-    mutating func join(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
+    func join(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
         let (sourceExpr, sourceVal) = try { () throws -> (ValueExprP, Any) in
             guard let source = source else {
                 return try (target, _get(target))
@@ -322,7 +326,7 @@ extension EvalContext {
         try set(target, s.joined(separator: ""))
     }
 
-    mutating func castDouble(_ s: String, _ arg: ValueExprP?, sourceExpr: ValueExprP) throws -> Double {
+    func castDouble(_ s: String, _ arg: ValueExprP?, sourceExpr: ValueExprP) throws -> Double {
         if let a = arg {
             let argVal = try eval(a)
             guard let r = argVal as? Double else {
@@ -353,7 +357,7 @@ extension EvalContext {
         return String(u)
     }
 
-    mutating func cast(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
+    func cast(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
         let sourceVal = source != nil ? try eval(source!) : try _get(target)
         switch sourceVal {
         case let s as String:
@@ -365,7 +369,7 @@ extension EvalContext {
         }
     }
 
-    mutating func eval(_ expr: VoidCallExpr) throws {
+    func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
         case .assign: try set(expr.target!, try eval(expr.source!))
         case .print:  try shout(eval(expr.source!))
@@ -381,12 +385,13 @@ extension EvalContext {
         }
     }
 
-    mutating func _eval(_ expr: ExprP) throws {
+    func _eval(_ expr: ExprP) throws {
         switch expr {
         case let v as VoidCallExpr:
             try eval(v)
-        case _ as ConditionalExpr:
-            break // TODO
+        case let c as ConditionalExpr:
+            let cc = ConditionalEvalContext(parent: self)
+            try cc.eval(c)
         case _ as LoopExpr:
             break // TODO
         case let f as FunctionCallExpr:
@@ -411,9 +416,9 @@ extension EvalContext {
     }
 }
 
-internal struct MainEvalContext: EvalContext {
+internal class MainEvalContext: EvalContext {
     var variables = [String: Any]()
-    var lastVariable: VariableNameExpr? = nil
+    var lastVariable: String? = nil
     var parser: Parser
     var _listen: () -> Any
     var _shout: (Any) -> Void
@@ -424,13 +429,20 @@ internal struct MainEvalContext: EvalContext {
         _shout = stdout
     }
 
-    mutating func step() throws -> Bool {
+    func getVariableOwner(_ n: String) -> EvalContext? {
+        variables[n] != nil ? self : nil
+    }
+
+    func getVariable(_ n: String) -> Any? { variables[n] }
+    func setVariable(_ n: String, _ v: Any) { variables[n] = v }
+
+    func step() throws -> Bool {
         guard let expr = try parser.next() else { return false }
         try _eval(expr)
         return true
     }
 
-    mutating func run() throws {
+    func run() throws {
         while try step() { }
     }
 
@@ -440,4 +452,71 @@ internal struct MainEvalContext: EvalContext {
     func doReturn(_ r: ReturnExpr) throws { throw StrayExprError(expr: r) }
     func doBreak(_ b: BreakExpr) throws { throw StrayExprError(expr: b) }
     func doContinue(_ c: ContinueExpr) throws { throw StrayExprError(expr: c) }
+}
+
+internal class ConditionalEvalContext: EvalContext {
+    var parent: EvalContext
+
+    private var variables = [String: Any]()
+    private var _lastVariable: String?
+    private var halt: Bool = false
+
+    init(parent p: EvalContext) {
+        parent = p
+    }
+
+    func getVariable(_ n: String) -> Any? {
+        variables[n] ?? parent.getVariable(n)
+    }
+
+    func getVariableOwner(_ n: String) -> EvalContext? {
+        if variables[n] != nil {
+            return self
+        }
+        return parent.getVariableOwner(n)
+    }
+
+    func setVariable(_ n: String, _ v: Any) {
+        if let owner = getVariableOwner(n) {
+            owner.setVariable(n, v)
+        } else {
+            variables[n] = v
+            lastVariable = n
+        }
+    }
+
+    var lastVariable: String? {
+        get {
+            _lastVariable ?? parent.lastVariable
+        } set {
+            _lastVariable = newValue
+        }
+    }
+
+    func shout(_ v: Any) { parent.shout(v) }
+    func listen() -> Any { parent.listen() }
+
+    func doReturn(_ r: ReturnExpr) throws {
+        halt = true
+        try parent.doReturn(r)
+    }
+
+    func doBreak(_ b: BreakExpr) throws {
+        halt = true
+         try parent.doBreak(b)
+    }
+
+    func doContinue(_ c: ContinueExpr) throws {
+        halt = true
+        try parent.doContinue(c)
+    }
+
+    func eval(_ c: ConditionalExpr) throws {
+        let cond = try evalTruthiness(c.condition)
+        let block = cond ? c.trueBlock : c.falseBlock
+        for e in block {
+            try _eval(e)
+            if halt { break }
+        }
+    }
 }

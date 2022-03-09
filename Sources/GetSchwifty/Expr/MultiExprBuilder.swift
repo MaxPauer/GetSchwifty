@@ -12,7 +12,7 @@ extension MultiExprBuilder {
                 return .expr(try build())
             }
             try push(e)
-            currentExpr = VanillaExprBuilder(startPos: lex.range.start)
+            currentExpr = VanillaExprBuilder(startPos: lex.range.end)
         case .builder(let b):
             currentExpr = b
         }
