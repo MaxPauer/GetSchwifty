@@ -331,6 +331,35 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testJoin() throws {
+        var x = MainEvalContext(input: """
+            let my life be "123"
+            cut my life
+            join my life
+            let my life be "1,2,3"
+            cut my life into pieces with ","
+            join pieces into my life with " or "
+            rock my house
+            rock my house with "a","b"
+            join my house with "c"
+            """)
+        _ = try x.step()
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "my life", "123")
+        }
+        _ = try x.step()
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "my life", "1 or 2 or 3")
+        }
+        _ = try x.step()
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "my house", "acb")
+        }
+    }
+
     func testErrors() throws {
         let _: LocationError = try errorTest("put my heart into my soul", (1,4))
         let _: LocationError = try errorTest("it is nothing", (1,0))
@@ -351,5 +380,8 @@ final class EvalTests: XCTestCase {
         let _: NonStringExprError = try errorTest("cut 5 into pieces", (1,4))
         let _: NonStringExprError = try errorTest("let my life be 5\ncut my life into pieces", (2,4))
         let _: NonStringExprError = try errorTest("cut \"my life\" into pieces with 5", (1,31))
+        let _: NonArrayExprError = try errorTest("join 5 into pieces", (1,5))
+        let _: NonStringExprError = try errorTest("rock my life\nrock my life with 5,6\njoin my life into pieces", (3,5))
+        let _: NonStringExprError = try errorTest("rock my life\nrock my life with \"a\",\"b\"\njoin my life with 5", (3,18))
     }
 }

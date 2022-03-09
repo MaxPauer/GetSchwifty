@@ -144,6 +144,16 @@ internal struct NonStringExprError: RuntimeError {
     }
 }
 
+internal struct NonArrayExprError: RuntimeError {
+    let expr: ExprP
+    let val: Any
+    var startPos: LexPos { expr.range.start }
+    var _description: String {
+        "expression \(expr), evaluated to \(val) cannot be used for array operations"
+    }
+}
+
+
 internal struct StrayExprError: RuntimeError {
     let expr: ExprP
     var startPos: LexPos { expr.range.start }

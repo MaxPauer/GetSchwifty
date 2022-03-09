@@ -291,6 +291,37 @@ extension EvalContext {
         try set(target, RockstarArray(Array(s).map{ String($0) }))
     }
 
+    mutating func join(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
+        let (sourceExpr, sourceVal) = try { () throws -> (ValueExprP, Any) in
+            guard let source = source else {
+                return try (target, _get(target))
+            }
+            switch source {
+            case let l as LocationExprP:
+                return (source, try _get(l))
+            default:
+                return (source, try eval(source))
+            }
+        }()
+
+        guard var s = sourceVal as? RockstarArray else {
+            throw NonArrayExprError(expr: sourceExpr, val: sourceVal)
+        }
+        guard let s = s.values() as? [String] else {
+            throw NonStringExprError(expr: sourceExpr, val: sourceVal)
+        }
+        if let arg = arg {
+            let a = try eval(arg)
+            guard let a = a as? String else {
+                throw NonStringExprError(expr: arg, val: a)
+            }
+            let joint = s.joined(separator: a)
+            try set(target, joint)
+            return
+        }
+        try set(target, s.joined(separator: ""))
+    }
+
     mutating func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
         case .assign: try set(expr.target!, try eval(expr.source!))
@@ -299,7 +330,7 @@ extension EvalContext {
         case .push:   try evalPush(expr.target!, expr.arg)
         case .pop:    try evalPop(expr.target!, expr.source! as! LocationExprP)
         case .split:  try split(expr.target!, expr.source, expr.arg)
-        case .join:   break // TODO
+        case .join:   try join(expr.target!, expr.source, expr.arg)
         case .cast:   break // TODO
         case .ceil:   try set(expr.target!, evalMath(expr.source!, { ceil($0) }))
         case .floor:  try set(expr.target!, evalMath(expr.source!, { floor($0) }))

@@ -110,6 +110,15 @@ internal struct RockstarArray {
     var length: Int { nextIndex }
     internal var count: Int { dict.count }
 
+    mutating func values() -> [Any] {
+        let newInsertionOrder = DLinkedList<AnyHashable>()
+        defer { insertionOrder = newInsertionOrder }
+        return insertionOrder.frontToBack.map {
+            newInsertionOrder.pushBack($0)
+            return dict[$0]!
+        }
+    }
+
     mutating func pop() -> Any {
         guard let i = insertionOrder.popFront() else {
             return Rockstar.null
