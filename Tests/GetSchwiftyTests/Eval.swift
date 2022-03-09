@@ -370,6 +370,39 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testCast() throws {
+        var x = MainEvalContext(input: """
+            Let X be "123.45"
+            Cast X
+            Let X be "ff"
+            Cast X with 16
+            Cast "12345" into result
+            Cast "aa" into result with 16
+            Cast 65 into result
+            Cast 1046 into result
+            """)
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", 123.45)
+        }
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", 255.0)
+        }
+        try step(&x) {
+            try assertVariable($0, "result", 12345.0)
+        }
+        try step(&x) {
+            try assertVariable($0, "result", 170.0)
+        }
+        try step(&x) {
+            try assertVariable($0, "result", "A")
+        }
+        try step(&x) {
+            try assertVariable($0, "result", "Ж")
+        }
+    }
+
     func testErrors() throws {
         try errorTest("put my heart into my soul", .read, (1,4))
         try errorTest("it is nothing", .writePronoun, (1,0))
@@ -393,5 +426,13 @@ final class EvalTests: XCTestCase {
         try errorTest("join 5 into pieces", .array, (1,5))
         try errorTest("rock my life\nrock my life with 5,6\njoin my life into pieces", .string, (3,5))
         try errorTest("rock my life\nrock my life with \"a\",\"b\"\njoin my life with 5", .string, (3,18))
+        try errorTest("cast nothing into x", .cast, (1,5))
+        try errorTest("cast 123.4 into x", .castString, (1,5))
+        try errorTest("cast -1 into x", .castString, (1,5))
+        try errorTest("cast 55296 into x", .castString, (1,5))
+        try errorTest("cast \"foo\" into x", .castDouble, (1,5))
+        try errorTest("cast \"10\" into x with mysterious", .castIntRadix, (1,22))
+        try errorTest("cast \"10\" into x with 37", .castIntRadix, (1,22))
+        try errorTest("cast \"foo\" into x with 10", .castInt, (1,5))
     }
 }

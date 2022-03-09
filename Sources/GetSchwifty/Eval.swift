@@ -322,6 +322,49 @@ extension EvalContext {
         try set(target, s.joined(separator: ""))
     }
 
+    mutating func castDouble(_ s: String, _ arg: ValueExprP?, sourceExpr: ValueExprP) throws -> Double {
+        if let a = arg {
+            let argVal = try eval(a)
+            guard let r = argVal as? Double else {
+                throw UnfitExprError(expr: a, val: argVal, op: .castIntRadix)
+            }
+            guard let radix = Int(exactly: r), 2 <= r && r <= 36 else {
+                throw UnfitExprError(expr: a, val: r, op: .castIntRadix)
+            }
+            guard let i = Int(s, radix: radix) else {
+                throw UnfitExprError(expr: sourceExpr, val: s, op: .castInt)
+            }
+            return Double(i)
+        } else {
+            guard let d = Double(s) else {
+                throw UnfitExprError(expr: sourceExpr, val: s, op: .castDouble)
+            }
+            return d
+        }
+    }
+
+    func castString(_ d: Double, sourceExpr: ValueExprP) throws -> String {
+        guard let i = Int(exactly: d), i >= 0 else {
+            throw UnfitExprError(expr: sourceExpr, val: d, op: .castString)
+        }
+        guard let u = UnicodeScalar(i) else {
+            throw UnfitExprError(expr: sourceExpr, val: i, op: .castString)
+        }
+        return String(u)
+    }
+
+    mutating func cast(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
+        let sourceVal = source != nil ? try eval(source!) : try _get(target)
+        switch sourceVal {
+        case let s as String:
+            try set(target, castDouble(s, arg, sourceExpr: source ?? target))
+        case let d as Double:
+            try set(target, castString(d, sourceExpr: source ?? target))
+        default:
+            throw UnfitExprError(expr: source ?? target, val: sourceVal, op: .cast)
+        }
+    }
+
     mutating func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
         case .assign: try set(expr.target!, try eval(expr.source!))
@@ -331,7 +374,7 @@ extension EvalContext {
         case .pop:    try evalPop(expr.target!, expr.source! as! LocationExprP)
         case .split:  try split(expr.target!, expr.source, expr.arg)
         case .join:   try join(expr.target!, expr.source, expr.arg)
-        case .cast:   break // TODO
+        case .cast:   try cast(expr.target!, expr.source, expr.arg)
         case .ceil:   try set(expr.target!, evalMath(expr.source!, { ceil($0) }))
         case .floor:  try set(expr.target!, evalMath(expr.source!, { floor($0) }))
         case .round:  try set(expr.target!, evalMath(expr.source!, { round($0) }))

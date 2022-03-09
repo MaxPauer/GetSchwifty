@@ -116,6 +116,8 @@ internal struct UnfitExprError: RuntimeError {
     enum Op: CustomStringConvertible {
         case bool; case equation; case numeric
         case string; case array; case call; case index
+        case cast; case castInt; case castIntRadix
+        case castDouble; case castString
 
         var description: String {
             switch self {
@@ -126,6 +128,11 @@ internal struct UnfitExprError: RuntimeError {
             case .array: return "array"
             case .call: return "function call"
             case .index: return "indexing"
+            case .cast: return "casting"
+            case .castInt: return "cast to int"
+            case .castIntRadix: return "cast to int (radix)"
+            case .castDouble: return "cast to double"
+            case .castString: return "cast to string"
             }
         }
     }
