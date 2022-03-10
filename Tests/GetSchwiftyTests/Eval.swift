@@ -454,6 +454,68 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testLoop() throws {
+        var x = MainEvalContext(input: """
+            let x be 1
+            while x is smaller than 10
+            let x be with 1
+
+            let x be 1
+            let z be 1
+            let y be 2
+            while z is as small as 9
+            let z be with 1
+            if z is greater than 4
+            let y be times 2
+
+            let x be with 2
+
+            let x be 1
+            let y be 1
+            while x is smaller than 10
+            let y be with 1
+            if x is 5
+            break it down
+            let x be mysterious
+
+            let x be with 1
+
+            let x be 0
+            let n be 1
+            let m be 1
+            while x is smaller than 10
+            let o be n with m
+            let n be m
+            let m be o
+            let x be with 1
+            """)
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", 10.0)
+        }
+        _ = try x.step()
+        _ = try x.step()
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", 19.0)
+            try assertVariable($0, "y", 128.0)
+            try assertVariable($0, "z", 10.0)
+        }
+        _ = try x.step()
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "x", 5.0)
+            try assertVariable($0, "y", 6.0)
+        }
+        _ = try x.step()
+        _ = try x.step()
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "n", 89.0)
+            try assertVariable($0, "m", 144.0)
+        }
+    }
+
     func testErrors() throws {
         try errorTest("put my heart into my soul", .read, (1,4))
         try errorTest("it is nothing", .writePronoun, (1,0))
@@ -486,5 +548,6 @@ final class EvalTests: XCTestCase {
         try errorTest("cast \"10\" into x with 37", .castIntRadix, (1,22))
         try errorTest("cast \"foo\" into x with 10", .castInt, (1,5))
         let _: StrayExprError = try errorTest("if 1\nbreak", (2,0))
+        let _: StrayExprError = try errorTest("while 1\nreturn 1", (2,0))
     }
 }

@@ -392,8 +392,9 @@ extension EvalContext {
         case let c as ConditionalExpr:
             let cc = ConditionalEvalContext(parent: self)
             try cc.eval(c)
-        case _ as LoopExpr:
-            break // TODO
+        case let l as LoopExpr:
+            let lc = LoopEvalContext(parent: self)
+            try lc.eval(l)
         case let f as FunctionCallExpr:
             _ = try eval(f)
         case _ as FunctionDeclExpr:
@@ -454,25 +455,18 @@ internal class MainEvalContext: EvalContext {
     func doContinue(_ c: ContinueExpr) throws { throw StrayExprError(expr: c) }
 }
 
-internal class ConditionalEvalContext: EvalContext {
-    var parent: EvalContext
+internal protocol NestedEvalContext: EvalContext {
+    var parent: EvalContext { get set }
+    var variables: [String: Any] { get set }
+    var _lastVariable: String? { get set }
+}
 
-    private var variables = [String: Any]()
-    private var _lastVariable: String?
-    private var halt: Bool = false
-
-    init(parent p: EvalContext) {
-        parent = p
-    }
-
+extension NestedEvalContext {
     func getVariable(_ n: String) -> Any? {
         variables[n] ?? parent.getVariable(n)
     }
 
     func getVariableOwner(_ n: String) -> EvalContext? {
-        if variables[n] != nil {
-            return self
-        }
         return parent.getVariableOwner(n)
     }
 
@@ -495,6 +489,18 @@ internal class ConditionalEvalContext: EvalContext {
 
     func shout(_ v: Any) { parent.shout(v) }
     func listen() -> Any { parent.listen() }
+}
+
+internal class ConditionalEvalContext: NestedEvalContext {
+    var parent: EvalContext
+
+    internal var variables = [String: Any]()
+    internal var _lastVariable: String?
+    internal var halt: Bool = false
+
+    init(parent p: EvalContext) {
+        parent = p
+    }
 
     func doReturn(_ r: ReturnExpr) throws {
         halt = true
@@ -503,7 +509,7 @@ internal class ConditionalEvalContext: EvalContext {
 
     func doBreak(_ b: BreakExpr) throws {
         halt = true
-         try parent.doBreak(b)
+        try parent.doBreak(b)
     }
 
     func doContinue(_ c: ContinueExpr) throws {
@@ -517,6 +523,43 @@ internal class ConditionalEvalContext: EvalContext {
         for e in block {
             try _eval(e)
             if halt { break }
+        }
+    }
+}
+
+internal class LoopEvalContext: NestedEvalContext {
+    var parent: EvalContext
+
+    internal var variables = [String: Any]()
+    internal var _lastVariable: String?
+
+    var didBreak: Bool = false
+    var didContinue: Bool = false
+
+    init(parent p: EvalContext) {
+        parent = p
+    }
+
+    func doReturn(_ r: ReturnExpr) throws {
+        didBreak = true
+        try parent.doReturn(r)
+    }
+
+    func doBreak(_ b: BreakExpr) throws {
+        didBreak = true
+    }
+
+    func doContinue(_ c: ContinueExpr) throws {
+        didContinue = true
+    }
+
+    func eval(_ l: LoopExpr) throws {
+        rockLoop: while try evalTruthiness(l.condition) {
+            for e in l.loopBlock {
+                try _eval(e)
+                if didBreak { break rockLoop }
+                if didContinue { continue rockLoop }
+            }
         }
     }
 }
