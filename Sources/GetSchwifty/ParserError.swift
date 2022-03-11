@@ -162,3 +162,12 @@ internal struct InvalidIndexError: RuntimeError {
         "location \(expr) cannot be indexed with \(index)"
     }
 }
+
+internal struct InvalidArgumentCountError: RuntimeError {
+    let expecting: Int
+    let got: Int
+    let startPos: LexPos
+    var _description: String {
+        "mismatching function argument count expected \(expecting), got \(got)"
+    }
+}

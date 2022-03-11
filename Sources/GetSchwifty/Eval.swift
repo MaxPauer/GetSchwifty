@@ -6,6 +6,7 @@ internal protocol EvalContext: AnyObject {
     func getVariableOwner(_ n: String) -> EvalContext?
     func getVariable(_ n: String) -> Any?
     func setVariable(_ n: String, _ v: Any)
+    func _setVariable(_ n: String, _ v: Any)
 
     func shout(_: Any)
     func listen() -> Any
@@ -18,7 +19,6 @@ internal protocol EvalContext: AnyObject {
 extension EvalContext {
     func _set(_ v: VariableNameExpr, _ newValue: Any) throws {
         setVariable(v.name, newValue)
-        lastVariable = v.name
     }
 
     func _set(_ p: PronounExpr, _ newValue: Any) throws {
@@ -175,7 +175,8 @@ extension EvalContext {
             return try swiftFun(a)
         case let swiftFun as ([Any]) throws -> Any?:
             return try swiftFun(a) ?? Rockstar.null
-        // case let rockFun as // TODO
+        case let rockFun as RockFunEvalContext:
+            return try rockFun.call(argVals: a, callPos: head.range.start)
         default:
             throw UnfitExprError(expr: head, val: h, op: .call)
         }
@@ -397,8 +398,8 @@ extension EvalContext {
             try lc.eval(l)
         case let f as FunctionCallExpr:
             _ = try eval(f)
-        case _ as FunctionDeclExpr:
-            break // TODO
+        case let f as FunctionDeclExpr:
+            try set(f.head, RockFunEvalContext(parent: self, argNames: f.args.map { $0.name }, f.funBlock))
         case let r as ReturnExpr:
             try doReturn(r)
         case let e as ElseExpr:
@@ -434,8 +435,12 @@ internal class MainEvalContext: EvalContext {
         variables[n] != nil ? self : nil
     }
 
+    func _setVariable(_ n: String, _ v: Any) {
+        variables[n] = v
+        lastVariable = n
+    }
     func getVariable(_ n: String) -> Any? { variables[n] }
-    func setVariable(_ n: String, _ v: Any) { variables[n] = v }
+    func setVariable(_ n: String, _ v: Any) { _setVariable(n, v) }
 
     func step() throws -> Bool {
         guard let expr = try parser.next() else { return false }
@@ -467,15 +472,19 @@ extension NestedEvalContext {
     }
 
     func getVariableOwner(_ n: String) -> EvalContext? {
-        return parent.getVariableOwner(n)
+        return variables[n] != nil ? self : parent.getVariableOwner(n)
+    }
+
+    func _setVariable(_ n: String, _ v: Any) {
+        variables[n] = v
+        lastVariable = n
     }
 
     func setVariable(_ n: String, _ v: Any) {
         if let owner = getVariableOwner(n) {
-            owner.setVariable(n, v)
+            owner._setVariable(n, v)
         } else {
-            variables[n] = v
-            lastVariable = n
+            _setVariable(n, v)
         }
     }
 
@@ -561,5 +570,55 @@ internal class LoopEvalContext: NestedEvalContext {
                 if didContinue { continue rockLoop }
             }
         }
+    }
+}
+
+internal class RockFunEvalContext: NestedEvalContext {
+    var parent: EvalContext
+    let argNames: [String]
+    let exprs: [ExprP]
+
+    internal var variables = [String: Any]()
+    internal var _lastVariable: String?
+
+    var returnValue: Any? = nil
+
+    init(parent p: EvalContext, argNames a: [String], _ e: [ExprP]) {
+        parent = p
+        argNames = a
+        exprs = e
+    }
+
+    func doReturn(_ r: ReturnExpr) throws {
+        returnValue = try eval(r.value)
+    }
+
+    func doBreak(_ b: BreakExpr) throws {
+        throw StrayExprError(expr: b)
+    }
+
+    func doContinue(_ c: ContinueExpr) throws {
+        throw StrayExprError(expr: c)
+    }
+
+    func call(argVals: [Any], callPos: LexPos) throws -> Any {
+        guard argNames.count == argVals.count else {
+            throw InvalidArgumentCountError(expecting: argNames.count, got: argVals.count, startPos: callPos)
+        }
+
+        returnValue = nil
+        variables.removeAll()
+        for (a,v) in zip(argNames, argVals) {
+            variables[a] = v
+        }
+
+        for e in exprs {
+            try _eval(e)
+            if let r = returnValue {
+                return r
+            }
+        }
+
+        return Rockstar.null
     }
 }

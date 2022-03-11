@@ -516,6 +516,38 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testFun() throws {
+        var x = MainEvalContext(input: """
+            midnight takes y
+            let x be 0
+            let n be 1
+            let m be 1
+            while x is smaller than y
+            let o be n with m
+            let n be m
+            let m be o
+            let x be with 1
+
+            give back m
+
+            put midnight taking 10 into z
+
+            multiplication takes x, and y
+            give x times y back
+
+            let z be multiplication taking z, 2
+            """)
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "z", 144.0)
+        }
+        _ = try x.step()
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "z", 288.0)
+        }
+    }
+
     func testErrors() throws {
         try errorTest("put my heart into my soul", .read, (1,4))
         try errorTest("it is nothing", .writePronoun, (1,0))
@@ -549,5 +581,8 @@ final class EvalTests: XCTestCase {
         try errorTest("cast \"foo\" into x with 10", .castInt, (1,5))
         let _: StrayExprError = try errorTest("if 1\nbreak", (2,0))
         let _: StrayExprError = try errorTest("while 1\nreturn 1", (2,0))
+        let _: StrayExprError = try errorTest("foo takes x\nbreak\n\nfoo taking 1", (2,0))
+        let _: InvalidArgumentCountError = try errorTest("foo takes x,y\n\nfoo taking 1", (3,0))
+        let _: InvalidArgumentCountError = try errorTest("foo takes x,y\n\nfoo taking 1,2,3", (3,0))
     }
 }
