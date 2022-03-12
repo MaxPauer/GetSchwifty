@@ -456,7 +456,12 @@ internal class MainEvalContext: EvalContext {
         while try step() { }
     }
 
-    func shout(_ v: Any) { _shout(v) }
+    func shout(_ v: Any) {
+        if let d = v as? Double, let i = Int(exactly: d) {
+            return _shout(i)
+        }
+        _shout(v)
+    }
     func listen() -> Any { _listen() }
 
     func doReturn(_ r: ReturnExpr) throws { throw StrayExprError(expr: r) }
