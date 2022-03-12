@@ -48,7 +48,7 @@ internal class PoeticConstantExprBuilder:
 
 internal class PoeticNumberExprBuilder:
         SingleExprBuilder, ThrowsNumberLexP, ThrowsStringLexP {
-    private var value = 0.0
+    private var value: Double?
     private var divider: Double = 1.0
     private var digit: Int? = nil
     var range: LexRange!
@@ -59,12 +59,12 @@ internal class PoeticNumberExprBuilder:
 
     @discardableResult
     func pushPoeticDigit() -> ExprBuilder {
+        let oldVal = value ?? 0.0
         if let n = digit {
             if divider == 1.0 {
-                value *= 10
-                value += Double(n % 10)
+                value = oldVal * 10 + Double(n % 10)
             } else {
-                value += Double(n) * divider
+                value = oldVal + Double(n) * divider
                 divider *= 0.1
             }
             digit = nil
@@ -74,14 +74,14 @@ internal class PoeticNumberExprBuilder:
 
     func build() throws -> ExprP {
         pushPoeticDigit()
-        guard value != 0 else {
+        guard let value = value else {
             throw UnfinishedExprError(parsing: self, expecting: Set())
         }
         return NumberExpr(literal: Double(value), range: range)
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        if value == 0 {
+        if value == nil {
             switch id.literal {
             case String.constantIdentifiers:
                 var c: ExprBuilder = self |=> PoeticConstantExprBuilder()
