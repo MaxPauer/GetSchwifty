@@ -54,4 +54,25 @@ final class GetSchwiftyTests: XCTestCase {
             })
         }
     }
+
+    func testFibonacci() throws {
+        let exp = [
+            0: 1,
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 5,
+            5: 8,
+            6: 13,
+            7: 21]
+
+        let fibonacci = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fibonacci.rock"))
+        let x = try GetSchwifty(input: fibonacci)
+        for (i, v) in exp {
+            try x.run(rockin: { i }, rockout: {o throws in
+                let out = try XCTUnwrap(o as? Int)
+                XCTAssertEqual(out, v)
+            })
+        }
+    }
 }

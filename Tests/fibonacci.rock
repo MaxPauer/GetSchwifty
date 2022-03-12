@@ -1,0 +1,14 @@
+fibonacci takes i
+let n be 1
+let m be 1
+let j be 1
+while j is smaller than i
+let o be n with m
+let n be m
+let m be o
+let j be with 1
+
+return m
+
+listen to x
+shout fibonacci taking x
