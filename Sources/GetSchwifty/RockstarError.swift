@@ -1,27 +1,43 @@
-internal protocol RockstarError: Error, CustomStringConvertible {
-    var _description: String { get }
+public protocol RockstarError: Error, CustomStringConvertible {
+    var errorPos: (UInt, UInt) { get }
+}
+public protocol ParserError: RockstarError {}
+public protocol RuntimeError: RockstarError {}
+
+internal protocol IRockstarError: RockstarError, CustomDebugStringConvertible {
     var startPos: LexPos { get }
 }
 
-internal protocol ParserError: RockstarError {
+extension IRockstarError {
+    var errorPos: (UInt, UInt) { (startPos.line, startPos.char) }
+}
+
+internal protocol IParserError: IRockstarError, ParserError {
     var parsing: ExprBuilder { get }
 }
 
-extension ParserError {
+internal protocol IRuntimeError: IRockstarError, RuntimeError {}
+
+extension IParserError {
     var description: String {
-        return "Parser error on line \(startPos.line):\(startPos.char): \(_description)"
+        return "Parser error on line \(startPos.line):\(startPos.char): \(debugDescription)"
+    }
+}
+extension IRuntimeError {
+    var description: String {
+        return "Runtime error on line \(startPos.line):\(startPos.char): \(debugDescription)"
     }
 }
 
-internal protocol LexemeError: ParserError {
+internal protocol ILexemeError: IParserError {
     var got: Lex { get }
 }
 
-extension LexemeError {
+extension ILexemeError {
     var startPos: LexPos { got.range.start }
 }
 
-internal struct UnexpectedIdentifierError: LexemeError {
+internal struct UnexpectedIdentifierError: ILexemeError {
     let got: Lex
     let parsing: ExprBuilder
     let expecting: Set<String>
@@ -32,40 +48,40 @@ internal struct UnexpectedIdentifierError: LexemeError {
         }.joined(separator: " or ")
     }
 
-    var _description: String {
+    var debugDescription: String {
         "encountered unexpected \(got) lexeme while parsing \(parsing) expression. Expecting \(expectingDescr)"
     }
 }
 
-internal struct UnexpectedLexemeError: LexemeError {
+internal struct UnexpectedLexemeError: ILexemeError {
     let got: Lex
     let parsing: ExprBuilder
 
-    var _description: String {
+    var debugDescription: String {
         "encountered unexpected \(got) lexeme while parsing \(parsing) expression"
     }
 }
 
-internal struct UnparsableNumberLexemeError: LexemeError {
+internal struct UnparsableNumberLexemeError: ILexemeError {
     let got: Lex
     let parsing: ExprBuilder
 
-    var _description: String {
+    var debugDescription: String {
         "encountered unparsable number \(got) lexeme while parsing \(parsing) expression"
     }
 }
 
-internal struct UnexpectedExprError<Expecting>: ParserError {
+internal struct UnexpectedExprError<Expecting>: IParserError {
     let got: ExprP
     let startPos: LexPos
     let parsing: ExprBuilder
 
-    var _description: String {
+    var debugDescription: String {
         "encountered unexpected \(got) expression while parsing \(parsing) expression, expecting: \(Expecting.self)"
     }
 }
 
-internal struct UnfinishedExprError: ParserError {
+internal struct UnfinishedExprError: IParserError {
     var parsing: ExprBuilder
     let expecting: Set<String>
 
@@ -77,20 +93,12 @@ internal struct UnfinishedExprError: ParserError {
         }.joined(separator: " or ")
     }
 
-    var _description: String {
+    var debugDescription: String {
         "unfinished \(parsing) expression, expecting: \(expectingDescr)"
     }
 }
 
-internal protocol RuntimeError: RockstarError {}
-
-extension RuntimeError {
-    var description: String {
-        return "Runtime error on line \(startPos.line):\(startPos.char): \(_description)"
-    }
-}
-
-internal struct LocationError: RuntimeError {
+internal struct LocationError: IRuntimeError {
     enum Op: CustomStringConvertible {
         case read; case write
         case readPronoun; case writePronoun
@@ -107,12 +115,12 @@ internal struct LocationError: RuntimeError {
     let location: LocationExprP
     let op: Op
     var startPos: LexPos { location.range.start }
-    var _description: String {
+    var debugDescription: String {
         "\(op) \(location) before assignment"
     }
 }
 
-internal struct UnfitExprError: RuntimeError {
+internal struct UnfitExprError: IRuntimeError {
     enum Op: CustomStringConvertible {
         case bool; case equation; case numeric
         case string; case array; case call; case index
@@ -141,33 +149,33 @@ internal struct UnfitExprError: RuntimeError {
     let val: Any
     let op: Op
     var startPos: LexPos { expr.range.start }
-    var _description: String {
+    var debugDescription: String {
         "expression \(expr) evaluated to \(val) cannot be used for \(op) operations"
     }
 }
 
-internal struct StrayExprError: RuntimeError {
+internal struct StrayExprError: IRuntimeError {
     let expr: ExprP
     var startPos: LexPos { expr.range.start }
-    var _description: String {
+    var debugDescription: String {
         "stray \(expr) expression"
     }
 }
 
-internal struct InvalidIndexError: RuntimeError {
+internal struct InvalidIndexError: IRuntimeError {
     let expr: LocationExprP
     let index: Any
     var startPos: LexPos { expr.range.start }
-    var _description: String {
+    var debugDescription: String {
         "location \(expr) cannot be indexed with \(index)"
     }
 }
 
-internal struct InvalidArgumentCountError: RuntimeError {
+internal struct InvalidArgumentCountError: IRuntimeError {
     let expecting: Int
     let got: Int
     let startPos: LexPos
-    var _description: String {
+    var debugDescription: String {
         "mismatching function argument count expected \(expecting), got \(got)"
     }
 }

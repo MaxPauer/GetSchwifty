@@ -11,7 +11,7 @@ final class EvalTests: XCTestCase {
         return MainEvalContext(input: exprCache.consumeFrontToBack, rockin: stdin, rockout: stdout)
     }
 
-    func errorTest<T>(_ inp: String, _ pos: (UInt,UInt)) throws -> T where T: RuntimeError {
+    func errorTest<T>(_ inp: String, _ pos: (UInt,UInt)) throws -> T where T: IRuntimeError {
         let c = try context(input: inp)
         var error: Error?
         XCTAssertThrowsError(try c.run()) { (e: Error) in

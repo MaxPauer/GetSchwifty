@@ -7,7 +7,7 @@ final class ParserErrorTests: XCTestCase {
         while let _ = try p.next() {}
     }
 
-    func errorTest<E>(_ inp: String,_ got: Lex.Type, _ expr: ExprBuilder.Type, _ pos: (UInt,UInt)) -> E where E: LexemeError {
+    func errorTest<E>(_ inp: String,_ got: Lex.Type, _ expr: ExprBuilder.Type, _ pos: (UInt,UInt)) -> E where E: ILexemeError {
         var error: E!
         XCTAssertThrowsError(try parseDiscardAll(inp)) { (e: Error) in
             error = try! XCTUnwrap(e as? E)
