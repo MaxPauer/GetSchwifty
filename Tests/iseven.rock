@@ -1,0 +1,14 @@
+iseven takes n
+while n is greater than 0
+let n be without 2
+
+if n is 0
+return true
+
+while n is smaller than 0
+let n be with 2
+
+return n is 0
+
+listen to x
+shout iseven taking x

@@ -29,4 +29,29 @@ final class GetSchwiftyTests: XCTestCase {
 
         try! x.runOnce()
     }
+
+    func testIsEven() throws {
+        let exp = [
+            0: true,
+            1: false,
+            2: true,
+            3: false,
+            4: true,
+            5: false,
+            5.5: false,
+            -0.5: false,
+            -2: true,
+            -4.01: false,
+            -4.9: false,
+            -6: true]
+
+        let isEven = try! String(contentsOf: URL(fileURLWithPath: "./Tests/iseven.rock"))
+        let x = try GetSchwifty(input: isEven)
+        for (i, v) in exp {
+            try x.run(rockin: { i }, rockout: {o throws in
+                let out = try XCTUnwrap(o as? AnyHashable)
+                XCTAssertEqual(out, v)
+            })
+        }
+    }
 }
