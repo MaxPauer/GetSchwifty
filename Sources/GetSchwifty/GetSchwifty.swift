@@ -31,9 +31,4 @@ public struct GetSchwifty {
         let ctx = MainEvalContext(input: exprCache.walkFrontToBack, rockin: i ?? rockin, rockout: o ?? rockout)
         try ctx.run()
     }
-
-    func runOnce(rockin i: Rockin? = nil, rockout o: Rockout? = nil) throws {
-        let ctx = MainEvalContext(input: exprCache.consumeFrontToBack, rockin: i ?? rockin, rockout: o ?? rockout)
-        try ctx.run()
-    }
 }

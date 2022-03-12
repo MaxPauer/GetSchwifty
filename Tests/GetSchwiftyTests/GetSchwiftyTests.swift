@@ -27,7 +27,7 @@ final class GetSchwiftyTests: XCTestCase {
             i += 1
         })
 
-        try! x.runOnce()
+        try! x.run()
     }
 
     func testIsEven() throws {

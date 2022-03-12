@@ -11,16 +11,9 @@ internal struct Parser {
         while let l = lexemes.next() {
             assert(!(l is ContractionLex), "LexContractor should have filtered these out")
 
-            var partialExpr: PartialExpr!
-            do {
-                partialExpr = try currentExprBuilder!.push(l)
-            } catch let err as ParserError {
-                throw err
-            } catch {
-                assertionFailure("unexpected Error")
-            }
+            let partialExpr = try currentExprBuilder!.push(l)
 
-            switch partialExpr! {
+            switch partialExpr {
             case .builder(let b):
                 currentExprBuilder = b
             case .expr(let e):
