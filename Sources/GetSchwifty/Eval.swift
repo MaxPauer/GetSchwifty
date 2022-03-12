@@ -119,25 +119,29 @@ extension EvalContext {
         throw UnfitExprError(expr: expr, val: i, op: .bool)
     }
 
+    func implicitNull(_ v: Any) -> Any {
+        v is Rockstar.Null ? 0.0 : v
+    }
+
     func evalEq(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (AnyHashable, AnyHashable) -> Bool) throws -> Bool {
-        let l = try eval(lhs)
+        let l = implicitNull(try eval(lhs))
         guard let ll = l as? AnyHashable else { throw UnfitExprError(expr: lhs, val: l, op: .equation) }
-        let r = try eval(rhs)
+        let r = implicitNull(try eval(rhs))
         guard let rr = r as? AnyHashable else { throw UnfitExprError(expr: rhs, val: r, op: .equation) }
         return op(ll, rr)
     }
 
     func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
-        let l = try eval(lhs)
+        let l = implicitNull(try eval(lhs))
         guard let ll = l as? Double else { throw UnfitExprError(expr: lhs, val: l, op: .numeric) }
-        let r = try eval(rhs)
+        let r = implicitNull(try eval(rhs))
         guard let rr = r as? Double else { throw UnfitExprError(expr: rhs, val: r, op: .numeric) }
         return op(ll, rr)
     }
 
     func evalAdd(_ lhs: ValueExprP, _ rhs: ValueExprP) throws -> Any {
-        let l = try eval(lhs)
-        let r = try eval(rhs)
+        let l = implicitNull(try eval(lhs))
+        let r = implicitNull(try eval(rhs))
         switch (l, r) {
         case (let ll as Double, let rr as Double):
             return ll+rr
