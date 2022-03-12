@@ -536,6 +536,8 @@ internal class ConditionalEvalContext: NestedEvalContext {
     }
 
     func eval(_ c: ConditionalExpr) throws {
+        halt = false
+
         let cond = try evalTruthiness(c.condition)
         let block = cond ? c.trueBlock : c.falseBlock
         for e in block {
@@ -573,6 +575,9 @@ internal class LoopEvalContext: NestedEvalContext {
 
     func eval(_ l: LoopExpr) throws {
         rockLoop: while try evalTruthiness(l.condition) {
+            didBreak = false
+            didContinue = false
+
             for e in l.loopBlock {
                 try _eval(e)
                 if didBreak { break rockLoop }
