@@ -463,7 +463,13 @@ internal class MainEvalContext: EvalContext {
         }
         try _shout(v)
     }
-    func listen() throws -> Any { try _listen() }
+    func listen() throws -> Any {
+        let v = try _listen()
+        if let i = v as? Int {
+            return Double(i)
+        }
+        return v
+    }
 
     func doReturn(_ r: ReturnExpr) throws { throw StrayExprError(expr: r) }
     func doBreak(_ b: BreakExpr) throws { throw StrayExprError(expr: b) }
