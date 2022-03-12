@@ -20,13 +20,13 @@ final class GetSchwiftyTests: XCTestCase {
 
         var i = 1
         let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
-        let x = MainEvalContext(input: fizzbuzz, stdout: {o throws in
+        let x = try GetSchwifty(input: fizzbuzz, rockout: {o throws in
             let out = try XCTUnwrap(o as? AnyHashable)
             XCTAssertEqual(out, fizzBuzz(n: i))
             XCTAssert(i < 101)
             i += 1
         })
 
-        try! x.run()
+        try! x.runOnce()
     }
 }

@@ -425,14 +425,15 @@ extension EvalContext {
 internal class MainEvalContext: EvalContext {
     var variables = [String: Any]()
     var lastVariable: String? = nil
-    var parser: Parser
+
+    var _exprs: AnySequence<ExprP>.Iterator
     var _listen: () throws -> Any
     var _shout: (Any) throws -> Void
 
-    init(input inp: String, stdin: @escaping () throws -> Any = { Rockstar.null }, stdout: @escaping (Any) throws -> Void = {_ in}) {
-        parser = Parser(input: inp)
-        _listen = stdin
-        _shout = stdout
+    init(input inp: AnySequence<ExprP>, rockin: @escaping Rockin, rockout: @escaping Rockout) {
+        _exprs = inp.makeIterator()
+        _listen = rockin
+        _shout = rockout
     }
 
     func getVariableOwner(_ n: String) -> EvalContext? {
@@ -447,7 +448,7 @@ internal class MainEvalContext: EvalContext {
     func setVariable(_ n: String, _ v: Any) { _setVariable(n, v) }
 
     func step() throws -> Bool {
-        guard let expr = try parser.next() else { return false }
+        guard let expr = _exprs.next() else { return false }
         try _eval(expr)
         return true
     }

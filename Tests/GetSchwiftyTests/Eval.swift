@@ -2,8 +2,17 @@ import XCTest
 @testable import GetSchwifty
 
 final class EvalTests: XCTestCase {
+    func context(input inp: String, stdin: @escaping Rockin = { Rockstar.null }, stdout: @escaping Rockout = {_ in}) throws -> MainEvalContext {
+        var p = Parser(input: inp)
+        let exprCache = DLinkedList<ExprP>()
+        while let e = try p.next() {
+            exprCache.pushBack(e)
+        }
+        return MainEvalContext(input: exprCache.consumeFrontToBack, rockin: stdin, rockout: stdout)
+    }
+
     func errorTest<T>(_ inp: String, _ pos: (UInt,UInt)) throws -> T where T: RuntimeError {
-        let c = MainEvalContext(input: inp)
+        let c = try context(input: inp)
         var error: Error?
         XCTAssertThrowsError(try c.run()) { (e: Error) in
             error = e
@@ -55,7 +64,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testBoolAssignment() throws {
-        var c = MainEvalContext(input: "put true into my world\nlet my house be false\nput my world into my house")
+        var c = try context(input: "put true into my world\nlet my house be false\nput my world into my house")
         try step(&c) {
             try assertVariable($0, "my world", true)
         }
@@ -72,7 +81,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testPoeticPronounAssignment() throws {
-        var c = MainEvalContext(input: "(when i was 17) my father said to me A wealthy man had the things I wanted\nhe is nothing\nit is beating like a jungle drum")
+        var c = try context(input: "(when i was 17) my father said to me A wealthy man had the things I wanted\nhe is nothing\nit is beating like a jungle drum")
         try step(&c) {
             try assertVariable($0, "my father", "to me A wealthy man had the things I wanted")
         }
@@ -85,7 +94,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testBooleanLogicAssignment() throws {
-        var c = MainEvalContext(input: "let my life be not mysterious\nlet it be right and wrong\nlet it be 5 is greater than 4\nlet it be 5 ain't 5\nlet it be 5 is as great as 1")
+        var c = try context(input: "let my life be not mysterious\nlet it be right and wrong\nlet it be 5 is greater than 4\nlet it be 5 ain't 5\nlet it be 5 is as great as 1")
         try step(&c) {
             try assertVariable($0, "my life", true)
         }
@@ -104,7 +113,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testMath() throws {
-        var c = MainEvalContext(input: "let my life be 5 minus 3\nlet it be 2 plus \"foo\"\nlet it be \"foo\" with \"fighters\"\nlet it be 10 over 2")
+        var c = try context(input: "let my life be 5 minus 3\nlet it be 2 plus \"foo\"\nlet it be \"foo\" with \"fighters\"\nlet it be 10 over 2")
         try step(&c) {
             try assertVariable($0, "my life", 2.0)
         }
@@ -120,7 +129,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testMathRound() throws {
-        var c = MainEvalContext(input: "let my life be 5.3\nturn it around\nlet my life be 5.3\nturn it up\nlet my life be 5.3\nturn it down\n")
+        var c = try context(input: "let my life be 5.3\nturn it around\nlet my life be 5.3\nturn it up\nlet my life be 5.3\nturn it down\n")
         try step(&c) {
             try assertVariable($0, "my life", 5.3)
         }
@@ -143,7 +152,7 @@ final class EvalTests: XCTestCase {
 
     func testInOut() throws {
         var result: Any?
-        let c = MainEvalContext(input: "listen to your heart\nshout it", stdin: {"noice"}, stdout: { result = $0 })
+        let c = try context(input: "listen to your heart\nshout it", stdin: {"noice"}, stdout: { result = $0 })
         try c.run()
         let r = try XCTUnwrap(result as? String)
         XCTAssertEqual(r, "noice")
@@ -151,16 +160,16 @@ final class EvalTests: XCTestCase {
 
     func testSwiftFun() throws {
         var result: Any?
-        let c = MainEvalContext(input: "put \"hallo\" into my world\nlisten to my life\nshout my life taking \"hallo\", my world",
-                                stdin: { { (args: [Any]) -> Any in "\(args[0]) \(args[1])" } },
-                               stdout: { result = $0 })
+        let c = try context(input: "put \"hallo\" into my world\nlisten to my life\nshout my life taking \"hallo\", my world",
+                            stdin: { { (args: [Any]) -> Any in "\(args[0]) \(args[1])" } },
+                            stdout: { result = $0 })
         try c.run()
         let r = try XCTUnwrap(result as? String)
         XCTAssertEqual(r, "hallo hallo")
     }
 
     func testArrays() throws {
-        var c = MainEvalContext(input: """
+        var c = try context(input: """
             put 5 into my world
             let my world at 1 be 4
             let my world at 0 be "nice"
@@ -203,7 +212,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testPop() throws {
-        var c = MainEvalContext(input: """
+        var c = try context(input: """
             put 5 into my world
             let my world at 1 be 4
             let my world at 2 be "nice"
@@ -258,7 +267,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testPush() throws {
-        var c = MainEvalContext(input: """
+        var c = try context(input: """
             put 5 into my world
             rock my world
             put my world into my soul
@@ -317,7 +326,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testSplit() throws {
-        var x = MainEvalContext(input: """
+        var x = try context(input: """
             cut "my life" into pieces
             cut "my life" into pieces with " "
             let my life be "123"
@@ -342,7 +351,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testJoin() throws {
-        var x = MainEvalContext(input: """
+        var x = try context(input: """
             let my life be "123"
             cut my life
             join my life
@@ -371,7 +380,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testCast() throws {
-        var x = MainEvalContext(input: """
+        var x = try context(input: """
             Let X be "123.45"
             Cast X
             Let X be "ff"
@@ -404,7 +413,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testIf() throws {
-        var x = MainEvalContext(input: """
+        var x = try context(input: """
             let x be mysterious
             if 1
             let x be "nice"
@@ -455,7 +464,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testLoop() throws {
-        var x = MainEvalContext(input: """
+        var x = try context(input: """
             let x be 1
             while x is smaller than 10
             let x be with 1
@@ -517,7 +526,7 @@ final class EvalTests: XCTestCase {
     }
 
     func testFun() throws {
-        var x = MainEvalContext(input: """
+        var x = try context(input: """
             midnight takes y
             let x be 0
             let n be 1
