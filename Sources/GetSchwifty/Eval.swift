@@ -8,8 +8,8 @@ internal protocol EvalContext: AnyObject {
     func setVariable(_ n: String, _ v: Any)
     func _setVariable(_ n: String, _ v: Any)
 
-    func shout(_: Any)
-    func listen() -> Any
+    func shout(_: Any) throws
+    func listen() throws -> Any
 
     func doReturn(_ r: ReturnExpr) throws
     func doBreak(_ b: BreakExpr) throws
@@ -426,10 +426,10 @@ internal class MainEvalContext: EvalContext {
     var variables = [String: Any]()
     var lastVariable: String? = nil
     var parser: Parser
-    var _listen: () -> Any
-    var _shout: (Any) -> Void
+    var _listen: () throws -> Any
+    var _shout: (Any) throws -> Void
 
-    init(input inp: String, stdin: @escaping () -> Any = { Rockstar.null }, stdout: @escaping (Any) -> Void = {_ in}) {
+    init(input inp: String, stdin: @escaping () throws -> Any = { Rockstar.null }, stdout: @escaping (Any) throws -> Void = {_ in}) {
         parser = Parser(input: inp)
         _listen = stdin
         _shout = stdout
@@ -456,13 +456,13 @@ internal class MainEvalContext: EvalContext {
         while try step() { }
     }
 
-    func shout(_ v: Any) {
+    func shout(_ v: Any) throws {
         if let d = v as? Double, let i = Int(exactly: d) {
-            return _shout(i)
+            return try _shout(i)
         }
-        _shout(v)
+        try _shout(v)
     }
-    func listen() -> Any { _listen() }
+    func listen() throws -> Any { try _listen() }
 
     func doReturn(_ r: ReturnExpr) throws { throw StrayExprError(expr: r) }
     func doBreak(_ b: BreakExpr) throws { throw StrayExprError(expr: b) }
@@ -505,8 +505,8 @@ extension NestedEvalContext {
         }
     }
 
-    func shout(_ v: Any) { parent.shout(v) }
-    func listen() -> Any { parent.listen() }
+    func shout(_ v: Any) throws { try parent.shout(v) }
+    func listen() throws -> Any { try parent.listen() }
 }
 
 internal class ConditionalEvalContext: NestedEvalContext {
