@@ -53,7 +53,7 @@ internal class LoopExprBuilder: MultiExprBuilder {
         let cc = invertedLogic ?
             FunctionCallExpr(head: .not, args: [condition!], range: range) : condition!
 
-        return LoopExpr(condition: cc, loopBlock: Array(subExprs.frontToBack), range: range)
+        return LoopExpr(condition: cc, loopBlock: Array(subExprs.consumeFrontToBack), range: range)
     }
 }
 
@@ -96,7 +96,7 @@ internal class FunctionDeclExprBuilder: MultiExprBuilder {
         try push(currentExpr.build())
 
         let head = try self.head.build() as! VariableNameExpr
-        return FunctionDeclExpr(head: head, args: args!, funBlock: Array(subExprs.frontToBack), range: range)
+        return FunctionDeclExpr(head: head, args: args!, funBlock: Array(subExprs.consumeFrontToBack), range: range)
     }
 }
 
@@ -128,6 +128,6 @@ internal class ConditionalExprBuilder: MultiExprBuilder {
     func build() throws -> ExprP {
         try push(currentExpr.build())
         let cc = condition!
-        return ConditionalExpr(condition: cc, trueBlock: Array(ifBlockExprs.frontToBack), falseBlock: Array(elseBlockExprs.frontToBack), range: range)
+        return ConditionalExpr(condition: cc, trueBlock: Array(ifBlockExprs.consumeFrontToBack), falseBlock: Array(elseBlockExprs.consumeFrontToBack), range: range)
     }
 }

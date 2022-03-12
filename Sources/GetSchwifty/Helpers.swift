@@ -8,9 +8,24 @@ internal class DLinkedList<T> {
             value = v
         }
     }
-    struct Sequencer<T>: IteratorProtocol, Sequence {
-        private(set) var _next: () -> T?
+
+    private struct ConsumingSequencer<T>: IteratorProtocol, Sequence {
+        private var _next: () -> T?
         func next() -> T? { _next() }
+        init(_ next: @escaping () -> T?) { _next = next }
+    }
+    private struct NonConsumingSequencer<T>: IteratorProtocol, Sequence {
+        private var _next: (LLNode<T>) -> LLNode<T>?
+        private var current: LLNode<T>?
+        mutating func next() -> T? {
+            guard let c = current else { return nil }
+            current = _next(c)
+            return c.value
+        }
+        init(start: LLNode<T>?, _ next: @escaping (LLNode<T>) -> LLNode<T>?) {
+            current = start
+            _next = next
+        }
     }
 
     private var front: LLNode<T>?
@@ -73,8 +88,14 @@ internal class DLinkedList<T> {
         return oldBack.value
     }
 
-    var frontToBack: Sequencer<T> {
-        Sequencer{ self.popFront() }
+    var consumeFrontToBack: AnySequence<T> {
+        AnySequence(ConsumingSequencer{ self.popFront() })
+    }
+
+    var walkFrontToBack: AnySequence<T> {
+        AnySequence(NonConsumingSequencer(start: self.front) {
+            $0.next
+        })
     }
 }
 
@@ -111,10 +132,7 @@ internal struct RockstarArray {
     internal var count: Int { dict.count }
 
     mutating func values() -> [Any] {
-        let newInsertionOrder = DLinkedList<AnyHashable>()
-        defer { insertionOrder = newInsertionOrder }
-        return insertionOrder.frontToBack.map {
-            newInsertionOrder.pushBack($0)
+        return insertionOrder.walkFrontToBack.map {
             return dict[$0]!
         }
     }
