@@ -94,14 +94,8 @@ extension StringExprBuilder {
 extension NumberExprBuilder {
     var prettyName: String { "Numeric Value: \"\(literal)\"" }
 }
-extension BoolExprBuilder {
-    var prettyName: String { "Boolean Value: \"\(literal)\"" }
-}
-extension NullExprBuilder {
-    var prettyName: String { "Null Value" }
-}
-extension MysteriousExprBuilder {
-    var prettyName: String { "Mysterious Value" }
+extension LiteralExprBuilder {
+    var prettyName: String { "Literal Value: \"\(literal)\"" }
 }
 extension PushExprBuilder {
     var prettyName: String { "Rock/Push" }

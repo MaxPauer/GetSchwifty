@@ -223,47 +223,17 @@ internal class NumberExprBuilder:
     }
 }
 
-internal class BoolExprBuilder:
+internal class LiteralExprBuilder<T>:
         DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
-    let literal: Bool
+    let literal: T
     var range: LexRange!
     let isStatement = false
     let precedence: Precedence = .literal
 
-    init(literal b: Bool) { literal = b }
+    init(literal b: T) { literal = b }
 
     func build() -> ExprP {
         return LiteralExpr(literal: literal, range: range)
-    }
-
-    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        throw UnexpectedLexemeError(got: id, parsing: self)
-    }
-}
-
-internal class NullExprBuilder:
-        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
-    var range: LexRange!
-    let isStatement = false
-    let precedence: Precedence = .literal
-
-    func build() -> ExprP {
-        return LiteralExpr(literal: Rockstar.null, range: range)
-    }
-
-    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        throw UnexpectedLexemeError(got: id, parsing: self)
-    }
-}
-
-internal class MysteriousExprBuilder:
-        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
-    var range: LexRange!
-    let isStatement = false
-    let precedence: Precedence = .literal
-
-    func build() -> ExprP {
-        return LiteralExpr(literal: Rockstar.mysterious, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {

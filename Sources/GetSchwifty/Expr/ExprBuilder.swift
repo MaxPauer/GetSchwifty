@@ -116,13 +116,13 @@ internal class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, Ignore
         case String.emptyStringIdentifiers:
             return StringExprBuilder(literal: "")
         case String.trueIdentifiers:
-            return BoolExprBuilder(literal: true)
+            return LiteralExprBuilder(literal: true)
         case String.falseIdentifiers:
-            return BoolExprBuilder(literal: false)
+            return LiteralExprBuilder(literal: false)
         case String.nullIdentifiers:
-            return NullExprBuilder()
+            return LiteralExprBuilder(literal: Rockstar.null)
         case String.mysteriousIdentifiers:
-            return MysteriousExprBuilder()
+            return LiteralExprBuilder(literal: Rockstar.mysterious)
         case String.pronounIdentifiers:
             return PronounExprBuilder(isStatement: isStatement)
         case String.buildIdentifiers:
