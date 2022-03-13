@@ -465,10 +465,14 @@ internal class MainEvalContext: EvalContext {
     }
     func listen() throws -> Any {
         let v = try _listen()
-        if let i = v as? Int {
+        switch v {
+        case let i as Int:
             return Double(i)
+        case let i as UInt:
+            return Double(i)
+        default:
+            return v
         }
-        return v
     }
 
     func doReturn(_ r: ReturnExpr) throws { throw StrayExprError(expr: r) }
