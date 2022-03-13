@@ -33,72 +33,71 @@ final class ParserTests: XCTestCase {
         }
     }
 
-    func assignParseTest<U, V>(_ inp: String, _ expVarName: String, _ expValue: U) throws -> V where U: Equatable, V: LiteralExprP, V.LiteralT == U {
+    func assignParseTest<U>(_ inp: String, _ expVarName: String, _ expValue: U) throws where U: Equatable {
         var p = try XCTUnwrap(self.parse(inp))
         let ass = try XCTUnwrap(p.next() as? VoidCallExpr)
         XCTAssertEqual(ass.head, .assign)
         XCTAssert(try p.next() is NopExpr)
         XCTAssertEqual((ass.target as! VariableNameExpr).name, expVarName)
-        let rhs = try XCTUnwrap(ass.source as? V)
+        let rhs = try XCTUnwrap(ass.source as? LiteralExpr<U>)
         XCTAssertEqual(rhs.literal, expValue)
-        return rhs
     }
 
     func testPoeticNumberLiteral() throws {
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a halfpipe", "heaven", 18)
-        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked", "my life", 6)
-        let _: LiteralExpr<Double> = try assignParseTest("Your lies're my death", "your lies", 25)
-        let _: LiteralExpr<Double> = try assignParseTest("Your lies're my death's death", "your lies", 265)
-        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked''", "my life", 6)
-        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked'd", "my life", 7)
-        let _: LiteralExpr<Double> = try assignParseTest("My life's  fucked'd", "my life", 7)
-        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked'd ", "my life", 7)
-        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked''d", "my life", 7)
-        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked'd'd", "my life", 8)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a halfhalfpipe", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a halfhalfpipe''", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a ha'lfhalfpipe", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a ha''lfhalfpipe", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half'halfpipe", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a halfhalfpi'pe", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half'halfpi'pe", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e'", "heaven", 12)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half.pipe", "heaven", 14.4)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half.pipe pipe pi", "heaven", 14.442)
-        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half.pipe pipe pi. pip", "heaven", 14.4423)
+        try assignParseTest("heaven is a halfpipe", "heaven", 18.0)
+        try assignParseTest("My life's fucked", "my life", 6.0)
+        try assignParseTest("Your lies're my death", "your lies", 25.0)
+        try assignParseTest("Your lies're my death's death", "your lies", 265.0)
+        try assignParseTest("My life's fucked''", "my life", 6.0)
+        try assignParseTest("My life's fucked'd", "my life", 7.0)
+        try assignParseTest("My life's  fucked'd", "my life", 7.0)
+        try assignParseTest("My life's fucked'd ", "my life", 7.0)
+        try assignParseTest("My life's fucked''d", "my life", 7.0)
+        try assignParseTest("My life's fucked'd'd", "my life", 8.0)
+        try assignParseTest("heaven is a halfhalfpipe", "heaven", 12.0)
+        try assignParseTest("heaven is a halfhalfpipe''", "heaven", 12.0)
+        try assignParseTest("heaven is a ha'lfhalfpipe", "heaven", 12.0)
+        try assignParseTest("heaven is a ha''lfhalfpipe", "heaven", 12.0)
+        try assignParseTest("heaven is a half'halfpipe", "heaven", 12.0)
+        try assignParseTest("heaven is a halfhalfpi'pe", "heaven", 12.0)
+        try assignParseTest("heaven is a half'halfpi'pe", "heaven", 12.0)
+        try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e", "heaven", 12.0)
+        try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e'", "heaven", 12.0)
+        try assignParseTest("heaven is a half.pipe", "heaven", 14.4)
+        try assignParseTest("heaven is a half.pipe pipe pi", "heaven", 14.442)
+        try assignParseTest("heaven is a half.pipe pipe pi. pip", "heaven", 14.4423)
     }
 
     func testPoeticConstantLiteral() throws {
-        let _: LiteralExpr<Rockstar.Null> = try assignParseTest("My life's gone", "my life", Rockstar.null)
-        let _: LiteralExpr<Bool> = try assignParseTest("My life's lies lol", "my life", false)
-        let _: LiteralExpr<Rockstar.Mysterious> = try assignParseTest("My life's mysterious", "my life", Rockstar.mysterious)
+        try assignParseTest("My life's gone", "my life", Rockstar.null)
+        try assignParseTest("My life's lies lol", "my life", false)
+        try assignParseTest("My life's mysterious", "my life", Rockstar.mysterious)
     }
 
     func testPoeticStringLiteral() throws {
-        let _: LiteralExpr<String> = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
-        let _: LiteralExpr<String> = try assignParseTest("(when i was 17) my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
-        let _: LiteralExpr<String> = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
-        let _: LiteralExpr<String> = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
-        let _: LiteralExpr<String> = try assignParseTest("Mother says good \"night\" good(fright)\t good124.5e2", "mother", "good \"night\" good(fright)\t good124.5e2")
-        let _: LiteralExpr<String> = try assignParseTest("Father say  \\ lala 'sick hui'  ", "father", " \\ lala 'sick hui'  ")
-        let _: LiteralExpr<String> = try assignParseTest("brother say ", "brother", "")
-        let _: LiteralExpr<String> = try assignParseTest("my father said", "my father", "")
+        try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+        try assignParseTest("(when i was 17) my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
+        try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
+        try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
+        try assignParseTest("Mother says good \"night\" good(fright)\t good124.5e2", "mother", "good \"night\" good(fright)\t good124.5e2")
+        try assignParseTest("Father say  \\ lala 'sick hui'  ", "father", " \\ lala 'sick hui'  ")
+        try assignParseTest("brother say ", "brother", "")
+        try assignParseTest("my father said", "my father", "")
     }
 
     func testLetAssignment() throws {
-        let _: LiteralExpr<String> = try assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
-        let _: LiteralExpr<Double> = try assignParseTest("let my life be 42.0", "my life", 42.0)
-        let _: LiteralExpr<Bool> = try assignParseTest("let The Devil be right", "the devil", true)
-        let _: LiteralExpr<Bool> = try assignParseTest("let The Devil be wrong", "the devil", false)
-        let _: LiteralExpr<Rockstar.Null> = try assignParseTest("let hate be nothing", "hate", Rockstar.null)
-        let _: LiteralExpr<Rockstar.Mysterious> = try assignParseTest("let dragons be mysterious", "dragons", Rockstar.mysterious)
+        try assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
+        try assignParseTest("let my life be 42.0", "my life", 42.0)
+        try assignParseTest("let The Devil be right", "the devil", true)
+        try assignParseTest("let The Devil be wrong", "the devil", false)
+        try assignParseTest("let hate be nothing", "hate", Rockstar.null)
+        try assignParseTest("let dragons be mysterious", "dragons", Rockstar.mysterious)
     }
 
     func testPutAssignment() throws {
-        let _: LiteralExpr<Double> = try assignParseTest("put 42 in my life", "my life", 42.0)
-        let _: LiteralExpr<String> = try assignParseTest("put \"squirrels\" into my pants", "my pants", "squirrels")
-        let _: LiteralExpr<String> = try assignParseTest("put silence into my pants", "my pants", "")
+        try assignParseTest("put 42 in my life", "my life", 42.0)
+        try assignParseTest("put \"squirrels\" into my pants", "my pants", "squirrels")
+        try assignParseTest("put silence into my pants", "my pants", "")
     }
 
     func testLetWithAssignment() throws {

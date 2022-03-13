@@ -5,11 +5,6 @@ internal protocol ExprP: PrettyNamed {
 internal protocol ValueExprP: ExprP {}
 internal protocol LocationExprP: ValueExprP {}
 
-internal protocol LiteralExprP: ValueExprP {
-    associatedtype LiteralT
-    var literal: LiteralT { get }
-}
-
 internal struct NopExpr: ExprP {
     let range: LexRange
 }
@@ -23,7 +18,7 @@ internal struct VariableNameExpr: LocationExprP {
     let range: LexRange
 }
 
-internal struct LiteralExpr<T>: LiteralExprP {
+internal struct LiteralExpr<T>: ValueExprP {
     let literal: T
     let range: LexRange
 }
