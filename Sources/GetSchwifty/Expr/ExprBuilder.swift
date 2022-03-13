@@ -77,7 +77,7 @@ internal class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, Ignore
                 _range = -parent!.range.end
             }
             return _range!
-        } set{
+        } set {
             _range = newValue
         }
     }
