@@ -1,12 +1,12 @@
 enum Precedence: Int, Equatable, Comparable {
-    case literal = 0
-    case logic   = 7
-    case compare = 8
-    case plus    = 9
-    case times   = 10
-    case not     = 11
-    case call    = 12
-    case index   = 14
+    case logic   = 20
+    case compare = 21
+    case plus    = 22
+    case times   = 23
+    case not     = 24
+    case call    = 25
+    case index   = 26
+    case literal = 99
 
     static func <(lhs: Precedence, rhs: Precedence) -> Bool { lhs.rawValue < rhs.rawValue }
 }
@@ -27,6 +27,9 @@ extension FunctionCallExpr.Op {
 
 internal protocol ArithExprBuilder: SingleExprBuilder {
     var precedence: Precedence { get }
+    var isStatement: Bool { get }
+    func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder?
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
 }
 
 extension IdentifierLex {
@@ -43,6 +46,30 @@ extension IdentifierLex {
         case String.isIdentifiers: return .eq
         default: return nil
         }
+    }
+}
+
+extension ArithExprBuilder {
+    var isStatement: Bool { false }
+
+    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        if let pre = try preHandleIdentifierLex(id) {
+            return pre
+        }
+
+        if isStatement && String.isIdentifiers ~= id.literal {
+            return PoeticNumberishAssignmentExprBuilder(target: self)
+        }
+
+        if let op = id.getOp(), op.precedence <= self.precedence {
+            return BiArithExprBuilder(op: op, lhs: self)
+        }
+
+        return try postHandleIdentifierLex(id)
+    }
+
+    func preHandleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder? {
+        return nil
     }
 }
 
@@ -77,7 +104,7 @@ internal class BiArithExprBuilder:
         return self
     }
 
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder? {
         if opMustContinueWith ~= id.literal {
             switch id.literal {
             case String.thanIdentifiers,
@@ -115,9 +142,10 @@ internal class BiArithExprBuilder:
             }
         }
 
-        if let op = id.getOp(), op.precedence <= self.precedence {
-            return self |=> BiArithExprBuilder(op: op, lhs: self)
-        }
+        return nil
+    }
+
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         return try pushThrough(id)
     }
 }
@@ -144,10 +172,7 @@ internal class UnArithExprBuilder:
         return self
     }
 
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        if let op = id.getOp(), op.precedence <= self.precedence {
-            return self |=> BiArithExprBuilder(op: op, lhs: self)
-        }
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         return try pushThrough(id)
     }
 }

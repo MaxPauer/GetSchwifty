@@ -1,48 +1,3 @@
-internal protocol ArithValueExprBuilder: ArithExprBuilder {
-    var isStatement: Bool { get }
-    func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder?
-    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
-}
-
-extension ArithValueExprBuilder {
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        if let pre = try preHandleIdentifierLex(id) {
-            return pre
-        }
-
-        switch id.literal {
-        case String.additionIdentifiers:
-            return BiArithExprBuilder(op: .add, lhs: self)
-        case String.subtractionIdentifiers:
-            return BiArithExprBuilder(op: .sub, lhs: self)
-        case String.multiplicationIdentifiers:
-            return BiArithExprBuilder(op: .mul, lhs: self)
-        case String.divisionIdentifiers:
-            return BiArithExprBuilder(op: .div, lhs: self)
-        case String.andIdentifiers:
-            return BiArithExprBuilder(op: .and, lhs: self)
-        case String.orIdentifiers:
-            return BiArithExprBuilder(op: .orr, lhs: self)
-        case String.norIdentifiers:
-            return BiArithExprBuilder(op: .nor, lhs: self)
-        case String.isntIdentifiers:
-            return BiArithExprBuilder(op: .neq, lhs: self)
-        case String.isIdentifiers:
-            if isStatement {
-                return PoeticNumberishAssignmentExprBuilder(target: self)
-            }
-            return BiArithExprBuilder(op: .eq, lhs: self)
-
-        default:
-            return try postHandleIdentifierLex(id)
-        }
-    }
-
-    func preHandleIdentifierLex(_ id: IdentifierLex) -> ExprBuilder? {
-        return nil
-    }
-}
-
 internal class IndexingExprBuilder:
         DelimiterLexToListP, PushesStringLexThroughP, PushesNumberLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let target: ExprBuilder
@@ -73,7 +28,7 @@ internal class IndexingExprBuilder:
 }
 
 internal class FunctionCallExprBuilder:
-        ArithValueExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresWhitespaceLexP, IgnoresCommentLexP {
+        ArithExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresWhitespaceLexP, IgnoresCommentLexP {
     var head: ExprBuilder
     lazy var args: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
@@ -110,7 +65,7 @@ internal class FunctionCallExprBuilder:
 }
 
 internal class PopExprBuilder:
-        ArithValueExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+        ArithExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var expectsTarget: Bool = false

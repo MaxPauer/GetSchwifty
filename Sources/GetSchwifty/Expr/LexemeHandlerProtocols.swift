@@ -73,7 +73,7 @@ internal extension PushesDelimiterLexThroughP {
     }
 }
 
-internal protocol DelimiterLexToListP: ArithValueExprBuilder {}
+internal protocol DelimiterLexToListP: ArithExprBuilder {}
 
 extension DelimiterLexToListP {
     func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
