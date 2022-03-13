@@ -162,12 +162,7 @@ internal class StringExprBuilder:
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        switch id.literal {
-        case String.indexingIdentifiers:
-            return IndexingExprBuilder(target: self, isStatement: isStatement)
-        default:
-            throw UnexpectedLexemeError(got: id, parsing: self)
-        }
+        throw UnexpectedLexemeError(got: id, parsing: self)
     }
 
     func handleStringLex(_ s: StringLex) throws -> ExprBuilder {
