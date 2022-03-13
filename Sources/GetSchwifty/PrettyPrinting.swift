@@ -156,20 +156,8 @@ extension PronounExpr {
 extension VariableNameExpr {
     var prettyName: String { "Variable Name: \(name)" }
 }
-extension BoolExpr {
-    var prettyName: String { "Boolean Value: \(literal)" }
-}
-extension NumberExpr {
-    var prettyName: String { "Numeric Value: \"\(literal)\"" }
-}
-extension StringExpr {
-    var prettyName: String { "String Value: \"\(literal)\"" }
-}
-extension NullExpr {
-    var prettyName: String { "Null Value" }
-}
-extension MysteriousExpr {
-    var prettyName: String { "Mysterious Value" }
+extension LiteralExpr {
+    var prettyName: String { "Literal Value: \(literal)" }
 }
 extension IndexingExpr {
     var prettyName: String { "Indexing" }

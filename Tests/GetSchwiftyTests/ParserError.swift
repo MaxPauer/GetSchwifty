@@ -70,7 +70,7 @@ final class ParserErrorTests: XCTestCase {
     }
 
     func testInputFailure() throws {
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("listen to true", BoolExpr.self, InputExprBuilder.self, (1,10))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("listen to true", LiteralExpr<Bool>.self, InputExprBuilder.self, (1,10))
         let _: UnexpectedExprError<LocationExprP> = try errorTest("listen to", NopExpr.self, InputExprBuilder.self, (1,9))
     }
 
@@ -100,7 +100,7 @@ final class ParserErrorTests: XCTestCase {
         let _: UnexpectedExprError<LocationExprP> = try errorTest("rock", NopExpr.self, PushExprBuilder.self, (1,4))
         let _: UnexpectedExprError<ValueExprP> = try errorTest("push it with", NopExpr.self, PushExprBuilder.self, (1,12))
         let _: UnexpectedExprError<LocationExprP> = try errorTest("roll", NopExpr.self, PopExprBuilder.self, (1,4))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("pop 5", NumberExpr.self, PopExprBuilder.self, (1,4))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("pop 5", LiteralExpr<Double>.self, PopExprBuilder.self, (1,4))
     }
 
     func testArithFailure() throws {
@@ -123,16 +123,16 @@ final class ParserErrorTests: XCTestCase {
 
     func testRoundingFailure() throws {
         let _: UnfinishedExprError = try errorTest("turn ", RoundExprBuilder.self, (1,5))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("turn 5 up", NumberExpr.self, RoundExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("turn 5 up", LiteralExpr<Double>.self, RoundExprBuilder.self, (1,5))
         let _: UnfinishedExprError = try errorTest("turn it", RoundExprBuilder.self, (1,7))
     }
 
     func testCastingFailure() throws {
         let _: UnexpectedExprError<LocationExprP> = try errorTest("cast ", NopExpr.self, VoidCallExprBuilder.self, (1,5))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5", NumberExpr.self, VoidCallExprBuilder.self, (1,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5", LiteralExpr<Double>.self, VoidCallExprBuilder.self, (1,5))
         let _: UnexpectedExprError<LocationExprP> = try errorTest("cast my life into", NopExpr.self, VoidCallExprBuilder.self, (1,17))
         let _: UnexpectedExprError<ValueExprP?> = try errorTest("cast my life with", NopExpr.self, VoidCallExprBuilder.self, (1,17))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5 into 5", NumberExpr.self, VoidCallExprBuilder.self, (1,12))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("cast 5 into 5", LiteralExpr<Double>.self, VoidCallExprBuilder.self, (1,12))
     }
 
     func testFuncCallFailure() throws {
@@ -142,7 +142,7 @@ final class ParserErrorTests: XCTestCase {
     func testLoopFailure() throws {
         let _: UnexpectedExprError<ValueExprP> = try errorTest("until ", NopExpr.self, LoopExprBuilder.self, (1,5))
         let _: UnexpectedExprError<ValueExprP> = try errorTest("until listen", VoidCallExpr.self, LoopExprBuilder.self, (1,5))
-        let _: UnexpectedExprError<LocationExprP> = try errorTest("until 1\ncast 5", NumberExpr.self, VoidCallExprBuilder.self, (2,5))
+        let _: UnexpectedExprError<LocationExprP> = try errorTest("until 1\ncast 5", LiteralExpr<Double>.self, VoidCallExprBuilder.self, (2,5))
     }
 
     func testFuncDeclFailure() throws {

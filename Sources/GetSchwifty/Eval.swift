@@ -226,15 +226,15 @@ extension EvalContext {
 
     func eval(_ expr: ValueExprP) throws -> Any {
         switch expr {
-        case let b as BoolExpr:
+        case let b as LiteralExpr<Bool>:
             return b.literal
-        case let n as NumberExpr:
+        case let n as LiteralExpr<Double>:
             return n.literal
-        case let s as StringExpr:
+        case let s as LiteralExpr<String>:
             return s.literal
-        case let n as NullExpr:
+        case let n as LiteralExpr<Rockstar.Null>:
             return n.literal
-        case let m as MysteriousExpr:
+        case let m as LiteralExpr<Rockstar.Mysterious>:
             return m.literal
         case let l as LocationExprP:
             return try get(l)

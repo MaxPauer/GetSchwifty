@@ -401,7 +401,7 @@ internal class CrementExprBuilder:
 
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
-        let add = FunctionCallExpr(head: .add, args: [t, NumberExpr(literal: Double(value), range: range)], range: range)
+        let add = FunctionCallExpr(head: .add, args: [t, LiteralExpr(literal: Double(value), range: range)], range: range)
         return VoidCallExpr(head: .assign, target: t, source: add, arg: nil, range: range)
     }
 

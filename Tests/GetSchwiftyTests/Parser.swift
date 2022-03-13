@@ -45,60 +45,60 @@ final class ParserTests: XCTestCase {
     }
 
     func testPoeticNumberLiteral() throws {
-        let _: NumberExpr = try assignParseTest("heaven is a halfpipe", "heaven", 18)
-        let _: NumberExpr = try assignParseTest("My life's fucked", "my life", 6)
-        let _: NumberExpr = try assignParseTest("Your lies're my death", "your lies", 25)
-        let _: NumberExpr = try assignParseTest("Your lies're my death's death", "your lies", 265)
-        let _: NumberExpr = try assignParseTest("My life's fucked''", "my life", 6)
-        let _: NumberExpr = try assignParseTest("My life's fucked'd", "my life", 7)
-        let _: NumberExpr = try assignParseTest("My life's  fucked'd", "my life", 7)
-        let _: NumberExpr = try assignParseTest("My life's fucked'd ", "my life", 7)
-        let _: NumberExpr = try assignParseTest("My life's fucked''d", "my life", 7)
-        let _: NumberExpr = try assignParseTest("My life's fucked'd'd", "my life", 8)
-        let _: NumberExpr = try assignParseTest("heaven is a halfhalfpipe", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a halfhalfpipe''", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a ha'lfhalfpipe", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a ha''lfhalfpipe", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a half'halfpipe", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a halfhalfpi'pe", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a half'halfpi'pe", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e'", "heaven", 12)
-        let _: NumberExpr = try assignParseTest("heaven is a half.pipe", "heaven", 14.4)
-        let _: NumberExpr = try assignParseTest("heaven is a half.pipe pipe pi", "heaven", 14.442)
-        let _: NumberExpr = try assignParseTest("heaven is a half.pipe pipe pi. pip", "heaven", 14.4423)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a halfpipe", "heaven", 18)
+        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked", "my life", 6)
+        let _: LiteralExpr<Double> = try assignParseTest("Your lies're my death", "your lies", 25)
+        let _: LiteralExpr<Double> = try assignParseTest("Your lies're my death's death", "your lies", 265)
+        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked''", "my life", 6)
+        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked'd", "my life", 7)
+        let _: LiteralExpr<Double> = try assignParseTest("My life's  fucked'd", "my life", 7)
+        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked'd ", "my life", 7)
+        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked''d", "my life", 7)
+        let _: LiteralExpr<Double> = try assignParseTest("My life's fucked'd'd", "my life", 8)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a halfhalfpipe", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a halfhalfpipe''", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a ha'lfhalfpipe", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a ha''lfhalfpipe", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half'halfpipe", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a halfhalfpi'pe", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half'halfpi'pe", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a h'a'l'f'h'a'l'f'p'i'p'e'", "heaven", 12)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half.pipe", "heaven", 14.4)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half.pipe pipe pi", "heaven", 14.442)
+        let _: LiteralExpr<Double> = try assignParseTest("heaven is a half.pipe pipe pi. pip", "heaven", 14.4423)
     }
 
     func testPoeticConstantLiteral() throws {
-        let _: NullExpr = try assignParseTest("My life's gone", "my life", Rockstar.null)
-        let _: BoolExpr = try assignParseTest("My life's lies lol", "my life", false)
-        let _: MysteriousExpr = try assignParseTest("My life's mysterious", "my life", Rockstar.mysterious)
+        let _: LiteralExpr<Rockstar.Null> = try assignParseTest("My life's gone", "my life", Rockstar.null)
+        let _: LiteralExpr<Bool> = try assignParseTest("My life's lies lol", "my life", false)
+        let _: LiteralExpr<Rockstar.Mysterious> = try assignParseTest("My life's mysterious", "my life", Rockstar.mysterious)
     }
 
     func testPoeticStringLiteral() throws {
-        let _: StringExpr = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
-        let _: StringExpr = try assignParseTest("(when i was 17) my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
-        let _: StringExpr = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
-        let _: StringExpr = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
-        let _: StringExpr = try assignParseTest("Mother says good \"night\" good(fright)\t good124.5e2", "mother", "good \"night\" good(fright)\t good124.5e2")
-        let _: StringExpr = try assignParseTest("Father say  \\ lala 'sick hui'  ", "father", " \\ lala 'sick hui'  ")
-        let _: StringExpr = try assignParseTest("brother say ", "brother", "")
-        let _: StringExpr = try assignParseTest("my father said", "my father", "")
+        let _: LiteralExpr<String> = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+        let _: LiteralExpr<String> = try assignParseTest("(when i was 17) my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
+        let _: LiteralExpr<String> = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
+        let _: LiteralExpr<String> = try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
+        let _: LiteralExpr<String> = try assignParseTest("Mother says good \"night\" good(fright)\t good124.5e2", "mother", "good \"night\" good(fright)\t good124.5e2")
+        let _: LiteralExpr<String> = try assignParseTest("Father say  \\ lala 'sick hui'  ", "father", " \\ lala 'sick hui'  ")
+        let _: LiteralExpr<String> = try assignParseTest("brother say ", "brother", "")
+        let _: LiteralExpr<String> = try assignParseTest("my father said", "my father", "")
     }
 
     func testLetAssignment() throws {
-        let _: StringExpr = try assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
-        let _: NumberExpr = try assignParseTest("let my life be 42.0", "my life", 42.0)
-        let _: BoolExpr = try assignParseTest("let The Devil be right", "the devil", true)
-        let _: BoolExpr = try assignParseTest("let The Devil be wrong", "the devil", false)
-        let _: NullExpr = try assignParseTest("let hate be nothing", "hate", Rockstar.null)
-        let _: MysteriousExpr = try assignParseTest("let dragons be mysterious", "dragons", Rockstar.mysterious)
+        let _: LiteralExpr<String> = try assignParseTest("let my life be \"GREAT\"", "my life", "GREAT")
+        let _: LiteralExpr<Double> = try assignParseTest("let my life be 42.0", "my life", 42.0)
+        let _: LiteralExpr<Bool> = try assignParseTest("let The Devil be right", "the devil", true)
+        let _: LiteralExpr<Bool> = try assignParseTest("let The Devil be wrong", "the devil", false)
+        let _: LiteralExpr<Rockstar.Null> = try assignParseTest("let hate be nothing", "hate", Rockstar.null)
+        let _: LiteralExpr<Rockstar.Mysterious> = try assignParseTest("let dragons be mysterious", "dragons", Rockstar.mysterious)
     }
 
     func testPutAssignment() throws {
-        let _: NumberExpr = try assignParseTest("put 42 in my life", "my life", 42.0)
-        let _: StringExpr = try assignParseTest("put \"squirrels\" into my pants", "my pants", "squirrels")
-        let _: StringExpr = try assignParseTest("put silence into my pants", "my pants", "")
+        let _: LiteralExpr<Double> = try assignParseTest("put 42 in my life", "my life", 42.0)
+        let _: LiteralExpr<String> = try assignParseTest("put \"squirrels\" into my pants", "my pants", "squirrels")
+        let _: LiteralExpr<String> = try assignParseTest("put silence into my pants", "my pants", "")
     }
 
     func testLetWithAssignment() throws {
@@ -111,7 +111,7 @@ final class ParserTests: XCTestCase {
             let rhs = try XCTUnwrap(ass.source as? FunctionCallExpr)
             XCTAssertEqual(rhs.head, op)
             let rhsTar = try XCTUnwrap(rhs.args[0] as? VariableNameExpr)
-            let rhsVal = try XCTUnwrap(rhs.args[1] as? NumberExpr)
+            let rhsVal = try XCTUnwrap(rhs.args[1] as? LiteralExpr<Double>)
             XCTAssertEqual(lhsTar.name, rhsTar.name)
             XCTAssertEqual(rhsVal.literal, val)
         }
@@ -154,7 +154,7 @@ final class ParserTests: XCTestCase {
         let _: VariableNameExpr = try testParse("whisper my name")
         let _: VariableNameExpr = try testParse("scream my name")
         let _: VariableNameExpr = try testParse("say my name") // Heisenberg
-        let _: BoolExpr = try testParse("whisper yes")
+        let _: LiteralExpr<Bool> = try testParse("whisper yes")
         let _: PronounExpr = try testParse("shout it")
     }
 
@@ -167,7 +167,7 @@ final class ParserTests: XCTestCase {
             let s = try XCTUnwrap(o.source as? FunctionCallExpr)
             XCTAssertEqual(s.head, .add)
             let _ = try XCTUnwrap(s.args[0] as? T)
-            let v = try XCTUnwrap(s.args[1] as? NumberExpr)
+            let v = try XCTUnwrap(s.args[1] as? LiteralExpr<Double>)
             XCTAssertEqual(v.literal, Double(value))
             return t
         }
@@ -190,7 +190,7 @@ final class ParserTests: XCTestCase {
             XCTAssertEqual(o.head, .push)
             _ = try XCTUnwrap(o.target as? VariableNameExpr)
             if let v = val {
-                let vv = try XCTUnwrap(o.arg as? NumberExpr)
+                let vv = try XCTUnwrap(o.arg as? LiteralExpr<Double>)
                 XCTAssertEqual(vv.literal, v)
             }
         }
@@ -222,9 +222,9 @@ final class ParserTests: XCTestCase {
             return (s,ii)
         }
 
-        let _: (VariableNameExpr, NumberExpr) = try testParse("A horse at 5")
+        let _: (VariableNameExpr, LiteralExpr<Double>) = try testParse("A horse at 5")
         let _: (PronounExpr, PronounExpr) = try testParse("him at her")
-        let _: (VariableNameExpr, StringExpr) = try testParse("heaven at \"hell\"")
+        let _: (VariableNameExpr, LiteralExpr<String>) = try testParse("heaven at \"hell\"")
     }
 
     func testArithmetic() throws {
@@ -251,14 +251,14 @@ final class ParserTests: XCTestCase {
             }
             func str(_ e: ExprP) -> String {
                 switch e {
-                case let n as NumberExpr: return str(n)
+                case let n as LiteralExpr<Double>: return str(n)
                 case let f as FunctionCallExpr: return str(f)
                 case let v as VariableNameExpr: return str(v)
                 case let l as ListExpr: return str(l)
                 default: return "(?)"
                 }
             }
-            func str(_ n: NumberExpr) -> String { String(Int(n.literal)) }
+            func str(_ n: LiteralExpr<Double>) -> String { String(Int(n.literal)) }
             func str(_ v: VariableNameExpr) -> String { v.name }
             func str(_ l: ListExpr) -> String {
                 l.members.map { str($0) }.joined(separator: ",")
@@ -313,7 +313,7 @@ final class ParserTests: XCTestCase {
             XCTAssertEqual(i.members.count, exp.count)
             for (m,e) in zip(i.members, exp) {
                 if let ee = e as? Int {
-                    let mm = try XCTUnwrap(m as? NumberExpr)
+                    let mm = try XCTUnwrap(m as? LiteralExpr<Double>)
                     XCTAssertEqual(mm.literal, Double(ee))
                 } else {
                     let ee = e as! [Any]
@@ -321,7 +321,7 @@ final class ParserTests: XCTestCase {
                     XCTAssertEqual(mm.head, .and)
                     for i in 0...1 {
                         let eee = ee[i] as! Int
-                        let mmm = try XCTUnwrap(mm.args[i] as? NumberExpr)
+                        let mmm = try XCTUnwrap(mm.args[i] as? LiteralExpr<Double>)
                         XCTAssertEqual(mmm.literal, Double(eee))
                     }
                 }
@@ -336,7 +336,7 @@ final class ParserTests: XCTestCase {
     func testListReduction() throws {
         func testParse(_ inp: String, _ exp: Double) throws {
             var p = try XCTUnwrap(self.parse(inp))
-            let i = try XCTUnwrap(p.next() as? NumberExpr)
+            let i = try XCTUnwrap(p.next() as? LiteralExpr<Double>)
             XCTAssertEqual(i.literal, exp)
         }
         try testParse("5,", 5)
@@ -370,10 +370,10 @@ final class ParserTests: XCTestCase {
             }
         }
         try testParse("cast my life", VariableNameExpr.self, nil, nil)
-        try testParse("burn my life with 5", VariableNameExpr.self, nil, NumberExpr.self)
+        try testParse("burn my life with 5", VariableNameExpr.self, nil, LiteralExpr<Double>.self)
         try testParse("cast my dream into my life", VariableNameExpr.self, VariableNameExpr.self, nil)
-        try testParse("cast my dream into my life with 5", VariableNameExpr.self, VariableNameExpr.self, NumberExpr.self)
-        try testParse("cast 5 into my life", VariableNameExpr.self, NumberExpr.self, nil)
+        try testParse("cast my dream into my life with 5", VariableNameExpr.self, VariableNameExpr.self, LiteralExpr<Double>.self)
+        try testParse("cast 5 into my life", VariableNameExpr.self, LiteralExpr<Double>.self, nil)
     }
 
     func testFuncCall() throws {
@@ -384,7 +384,7 @@ final class ParserTests: XCTestCase {
             XCTAssert(type(of: i.args[0]) == head)
             XCTAssert(type(of: i.args[1]) == ex)
         }
-        try testParse("my life taking 5", VariableNameExpr.self, NumberExpr.self)
+        try testParse("my life taking 5", VariableNameExpr.self, LiteralExpr<Double>.self)
         try testParse("it taking work", PronounExpr.self, VariableNameExpr.self)
         try testParse("my life taking 5, and 6", VariableNameExpr.self, ListExpr.self)
     }

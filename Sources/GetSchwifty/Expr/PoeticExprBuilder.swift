@@ -77,7 +77,7 @@ internal class PoeticNumberExprBuilder:
         guard let value = value else {
             throw UnfinishedExprError(parsing: self, expecting: Set())
         }
-        return NumberExpr(literal: Double(value), range: range)
+        return LiteralExpr(literal: Double(value), range: range)
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -155,7 +155,7 @@ internal class PoeticStringAssignmentExprBuilder:
 
     func build() throws -> ExprP {
         let t: LocationExprP = try target.build(asChildOf: self)
-        return VoidCallExpr(head: .assign, target: t, source: StringExpr(literal: value, range: range), arg: nil, range: range)
+        return VoidCallExpr(head: .assign, target: t, source: LiteralExpr(literal: value, range: range), arg: nil, range: range)
     }
 
     func append(_ s: String) {

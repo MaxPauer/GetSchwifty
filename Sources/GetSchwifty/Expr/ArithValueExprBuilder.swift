@@ -184,7 +184,7 @@ internal class StringExprBuilder:
     init(literal s: String) { literal = s }
 
     func build() -> ExprP {
-        return StringExpr(literal: literal, range: range)
+        return LiteralExpr(literal: literal, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -204,7 +204,7 @@ internal class NumberExprBuilder:
     let precedence: Precedence = .literal
 
     func build() -> ExprP {
-        return NumberExpr(literal: literal, range: range)
+        return LiteralExpr(literal: literal, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -233,7 +233,7 @@ internal class BoolExprBuilder:
     init(literal b: Bool) { literal = b }
 
     func build() -> ExprP {
-        return BoolExpr(literal: literal, range: range)
+        return LiteralExpr(literal: literal, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -248,7 +248,7 @@ internal class NullExprBuilder:
     let precedence: Precedence = .literal
 
     func build() -> ExprP {
-        return NullExpr(range: range)
+        return LiteralExpr(literal: Rockstar.null, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
@@ -263,7 +263,7 @@ internal class MysteriousExprBuilder:
     let precedence: Precedence = .literal
 
     func build() -> ExprP {
-        return MysteriousExpr(range: range)
+        return LiteralExpr(literal: Rockstar.mysterious, range: range)
     }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {

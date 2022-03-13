@@ -23,28 +23,8 @@ internal struct VariableNameExpr: LocationExprP {
     let range: LexRange
 }
 
-internal struct BoolExpr: LiteralExprP {
-    let literal: Bool
-    let range: LexRange
-}
-
-internal struct NumberExpr: LiteralExprP {
-    let literal: Double
-    let range: LexRange
-}
-
-internal struct StringExpr: LiteralExprP {
-    let literal: String
-    let range: LexRange
-}
-
-internal struct NullExpr: LiteralExprP {
-    let literal = Rockstar.null
-    let range: LexRange
-}
-
-internal struct MysteriousExpr: LiteralExprP {
-    let literal = Rockstar.mysterious
+internal struct LiteralExpr<T>: LiteralExprP {
+    let literal: T
     let range: LexRange
 }
 
