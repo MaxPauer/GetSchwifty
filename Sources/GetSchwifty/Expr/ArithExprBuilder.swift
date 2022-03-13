@@ -1,24 +1,31 @@
-extension FunctionCallExpr.Op {
-    var precedence: Int {
-        switch self {
-        case .and, .orr, .nor: return 1
-        case .eq, .neq, .gt,
-             .lt, .geq, .leq:  return 2
-        case .add, .sub:       return 3
-        case .mul, .div:       return 4
-        case .not:             return 5
-        case .pop, .custom:    return 6
-        }
-    }
+enum Precedence: Int, Equatable, Comparable {
+    case logic   = 7
+    case compare = 8
+    case plus    = 9
+    case times   = 10
+    case not     = 11
+    case call    = 12
 
-    static func <=(lhs: Self, rhs: Self) -> Bool {
-        lhs.precedence <= rhs.precedence
+    static func <(lhs: Precedence, rhs: Precedence) -> Bool { lhs.rawValue < rhs.rawValue }
+}
+
+extension FunctionCallExpr.Op {
+    var precedence: Precedence {
+        switch self {
+        case .and, .orr, .nor: return .logic
+        case .eq, .neq, .gt,
+             .lt, .geq, .leq:  return .compare
+        case .add, .sub:       return .plus
+        case .mul, .div:       return .times
+        case .not:             return .not
+        case .pop, .custom:    return .call
+        }
     }
 }
 
 internal protocol ArithExprBuilder: SingleExprBuilder {
-    var op: FunctionCallExpr.Op { get set }
     var rhs: ExprBuilder { get set }
+    var precedence: Precedence { get }
 }
 
 extension IdentifierLex {
@@ -40,12 +47,14 @@ extension IdentifierLex {
 
 internal class BiArithExprBuilder:
         ArithExprBuilder, PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
-    var op: FunctionCallExpr.Op
+    private(set) var op: FunctionCallExpr.Op
     var opMustContinueWith: Set<String> = Set()
     var hasRhs: Bool = false
     var lhs: ExprBuilder
     lazy var rhs: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
+
+    var precedence: Precedence { op.precedence }
 
     init(op o: FunctionCallExpr.Op, lhs l: ExprBuilder) {
         op = o
@@ -105,7 +114,7 @@ internal class BiArithExprBuilder:
             }
         }
 
-        if let op = id.getOp(), op <= self.op {
+        if let op = id.getOp(), op.precedence <= self.precedence {
             return self |=> BiArithExprBuilder(op: op, lhs: self)
         }
         return try pushThrough(id)
@@ -114,13 +123,15 @@ internal class BiArithExprBuilder:
 
 internal class UnArithExprBuilder:
         ArithExprBuilder, PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
-    var op: FunctionCallExpr.Op
+    let op: FunctionCallExpr.Op
     lazy var rhs: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
     init(op o: FunctionCallExpr.Op) {
         op = o
     }
+
+    var precedence: Precedence { op.precedence }
 
     func build() throws -> ExprP {
         let r: ValueExprP = try rhs.build(asChildOf: self)
@@ -133,7 +144,7 @@ internal class UnArithExprBuilder:
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        if let op = id.getOp(), op <= self.op {
+        if let op = id.getOp(), op.precedence <= self.precedence {
             return self |=> BiArithExprBuilder(op: op, lhs: self)
         }
         return try pushThrough(id)

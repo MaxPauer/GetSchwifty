@@ -115,7 +115,10 @@ extension RoundExprBuilder {
 extension VoidCallExprBuilder {
     var prettyName: String { "Call: \(op)" }
 }
-extension ArithExprBuilder {
+extension BiArithExprBuilder {
+    var prettyName: String { "Arithmetic: \(op)" }
+}
+extension UnArithExprBuilder {
     var prettyName: String { "Arithmetic: \(op)" }
 }
 extension FunctionCallExprBuilder {
