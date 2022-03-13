@@ -1,4 +1,5 @@
 enum Precedence: Int, Equatable, Comparable {
+    case list    = 19
     case logic   = 20
     case compare = 21
     case plus    = 22

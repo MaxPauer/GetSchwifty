@@ -1,6 +1,6 @@
 infix operator |=>
 
-fileprivate extension DelimiterLex {
+internal extension DelimiterLex {
     var isComma: Bool { literal == "," }
 }
 
@@ -487,19 +487,22 @@ internal class OutputExprBuilder:
 }
 
 internal class ListExprBuilder:
-        SingleExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+        ArithExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var sources = DLinkedList<ExprBuilder>()
     lazy var currSource: ExprBuilder = VanillaExprBuilder(parent: self)
     var takesAnd: Bool
+    var rejectsAnd: Bool
     var isStatement: Bool
     var range: LexRange!
+    let precedence: Precedence = .list
 
     var consumesAnd: Bool { takesAnd }
 
-    init(first s: ExprBuilder, isStatement iss: Bool) {
+    init(first s: ExprBuilder, isStatement iss: Bool, takesAnd t: Bool) {
         sources.pushBack(s)
         isStatement = iss
-        takesAnd = true
+        takesAnd = t
+        rejectsAnd = !t
     }
 
     func build() throws -> ExprP {
@@ -519,22 +522,31 @@ internal class ListExprBuilder:
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         takesAnd = false
+        rejectsAnd = false
         currSource = try currSource.partialPush(lex)
         return self
     }
 
-    func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+    func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder? {
         switch id.literal {
         case String.andIdentifiers where takesAnd:
             takesAnd = false
+            rejectsAnd = true
             return self
+        case String.andIdentifiers where rejectsAnd:
+            throw UnexpectedLexemeError(got: id, parsing: self)
         default:
-            return try pushThrough(id)
+            return nil
         }
+    }
+
+    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
+        return try pushThrough(id)
     }
 
     func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
         takesAnd = d.isComma
+        rejectsAnd = !takesAnd
         sources.pushBack(currSource)
         currSource = VanillaExprBuilder(parent: self)
         return self

@@ -77,6 +77,6 @@ internal protocol DelimiterLexToListP: ArithExprBuilder {}
 
 extension DelimiterLexToListP {
     func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        return ListExprBuilder(first: self, isStatement: isStatement)
+        return ListExprBuilder(first: self, isStatement: isStatement, takesAnd: d.isComma)
     }
 }
