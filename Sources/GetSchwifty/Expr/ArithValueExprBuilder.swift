@@ -107,6 +107,44 @@ internal class FunctionCallExprBuilder:
     }
 }
 
+internal class PopExprBuilder:
+        ArithValueExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+    lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
+    lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
+    var expectsTarget: Bool = false
+    var range: LexRange!
+    let isStatement: Bool = false
+
+    func build() throws -> ExprP {
+        let s: LocationExprP = try source.build(asChildOf: self)
+        if expectsTarget {
+            let t: LocationExprP = try target.build(asChildOf: self)
+            return VoidCallExpr(head: .pop, target: t, source: s, arg: nil, range: range)
+        }
+        return FunctionCallExpr(head: .pop, args: [s], range: range)
+    }
+
+    @discardableResult
+    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
+        if expectsTarget {
+            target = try target.partialPush(lex)
+        } else {
+            source = try source.partialPush(lex)
+        }
+        return self
+    }
+
+    func postHandleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
+        switch i.literal {
+        case String.intoIdentifiers:
+            expectsTarget = true
+            return self
+        default:
+            return try pushThrough(i)
+        }
+    }
+}
+
 internal class StringExprBuilder:
         DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP {
     let literal: String
