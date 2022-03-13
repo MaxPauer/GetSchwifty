@@ -1,10 +1,12 @@
 enum Precedence: Int, Equatable, Comparable {
+    case literal = 0
     case logic   = 7
     case compare = 8
     case plus    = 9
     case times   = 10
     case not     = 11
     case call    = 12
+    case index   = 14
 
     static func <(lhs: Precedence, rhs: Precedence) -> Bool { lhs.rawValue < rhs.rawValue }
 }
@@ -24,7 +26,6 @@ extension FunctionCallExpr.Op {
 }
 
 internal protocol ArithExprBuilder: SingleExprBuilder {
-    var rhs: ExprBuilder { get set }
     var precedence: Precedence { get }
 }
 

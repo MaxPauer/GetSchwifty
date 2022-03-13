@@ -8,6 +8,7 @@ internal protocol FinalizedLocationExprBuilder: DelimiterLexToListP {}
 
 extension FinalizedLocationExprBuilder {
     var canTerminate: Bool { true }
+    var precedence: Precedence { .literal }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         let word = id.literal

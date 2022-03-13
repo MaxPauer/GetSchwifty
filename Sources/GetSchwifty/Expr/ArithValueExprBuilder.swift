@@ -1,4 +1,4 @@
-internal protocol ArithValueExprBuilder: SingleExprBuilder {
+internal protocol ArithValueExprBuilder: ArithExprBuilder {
     var isStatement: Bool { get }
     func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder?
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
@@ -49,6 +49,7 @@ internal class IndexingExprBuilder:
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
     let isStatement: Bool
     var range: LexRange!
+    let precedence: Precedence = .index
 
     init(target t: ExprBuilder, isStatement iss: Bool) {
         target = t
@@ -77,6 +78,7 @@ internal class FunctionCallExprBuilder:
     lazy var args: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
     var isStatement: Bool { false }
+    let precedence: Precedence = .call
 
     init(head h: ExprBuilder) {
         head = h
@@ -114,6 +116,7 @@ internal class PopExprBuilder:
     var expectsTarget: Bool = false
     var range: LexRange!
     let isStatement: Bool = false
+    let precedence: Precedence = .call
 
     func build() throws -> ExprP {
         let s: LocationExprP = try source.build(asChildOf: self)
@@ -150,6 +153,7 @@ internal class StringExprBuilder:
     let literal: String
     var range: LexRange!
     let isStatement = false
+    let precedence: Precedence = .literal
 
     init(literal s: String) { literal = s }
 
@@ -176,6 +180,7 @@ internal class NumberExprBuilder:
     let literal: Double
     var range: LexRange!
     let isStatement = false
+    let precedence: Precedence = .literal
 
     func build() -> ExprP {
         return NumberExpr(literal: literal, range: range)
@@ -202,6 +207,7 @@ internal class BoolExprBuilder:
     let literal: Bool
     var range: LexRange!
     let isStatement = false
+    let precedence: Precedence = .literal
 
     init(literal b: Bool) { literal = b }
 
@@ -218,6 +224,7 @@ internal class NullExprBuilder:
         DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     var range: LexRange!
     let isStatement = false
+    let precedence: Precedence = .literal
 
     func build() -> ExprP {
         return NullExpr(range: range)
@@ -232,6 +239,7 @@ internal class MysteriousExprBuilder:
         DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     var range: LexRange!
     let isStatement = false
+    let precedence: Precedence = .literal
 
     func build() -> ExprP {
         return MysteriousExpr(range: range)
