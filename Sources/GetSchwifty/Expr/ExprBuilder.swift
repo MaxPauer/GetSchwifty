@@ -1,9 +1,5 @@
 infix operator |=>
 
-internal extension DelimiterLex {
-    var isComma: Bool { literal == "," }
-}
-
 internal enum PartialExpr {
     case builder(ExprBuilder)
     case expr(ExprP)
@@ -482,73 +478,6 @@ internal class OutputExprBuilder:
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
         target = try target.partialPush(lex)
-        return self
-    }
-}
-
-internal class ListExprBuilder:
-        ArithExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
-    var sources = DLinkedList<ExprBuilder>()
-    lazy var currSource: ExprBuilder = VanillaExprBuilder(parent: self)
-    var takesAnd: Bool
-    var rejectsAnd: Bool
-    var isStatement: Bool
-    var range: LexRange!
-    let precedence: Precedence = .list
-
-    var consumesAnd: Bool { takesAnd }
-
-    init(first s: ExprBuilder, isStatement iss: Bool, takesAnd t: Bool) {
-        sources.pushBack(s)
-        isStatement = iss
-        takesAnd = t
-        rejectsAnd = !t
-    }
-
-    func build() throws -> ExprP {
-        if !currSource.isVanilla {
-            sources.pushBack(currSource)
-        }
-        var members: [ValueExprP] = []
-        while let member = sources.popFront() {
-            let m: ValueExprP = try member.build(asChildOf: self)
-            members.append(m)
-        }
-        if members.count == 1 {
-            return members.first!
-        }
-        return ListExpr(members: members, range: range)
-    }
-
-    func pushThrough(_ lex: Lex) throws -> ExprBuilder {
-        takesAnd = false
-        rejectsAnd = false
-        currSource = try currSource.partialPush(lex)
-        return self
-    }
-
-    func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder? {
-        switch id.literal {
-        case String.andIdentifiers where takesAnd:
-            takesAnd = false
-            rejectsAnd = true
-            return self
-        case String.andIdentifiers where rejectsAnd:
-            throw UnexpectedLexemeError(got: id, parsing: self)
-        default:
-            return nil
-        }
-    }
-
-    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        return try pushThrough(id)
-    }
-
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder {
-        takesAnd = d.isComma
-        rejectsAnd = !takesAnd
-        sources.pushBack(currSource)
-        currSource = VanillaExprBuilder(parent: self)
         return self
     }
 }
