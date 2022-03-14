@@ -1,4 +1,4 @@
-internal class DLinkedList<T> {
+class DLinkedList<T> {
     private class LLNode<T> {
         let value: T
         var previous: LLNode?
@@ -99,7 +99,7 @@ internal class DLinkedList<T> {
     }
 }
 
-internal struct Fifo<T: IteratorProtocol> {
+struct Fifo<T: IteratorProtocol> {
     private var iter: T
     private var ll: DLinkedList<T.Element>
 
@@ -123,13 +123,13 @@ internal struct Fifo<T: IteratorProtocol> {
     }
 }
 
-internal struct RockstarArray {
+struct RockstarArray {
     private var dict = [AnyHashable: Any]()
     private var insertionOrder = DLinkedList<AnyHashable>()
     private var nextIndex: Int = 0
 
     var length: Int { nextIndex }
-    internal var count: Int { dict.count }
+    var count: Int { dict.count }
 
     mutating func values() -> [Any] {
         return insertionOrder.walkFrontToBack.map {

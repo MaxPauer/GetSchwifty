@@ -1,4 +1,4 @@
-internal struct Parser {
+struct Parser {
     var lexemes: LexContractor
     var currentExprBuilder: ExprBuilder? = VanillaExprBuilder(startPos: LexPos.origin)
 

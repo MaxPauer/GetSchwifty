@@ -4,7 +4,7 @@ public protocol RockstarError: Error, CustomStringConvertible {
 public protocol ParserError: RockstarError {}
 public protocol RuntimeError: RockstarError {}
 
-internal protocol IRockstarError: RockstarError, CustomDebugStringConvertible {
+protocol IRockstarError: RockstarError, CustomDebugStringConvertible {
     var startPos: LexPos { get }
 }
 
@@ -12,11 +12,11 @@ extension IRockstarError {
     var errorPos: (UInt, UInt) { (startPos.line, startPos.char) }
 }
 
-internal protocol IParserError: IRockstarError, ParserError {
+protocol IParserError: IRockstarError, ParserError {
     var parsing: ExprBuilder { get }
 }
 
-internal protocol IRuntimeError: IRockstarError, RuntimeError {}
+protocol IRuntimeError: IRockstarError, RuntimeError {}
 
 extension IParserError {
     var description: String {
@@ -29,7 +29,7 @@ extension IRuntimeError {
     }
 }
 
-internal protocol ILexemeError: IParserError {
+protocol ILexemeError: IParserError {
     var got: Lex { get }
 }
 
@@ -37,7 +37,7 @@ extension ILexemeError {
     var startPos: LexPos { got.range.start }
 }
 
-internal struct UnexpectedIdentifierError: ILexemeError {
+struct UnexpectedIdentifierError: ILexemeError {
     let got: Lex
     let parsing: ExprBuilder
     let expecting: Set<String>
@@ -53,7 +53,7 @@ internal struct UnexpectedIdentifierError: ILexemeError {
     }
 }
 
-internal struct UnexpectedLexemeError: ILexemeError {
+struct UnexpectedLexemeError: ILexemeError {
     let got: Lex
     let parsing: ExprBuilder
 
@@ -62,7 +62,7 @@ internal struct UnexpectedLexemeError: ILexemeError {
     }
 }
 
-internal struct UnparsableNumberLexemeError: ILexemeError {
+struct UnparsableNumberLexemeError: ILexemeError {
     let got: Lex
     let parsing: ExprBuilder
 
@@ -71,7 +71,7 @@ internal struct UnparsableNumberLexemeError: ILexemeError {
     }
 }
 
-internal struct UnexpectedExprError<Expecting>: IParserError {
+struct UnexpectedExprError<Expecting>: IParserError {
     let got: ExprP
     let startPos: LexPos
     let parsing: ExprBuilder
@@ -81,7 +81,7 @@ internal struct UnexpectedExprError<Expecting>: IParserError {
     }
 }
 
-internal struct UnfinishedExprError: IParserError {
+struct UnfinishedExprError: IParserError {
     var parsing: ExprBuilder
     let expecting: Set<String>
 
@@ -98,7 +98,7 @@ internal struct UnfinishedExprError: IParserError {
     }
 }
 
-internal struct LocationError: IRuntimeError {
+struct LocationError: IRuntimeError {
     enum Op: CustomStringConvertible {
         case read; case write
         case readPronoun; case writePronoun
@@ -120,7 +120,7 @@ internal struct LocationError: IRuntimeError {
     }
 }
 
-internal struct UnfitExprError: IRuntimeError {
+struct UnfitExprError: IRuntimeError {
     enum Op: CustomStringConvertible {
         case bool; case equation; case numeric
         case string; case array; case call; case index
@@ -154,7 +154,7 @@ internal struct UnfitExprError: IRuntimeError {
     }
 }
 
-internal struct StrayExprError: IRuntimeError {
+struct StrayExprError: IRuntimeError {
     let expr: ExprP
     var startPos: LexPos { expr.range.start }
     var debugDescription: String {
@@ -162,7 +162,7 @@ internal struct StrayExprError: IRuntimeError {
     }
 }
 
-internal struct InvalidIndexError: IRuntimeError {
+struct InvalidIndexError: IRuntimeError {
     let expr: LocationExprP
     let index: Any
     var startPos: LexPos { expr.range.start }
@@ -171,7 +171,7 @@ internal struct InvalidIndexError: IRuntimeError {
     }
 }
 
-internal struct InvalidArgumentCountError: IRuntimeError {
+struct InvalidArgumentCountError: IRuntimeError {
     let expecting: Int
     let got: Int
     let startPos: LexPos

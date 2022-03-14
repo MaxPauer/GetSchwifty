@@ -26,7 +26,7 @@ extension FunctionCallExpr.Op {
     }
 }
 
-internal protocol ArithExprBuilder: SingleExprBuilder {
+protocol ArithExprBuilder: SingleExprBuilder {
     var precedence: Precedence { get }
     var isStatement: Bool { get }
     func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder?
@@ -74,7 +74,7 @@ extension ArithExprBuilder {
     }
 }
 
-internal class BiArithExprBuilder:
+class BiArithExprBuilder:
         ArithExprBuilder, PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     private(set) var op: FunctionCallExpr.Op
     var opMustContinueWith: Set<String> = Set()
@@ -151,7 +151,7 @@ internal class BiArithExprBuilder:
     }
 }
 
-internal class UnArithExprBuilder:
+class UnArithExprBuilder:
         ArithExprBuilder, PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let op: FunctionCallExpr.Op
     lazy var rhs: ExprBuilder = VanillaExprBuilder(parent: self)

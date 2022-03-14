@@ -19,7 +19,7 @@ fileprivate extension ContractionLex {
     }
 }
 
-internal struct LexContractor: IteratorProtocol, Sequence {
+struct LexContractor: IteratorProtocol, Sequence {
     var lexemes: LexIterator
     var ll = DLinkedList<Lex>()
 

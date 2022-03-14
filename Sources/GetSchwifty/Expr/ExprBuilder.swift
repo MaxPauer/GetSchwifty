@@ -1,11 +1,11 @@
 infix operator |=>
 
-internal enum PartialExpr {
+enum PartialExpr {
     case builder(ExprBuilder)
     case expr(ExprP)
 }
 
-internal protocol ExprBuilder: AnyObject, PrettyNamed {
+protocol ExprBuilder: AnyObject, PrettyNamed {
     var range: LexRange! { get set }
     var consumesAnd: Bool { get }
     func partialPush(_ lex: Lex) throws -> ExprBuilder
@@ -14,7 +14,7 @@ internal protocol ExprBuilder: AnyObject, PrettyNamed {
 }
 
 extension ExprBuilder {
-    internal func build<T>(asChildOf parent: ExprBuilder) throws -> T {
+    func build<T>(asChildOf parent: ExprBuilder) throws -> T {
         let ep = try self.build()
         guard let tep = ep as? T else {
             throw UnexpectedExprError<T>(got: ep, startPos: range.start, parsing: parent)
@@ -31,7 +31,7 @@ extension ExprBuilder {
     var consumesAnd: Bool { false }
 }
 
-internal protocol SingleExprBuilder: ExprBuilder {
+protocol SingleExprBuilder: ExprBuilder {
     func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder
     func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder
     func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder
@@ -67,7 +67,7 @@ extension SingleExprBuilder {
     }
 }
 
-internal class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let parent: ExprBuilder?
     private var _range: LexRange?
 
@@ -180,7 +180,7 @@ internal class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, Ignore
     }
 }
 
-internal class AssignmentExprBuilder:
+class AssignmentExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
@@ -254,7 +254,7 @@ internal class AssignmentExprBuilder:
     }
 }
 
-internal class PushExprBuilder:
+class PushExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var value: ExprBuilder?
@@ -302,7 +302,7 @@ internal class PushExprBuilder:
     }
 }
 
-internal class RoundExprBuilder:
+class RoundExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
     private var op: VoidCallExpr.Op?
@@ -339,7 +339,7 @@ internal class RoundExprBuilder:
     }
 }
 
-internal class VoidCallExprBuilder:
+class VoidCallExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP  {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     let op: VoidCallExpr.Op
@@ -382,7 +382,7 @@ internal class VoidCallExprBuilder:
     }
 }
 
-internal class CrementExprBuilder:
+class CrementExprBuilder:
         SingleExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var targetFinished: Bool = false
     let isIncrement: Bool
@@ -434,7 +434,7 @@ internal class CrementExprBuilder:
     }
 }
 
-internal class InputExprBuilder:
+class InputExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP  {
     private var target: ExprBuilder?
     private var hasTarget: Bool { target != nil }
@@ -466,7 +466,7 @@ internal class InputExprBuilder:
     }
 }
 
-internal class OutputExprBuilder:
+class OutputExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, PushesIdentifierLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
@@ -482,7 +482,7 @@ internal class OutputExprBuilder:
     }
 }
 
-internal class ReturnExprBuilder:
+class ReturnExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let initialBackAllowed: Bool
     var backReceived: Bool = false
@@ -521,7 +521,7 @@ internal class ReturnExprBuilder:
     }
 }
 
-internal class ElseExprBuilder:
+class ElseExprBuilder:
         SingleExprBuilder, ThrowsDelimiterLexP, ThrowsIdentifierLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var range: LexRange!
     func build() -> ExprP {
@@ -529,7 +529,7 @@ internal class ElseExprBuilder:
     }
 }
 
-internal class BreakExprBuilder:
+class BreakExprBuilder:
         SingleExprBuilder, ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var range: LexRange!
     var acceptsIt: Bool = true
@@ -555,7 +555,7 @@ internal class BreakExprBuilder:
     }
 }
 
-internal class ContinueExprBuilder:
+class ContinueExprBuilder:
         SingleExprBuilder, ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var range: LexRange!
     var requires: DLinkedList<Set<String>>

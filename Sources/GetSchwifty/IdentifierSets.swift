@@ -1,16 +1,16 @@
 infix operator ∪: AdditionPrecedence
 
-internal extension Set {
+extension Set {
     static func ∪(lhs: Set, rhs: Set) -> Set {
         lhs.union(rhs)
     }
 }
 
-internal func ~=(pattern: Set<String>, value: String) -> Bool {
+func ~=(pattern: Set<String>, value: String) -> Bool {
     pattern.contains(value.lowercased())
 }
 
-internal extension String {
+extension String {
     static var commonVariableIdentifiers: Set<String> {
         Set(["a", "an", "the", "my", "your", "our"])
     }

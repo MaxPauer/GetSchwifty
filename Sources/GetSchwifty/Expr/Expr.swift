@@ -1,77 +1,77 @@
-internal protocol ExprP: PrettyNamed {
+protocol ExprP: PrettyNamed {
     var range: LexRange { get }
 }
 
-internal protocol ValueExprP: ExprP {}
-internal protocol LocationExprP: ValueExprP {}
+protocol ValueExprP: ExprP {}
+protocol LocationExprP: ValueExprP {}
 
-internal struct NopExpr: ExprP {
+struct NopExpr: ExprP {
     let range: LexRange
 }
 
-internal struct PronounExpr: LocationExprP {
+struct PronounExpr: LocationExprP {
     let range: LexRange
 }
 
-internal struct VariableNameExpr: LocationExprP {
+struct VariableNameExpr: LocationExprP {
     let name: String
     let range: LexRange
 }
 
-internal struct LiteralExpr<T>: ValueExprP {
+struct LiteralExpr<T>: ValueExprP {
     let literal: T
     let range: LexRange
 }
 
-internal struct IndexingExpr: LocationExprP {
+struct IndexingExpr: LocationExprP {
     let source: LocationExprP
     let operand: ValueExprP
     let range: LexRange
 }
 
-internal struct ListExpr: ValueExprP {
+struct ListExpr: ValueExprP {
     let members: [ValueExprP]
     let range: LexRange
 }
 
-internal struct ConditionalExpr: ExprP {
+struct ConditionalExpr: ExprP {
     let condition: ValueExprP
     let trueBlock: [ExprP]
     let falseBlock: [ExprP]
     let range: LexRange
 }
 
-internal struct LoopExpr: ExprP {
+struct LoopExpr: ExprP {
     let condition: ValueExprP
     let loopBlock: [ExprP]
     let range: LexRange
 }
 
-internal struct ReturnExpr: ExprP {
+struct ReturnExpr: ExprP {
     let value: ValueExprP
     let range: LexRange
 }
 
-internal struct ElseExpr: ExprP {
+struct ElseExpr: ExprP {
     let range: LexRange
 }
 
-internal struct BreakExpr: ExprP {
+struct BreakExpr: ExprP {
     let range: LexRange
 }
 
-internal struct ContinueExpr: ExprP {
+struct ContinueExpr: ExprP {
     let range: LexRange
 }
 
-internal struct FunctionDeclExpr: ExprP {
+struct FunctionDeclExpr: ExprP {
     let head: VariableNameExpr
     let args: [VariableNameExpr]
     let funBlock: [ExprP]
     let range: LexRange
 }
 
-internal struct FunctionCallExpr: ValueExprP {
+struct FunctionCallExpr: ValueExprP {
     enum Op {
         case not; case and; case orr; case nor; case eq
         case neq; case gt; case lt; case geq; case leq
@@ -83,7 +83,7 @@ internal struct FunctionCallExpr: ValueExprP {
     let range: LexRange
 }
 
-internal struct VoidCallExpr: ExprP {
+struct VoidCallExpr: ExprP {
     enum Op {
         case assign; case print; case scan; case push
         case split; case join; case cast; case pop

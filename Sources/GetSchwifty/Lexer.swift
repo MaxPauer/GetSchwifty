@@ -3,7 +3,7 @@ prefix operator →
 
 fileprivate typealias StringFifo = Fifo<String.Iterator>
 
-internal struct LexPos {
+struct LexPos {
     let line: UInt
     let char: UInt
 
@@ -22,7 +22,7 @@ internal struct LexPos {
     static var origin: LexPos { LexPos(line: 1, char: 0) }
 }
 
-internal struct LexRange {
+struct LexRange {
     let start: LexPos
     let end: LexPos
 
@@ -31,13 +31,13 @@ internal struct LexRange {
     }
 }
 
-internal protocol Lex: PrettyNamed {
+protocol Lex: PrettyNamed {
     var prettyLiteral: String? { get }
     var literal: String { get }
     var range: LexRange { get }
 }
 
-internal struct NewlineLex: Lex {
+struct NewlineLex: Lex {
     let literal: String
     let range: LexRange
 
@@ -62,7 +62,7 @@ internal struct NewlineLex: Lex {
     }
 }
 
-internal struct DelimiterLex: Lex {
+struct DelimiterLex: Lex {
     let prettyLiteral: String? = nil
     let literal: String
     let range: LexRange
@@ -73,7 +73,7 @@ internal struct DelimiterLex: Lex {
     }
 }
 
-internal struct ContractionLex: Lex {
+struct ContractionLex: Lex {
     var prettyLiteral: String? { "'\(literal)" }
     let literal: String
     let range: LexRange
@@ -90,7 +90,7 @@ internal struct ContractionLex: Lex {
     }
 }
 
-internal struct WhitespaceLex: Lex {
+struct WhitespaceLex: Lex {
     let literal: String
     let range: LexRange
 
@@ -123,7 +123,7 @@ internal struct WhitespaceLex: Lex {
     }
 }
 
-internal struct CommentLex: Lex {
+struct CommentLex: Lex {
     var prettyLiteral: String? { "(\(literal))" }
     let literal: String
     let range: LexRange
@@ -159,7 +159,7 @@ internal struct CommentLex: Lex {
     }
 }
 
-internal struct StringLex: Lex {
+struct StringLex: Lex {
     var prettyLiteral: String? { "\"\(literal)\"" }
     let literal: String
     let range: LexRange
@@ -204,7 +204,7 @@ internal struct StringLex: Lex {
     }
 }
 
-internal struct IdentifierLex: Lex {
+struct IdentifierLex: Lex {
     let prettyLiteral: String?
     let literal: String
     let range: LexRange
@@ -230,7 +230,7 @@ internal struct IdentifierLex: Lex {
     }
 }
 
-internal struct NumberLex: Lex {
+struct NumberLex: Lex {
     var prettyLiteral: String? { literal }
     var literal: String
     let range: LexRange
@@ -277,7 +277,7 @@ fileprivate extension Character {
     }
 }
 
-internal func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
+func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
 
@@ -308,7 +308,7 @@ private func nextLexeme(_ chars: inout StringFifo, start: LexPos) -> Lex? {
     }
 }
 
-internal struct LexIterator: Sequence, IteratorProtocol {
+struct LexIterator: Sequence, IteratorProtocol {
     private var chars: StringFifo
     var start: LexPos
     var lineTerminated = false

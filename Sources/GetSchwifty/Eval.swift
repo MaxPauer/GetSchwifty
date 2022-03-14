@@ -1,6 +1,6 @@
 import Foundation
 
-internal protocol EvalContext: AnyObject {
+protocol EvalContext: AnyObject {
     var lastVariable: String? { get set }
 
     func getVariableOwner(_ n: String) -> EvalContext?
@@ -422,7 +422,7 @@ extension EvalContext {
     }
 }
 
-internal class MainEvalContext: EvalContext {
+class MainEvalContext: EvalContext {
     var variables = [String: Any]()
     var lastVariable: String? = nil
 
@@ -480,7 +480,7 @@ internal class MainEvalContext: EvalContext {
     func doContinue(_ c: ContinueExpr) throws { throw StrayExprError(expr: c) }
 }
 
-internal protocol NestedEvalContext: EvalContext {
+protocol NestedEvalContext: EvalContext {
     var parent: EvalContext { get set }
     var variables: [String: Any] { get set }
     var _lastVariable: String? { get set }
@@ -520,12 +520,12 @@ extension NestedEvalContext {
     func listen() throws -> Any { try parent.listen() }
 }
 
-internal class ConditionalEvalContext: NestedEvalContext {
+class ConditionalEvalContext: NestedEvalContext {
     var parent: EvalContext
 
-    internal var variables = [String: Any]()
-    internal var _lastVariable: String?
-    internal var halt: Bool = false
+    var variables = [String: Any]()
+    var _lastVariable: String?
+    var halt: Bool = false
 
     init(parent p: EvalContext) {
         parent = p
@@ -558,11 +558,11 @@ internal class ConditionalEvalContext: NestedEvalContext {
     }
 }
 
-internal class LoopEvalContext: NestedEvalContext {
+class LoopEvalContext: NestedEvalContext {
     var parent: EvalContext
 
-    internal var variables = [String: Any]()
-    internal var _lastVariable: String?
+    var variables = [String: Any]()
+    var _lastVariable: String?
 
     var didBreak: Bool = false
     var didContinue: Bool = false
@@ -598,13 +598,13 @@ internal class LoopEvalContext: NestedEvalContext {
     }
 }
 
-internal class RockFunEvalContext: NestedEvalContext {
+class RockFunEvalContext: NestedEvalContext {
     var parent: EvalContext
     let argNames: [String]
     let exprs: [ExprP]
 
-    internal var variables = [String: Any]()
-    internal var _lastVariable: String?
+    var variables = [String: Any]()
+    var _lastVariable: String?
 
     var returnValue: Any? = nil
 

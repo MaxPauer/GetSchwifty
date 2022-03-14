@@ -17,7 +17,7 @@ fileprivate extension IdentifierLex {
     }
 }
 
-internal class PoeticConstantExprBuilder:
+class PoeticConstantExprBuilder:
         SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy private var constant: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
@@ -46,7 +46,7 @@ internal class PoeticConstantExprBuilder:
     }
 }
 
-internal class PoeticNumberExprBuilder:
+class PoeticNumberExprBuilder:
         SingleExprBuilder, ThrowsNumberLexP, ThrowsStringLexP {
     private var value: Double?
     private var divider: Double = 1.0
@@ -111,7 +111,7 @@ internal class PoeticNumberExprBuilder:
     }
 }
 
-internal class PoeticNumberishAssignmentExprBuilder:
+class PoeticNumberishAssignmentExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesIdentifierLexThroughP, ThrowsStringLexP, ThrowsNumberLexP {
     var target: ExprBuilder
     lazy var source: ExprBuilder = self |=> PoeticNumberExprBuilder()
@@ -142,7 +142,7 @@ internal class PoeticNumberishAssignmentExprBuilder:
     }
 }
 
-internal class PoeticStringAssignmentExprBuilder:
+class PoeticStringAssignmentExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, PushesIdentifierLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP {
     var target: ExprBuilder
     lazy private var value: String = ""

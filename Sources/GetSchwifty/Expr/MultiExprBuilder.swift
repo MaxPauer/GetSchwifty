@@ -1,4 +1,4 @@
-internal protocol MultiExprBuilder: ExprBuilder {
+protocol MultiExprBuilder: ExprBuilder {
     var currentExpr: ExprBuilder { get set }
     func push(_ expr: ExprP) throws
 }
@@ -25,11 +25,11 @@ extension MultiExprBuilder {
     }
 }
 
-internal class LoopExprBuilder: MultiExprBuilder {
+class LoopExprBuilder: MultiExprBuilder {
     private let invertedLogic: Bool
-    internal var range: LexRange!
-    internal lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
-    internal var subExprs = DLinkedList<ExprP>()
+    var range: LexRange!
+    lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
+    var subExprs = DLinkedList<ExprP>()
     private var condition: ValueExprP?
 
     init(invertedLogic i: Bool) {
@@ -57,11 +57,11 @@ internal class LoopExprBuilder: MultiExprBuilder {
     }
 }
 
-internal class FunctionDeclExprBuilder: MultiExprBuilder {
+class FunctionDeclExprBuilder: MultiExprBuilder {
     private let head: FinalizedLocationExprBuilder
-    internal var range: LexRange!
-    internal lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
-    internal var subExprs = DLinkedList<ExprP>()
+    var range: LexRange!
+    lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
+    var subExprs = DLinkedList<ExprP>()
     private var args: [VariableNameExpr]?
 
     init(head h: FinalizedLocationExprBuilder) {
@@ -100,13 +100,13 @@ internal class FunctionDeclExprBuilder: MultiExprBuilder {
     }
 }
 
-internal class ConditionalExprBuilder: MultiExprBuilder {
-    internal var range: LexRange!
-    internal lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
-    internal var condition: ValueExprP?
-    internal var ifBlockExprs = DLinkedList<ExprP>()
-    internal var elseBlockExprs = DLinkedList<ExprP>()
-    internal var ifBlockFinished = false
+class ConditionalExprBuilder: MultiExprBuilder {
+    var range: LexRange!
+    lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
+    var condition: ValueExprP?
+    var ifBlockExprs = DLinkedList<ExprP>()
+    var elseBlockExprs = DLinkedList<ExprP>()
+    var ifBlockFinished = false
 
     func push(_ expr: ExprP) throws {
         if condition == nil {

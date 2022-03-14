@@ -1,10 +1,10 @@
-internal extension String {
+extension String {
     var firstCharIsUpperCase: Bool {
         return self.first?.isUppercase ?? false
     }
 }
 
-internal protocol FinalizedLocationExprBuilder: DelimiterLexToListP {}
+protocol FinalizedLocationExprBuilder: DelimiterLexToListP {}
 
 extension FinalizedLocationExprBuilder {
     var canTerminate: Bool { true }
@@ -28,7 +28,7 @@ extension FinalizedLocationExprBuilder {
     }
 }
 
-internal class PronounExprBuilder:
+class PronounExprBuilder:
         FinalizedLocationExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let isStatement: Bool
     var range: LexRange!
@@ -42,7 +42,7 @@ internal class PronounExprBuilder:
     }
 }
 
-internal class VariableNameExprBuilder:
+class VariableNameExprBuilder:
         FinalizedLocationExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsStringLexP, ThrowsNumberLexP {
     let name: String
     let isStatement: Bool
@@ -58,7 +58,7 @@ internal class VariableNameExprBuilder:
     }
 }
 
-internal class CommonVariableNameExprBuilder:
+class CommonVariableNameExprBuilder:
         SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let first: String
     var range: LexRange!
@@ -87,7 +87,7 @@ internal class CommonVariableNameExprBuilder:
     }
 }
 
-internal class ProperVariableNameExprBuilder:
+class ProperVariableNameExprBuilder:
         SingleExprBuilder, PushesDelimiterLexThroughP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresWhitespaceLexP, IgnoresCommentLexP {
     private(set) var words: [String]
     var range: LexRange!

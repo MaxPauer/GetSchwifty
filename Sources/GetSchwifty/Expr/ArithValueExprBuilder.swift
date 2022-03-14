@@ -1,8 +1,8 @@
-internal extension DelimiterLex {
+extension DelimiterLex {
     var isComma: Bool { literal == "," }
 }
 
-internal class IndexingExprBuilder:
+class IndexingExprBuilder:
         DelimiterLexToListP, PushesStringLexThroughP, PushesNumberLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
@@ -31,7 +31,7 @@ internal class IndexingExprBuilder:
     }
 }
 
-internal class FunctionCallExprBuilder:
+class FunctionCallExprBuilder:
         ArithExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresWhitespaceLexP, IgnoresCommentLexP {
     var head: ExprBuilder
     lazy var args: ExprBuilder = VanillaExprBuilder(parent: self)
@@ -68,7 +68,7 @@ internal class FunctionCallExprBuilder:
     }
 }
 
-internal class ListExprBuilder:
+class ListExprBuilder:
         ArithExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var sources = DLinkedList<ExprBuilder>()
     lazy var currSource: ExprBuilder = VanillaExprBuilder(parent: self)
@@ -135,7 +135,7 @@ internal class ListExprBuilder:
     }
 }
 
-internal class PopExprBuilder:
+class PopExprBuilder:
         ArithExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
@@ -174,7 +174,7 @@ internal class PopExprBuilder:
     }
 }
 
-internal class StringExprBuilder:
+class StringExprBuilder:
         DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP {
     let literal: String
     var range: LexRange!
@@ -196,7 +196,7 @@ internal class StringExprBuilder:
     }
 }
 
-internal class NumberExprBuilder:
+class NumberExprBuilder:
         DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let literal: Double
     var range: LexRange!
@@ -223,7 +223,7 @@ internal class NumberExprBuilder:
     }
 }
 
-internal class LiteralExprBuilder<T>:
+class LiteralExprBuilder<T>:
         DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let literal: T
     var range: LexRange!
