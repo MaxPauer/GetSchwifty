@@ -464,14 +464,23 @@ class MainEvalContext: EvalContext {
         while try step() { }
     }
 
-    func shout(_ v: Any) throws {
-        if let d = v as? Double, let i = Int(exactly: d) {
-            return try _shout(i)
+    func swiftify(_ v: Any) -> Any {
+        switch v {
+        case let d as Double:
+            if let i = Int(exactly: d) {
+                return i
+            }
+            return d
+        default:
+            return v
         }
-        try _shout(v)
     }
-    func listen() throws -> Any {
-        let v = try _listen()
+
+    func shout(_ v: Any) throws {
+        try _shout(swiftify(v))
+    }
+
+    func rockify(_ v: Any) -> Any {
         switch v {
         case let i as Int:
             return Double(i)
@@ -480,6 +489,10 @@ class MainEvalContext: EvalContext {
         default:
             return v
         }
+    }
+
+    func listen() throws -> Any {
+        rockify(try _listen())
     }
 
     func doReturn(_ r: ReturnExpr) throws { throw StrayExprError(expr: r) }
