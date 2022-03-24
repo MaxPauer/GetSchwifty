@@ -1,0 +1,96 @@
+modulo takes x, n
+while x is greater than nothing
+let x be without n
+
+until x is as great as nothing
+let ne be with n
+
+return x is nothing
+
+iseven takes x
+return modulo taking x, 2
+
+sll takes x, n
+if n is nothing
+return x
+
+let y be n times 2
+let x be times y
+return x
+
+srl takes x, n
+if n is nothing
+return x
+
+let y be n times 2
+let x be over n
+turn x down
+return x
+
+logicNot takes m
+result is nothing
+let j be 7
+while j is bigger than nothing
+let y be srl taking m,j
+if iseven taking y
+build result up
+
+let result be sll taking result, 1
+knock j down
+
+if iseven taking m
+build result up
+
+return result
+
+logicAnd takes n,m
+result is nothing
+let j be 7
+while j is bigger than nothing
+let y be srl taking m,j
+let z be srl taking n,j
+if not iseven taking y and not iseven taking z
+build result up
+
+let result be sll taking result, 1
+knock j down
+
+if not iseven taking n and not iseven taking m
+build result up
+
+return result
+
+logicOr takes n,m
+result is nothing
+let j be 7
+while j is bigger than nothing
+let y be srl taking m,j
+let z be srl taking n,j
+if not iseven taking y or not iseven taking z
+build result up
+
+let result be sll taking result, 1
+knock j down
+
+if not iseven taking n or not iseven taking m
+build result up
+
+return result
+
+logicXor takes n,m
+result is nothing
+let j be 7
+while j is bigger than nothing
+let y be srl taking m,j
+let z be srl taking n,j
+let yz be y with z
+if not iseven taking yz
+build result up
+
+let result be sll taking result, 1
+knock j down
+
+let nm be n with m
+if not iseven taking nm
+
+return result

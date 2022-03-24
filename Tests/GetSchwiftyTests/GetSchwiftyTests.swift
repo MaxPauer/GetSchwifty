@@ -75,4 +75,60 @@ final class GetSchwiftyTests: XCTestCase {
             })
         }
     }
+
+    func testLogic() throws {
+        let not = [
+            0xff: 0x00,
+            0x00: 0xff,
+            0x55: 0xaa,
+            0xaa: 0x55,
+            0x01: 0xfe]
+        let and = [
+            0xff: 0x55,
+            0x00: 0x00,
+            0x55: 0x55,
+            0xaa: 0x00,
+            0x01: 0x01]
+        let or = [
+            0xff: 0xff,
+            0x00: 0x55,
+            0x55: 0x55,
+            0xaa: 0xff,
+            0x01: 0x55]
+        let xor = [
+            0xff: 0xaa,
+            0x00: 0x55,
+            0x55: 0x00,
+            0xaa: 0xff,
+            0x01: 0x54]
+
+        let testNot = """
+            listen to z
+            shout logicNot taking z
+        """
+        let testAnd = """
+            listen to z
+            shout logicAnd taking z,85
+        """
+        let testOr = """
+            listen to z
+            shout logicOr taking z,85
+        """
+        let testXor = """
+            listen to z
+            shout logicXor taking z,85
+        """
+
+        let logic = try! String(contentsOf: URL(fileURLWithPath: "./Tests/logic.rock"))
+
+        for (exp, code) in zip([not, and, or, xor], [testNot, testAnd, testOr, testXor]) {
+            let x = try GetSchwifty(input: logic + code)
+            for (i, v) in exp {
+                try x.run(rockin: { i }, rockout: {o throws in
+                    let out = try XCTUnwrap(o as? Int)
+                    XCTAssertEqual(out, v)
+                })
+            }
+        }
+    }
 }
