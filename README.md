@@ -119,6 +119,9 @@ Apart from these types you can also pass closures with the following signatures 
 Rockstar functions are first class members, so `f takes x,y` will create a variable called `f` that can be used like any other variable and can be passed around.
 Functions can also be nested.
 
+String literals can interpret some escape sequences, namely `\n`, `\r`, `\t`, `\\`, and `\"`.
+Also string literals as well as comments may span multiple lines.
+
 #### A note about scopes
 When you define a variable in Rockstar it will be defined in the narrowest scope possible, i.e. within the current if/else-statement or loop, the current function, or globally, in that order.
 If you do write to a variable, it will however be looked up in the scope hierarchy and a new variable will only be defined if a variable of that name can't be found.
@@ -130,7 +133,7 @@ If you really want to, you could however use it to implement a PlugIn sytem for 
 But if you decide to use it, do not blame me if it turns out to be a horrible idea. See also `COPYING`.
 
 ### Why?
-40% because I can, 30% to prove myself I can, 15% to improve my Swift skills, 10% to write this document, and 5% because winter evenings are long and dark.
+40% because I can, 30% to prove myself I can, 15% to improve my Swift skills, 10% to write this document, and 5% because winter evenings are dark and full of terrors.
 
 ### Where can I find further documentation?
 About Rockstar? See the links above. About GetSchwifty? Oh boy... Look at the code. Especially the tests. I'm happy to announce that due to me elite rockstar developing skills my code is so self-documenting it does not contain one line of comments. I mean, this is Rock'n'Roll, not rocket science.
