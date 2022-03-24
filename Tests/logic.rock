@@ -1,17 +1,17 @@
 modulo takes x, n
-while x is greater than nothing
+while x is greater than 0
 let x be without n
 
-until x is as great as nothing
-let ne be with n
+until x is as great as 0
+let x be with n
 
-return x is nothing
+return x
 
 iseven takes x
-return modulo taking x, 2
+return modulo taking x, 2 is 0
 
 sll takes x, n
-if n is nothing
+if n is 0
 return x
 
 let y be n times 2
@@ -19,7 +19,7 @@ let x be times y
 return x
 
 srl takes x, n
-if n is nothing
+if n is 0
 return x
 
 let y be n times 2
@@ -28,9 +28,9 @@ turn x down
 return x
 
 logicNot takes m
-result is nothing
+let result be 0
 let j be 7
-while j is bigger than nothing
+while j is bigger than 0
 let y be srl taking m,j
 if iseven taking y
 build result up
@@ -44,9 +44,9 @@ build result up
 return result
 
 logicAnd takes n,m
-result is nothing
+let result be 0
 let j be 7
-while j is bigger than nothing
+while j is bigger than 0
 let y be srl taking m,j
 let z be srl taking n,j
 if not iseven taking y and not iseven taking z
@@ -61,9 +61,9 @@ build result up
 return result
 
 logicOr takes n,m
-result is nothing
+let result be 0
 let j be 7
-while j is bigger than nothing
+while j is bigger than 0
 let y be srl taking m,j
 let z be srl taking n,j
 if not iseven taking y or not iseven taking z
@@ -78,13 +78,13 @@ build result up
 return result
 
 logicXor takes n,m
-result is nothing
+let result be 0
 let j be 7
-while j is bigger than nothing
+while j is bigger than 0
 let y be srl taking m,j
 let z be srl taking n,j
-let yz be y with z
-if not iseven taking yz
+let Y Add Z be y with z
+if not iseven taking Y Add Z
 build result up
 
 let result be sll taking result, 1
