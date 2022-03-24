@@ -433,8 +433,8 @@ class MainEvalContext: EvalContext {
     let debuggingSettings: DebuggingSettings
 
     var _exprs: AnySequence<ExprP>.Iterator
-    var _listen: () throws -> Any
-    var _shout: (Any) throws -> Void
+    var _listen: Rockin
+    var _shout: Rockout
 
     init(input inp: AnySequence<ExprP>, debuggingSettings d: DebuggingSettings, rockin: @escaping Rockin, rockout: @escaping Rockout) {
         _exprs = inp.makeIterator()
@@ -464,7 +464,7 @@ class MainEvalContext: EvalContext {
         while try step() { }
     }
 
-    func swiftify(_ v: Any) -> Any {
+    func swiftify(_ v: Any) -> Any? {
         switch v {
         case let d as Double:
             if let i = Int(exactly: d) {
@@ -473,6 +473,8 @@ class MainEvalContext: EvalContext {
             return d
         case let r as RockstarArray:
             return r.dict
+        case is Rockstar.Null:
+            return nil
         default:
             return v
         }
@@ -482,7 +484,10 @@ class MainEvalContext: EvalContext {
         try _shout(swiftify(v))
     }
 
-    func rockify(_ v: Any) -> Any {
+    func rockify(_ v: Any?) -> Any {
+        guard let v = v else {
+            return Rockstar.null
+        }
         switch v {
         case let i as Int:
             return Double(i)

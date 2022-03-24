@@ -8,8 +8,8 @@ public struct Rockstar {
     static public let mysterious = Mysterious()
 }
 
-public typealias Rockin = () throws -> Any
-public typealias Rockout = (Any) throws -> Void
+public typealias Rockin = () throws -> Any?
+public typealias Rockout = (Any?) throws -> Void
 
 public struct GetSchwifty {
     private var exprCache = DLinkedList<ExprP>()
