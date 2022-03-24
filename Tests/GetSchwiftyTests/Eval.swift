@@ -565,6 +565,38 @@ final class EvalTests: XCTestCase {
         }
     }
 
+    func testFunPointers() throws {
+        var x = try context(input: """
+            multiply takes x,y
+            return x times y
+
+            add takes x,y
+            return x plus y
+
+            switch takes x
+            if x is 0
+            return add
+
+            return multiply
+
+            let f be switch taking 0
+            let z be f taking 2,3
+            let f be switch taking 1
+            let z be f taking 2,3
+            """)
+        _ = try x.step()
+        _ = try x.step()
+        _ = try x.step()
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "z", 5.0)
+        }
+        _ = try x.step()
+        try step(&x) {
+            try assertVariable($0, "z", 6.0)
+        }
+    }
+
     func testErrors() throws {
         try errorTest("put my heart into my soul", .read, (1,4))
         try errorTest("it is nothing", .writePronoun, (1,0))
