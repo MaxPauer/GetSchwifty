@@ -471,6 +471,8 @@ class MainEvalContext: EvalContext {
                 return i
             }
             return d
+        case let r as RockstarArray:
+            return r.dict
         default:
             return v
         }
@@ -486,6 +488,10 @@ class MainEvalContext: EvalContext {
             return Double(i)
         case let i as UInt:
             return Double(i)
+        case let a as [Any]:
+            return RockstarArray(a)
+        case let d as [AnyHashable: Any]:
+            return RockstarArray(d)
         default:
             return v
         }

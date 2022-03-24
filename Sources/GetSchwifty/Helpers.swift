@@ -124,7 +124,7 @@ struct Fifo<T: IteratorProtocol> {
 }
 
 struct RockstarArray {
-    private var dict = [AnyHashable: Any]()
+    internal var dict = [AnyHashable: Any]()
     private var insertionOrder = DLinkedList<AnyHashable>()
     private var nextIndex: Int = 0
 
@@ -180,6 +180,12 @@ struct RockstarArray {
 
     init(_ arr: [Any]) {
         arr.forEach{ self.push($0) }
+    }
+
+    init(_ dict: [AnyHashable: Any]) {
+        dict.forEach {key, value in
+            self[key] = value
+        }
     }
 
     init() {}
