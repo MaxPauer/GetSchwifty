@@ -1,7 +1,12 @@
 import Foundation
 
+struct DebuggingSettings {
+    let maxLoopRecursions: UInt?
+}
+
 protocol EvalContext: AnyObject {
     var lastVariable: String? { get set }
+    var debuggingSettings: DebuggingSettings { get }
 
     func getVariableOwner(_ n: String) -> EvalContext?
     func getVariable(_ n: String) -> Any?
@@ -425,15 +430,17 @@ extension EvalContext {
 class MainEvalContext: EvalContext {
     var variables = [String: Any]()
     var lastVariable: String? = nil
+    let debuggingSettings: DebuggingSettings
 
     var _exprs: AnySequence<ExprP>.Iterator
     var _listen: () throws -> Any
     var _shout: (Any) throws -> Void
 
-    init(input inp: AnySequence<ExprP>, rockin: @escaping Rockin, rockout: @escaping Rockout) {
+    init(input inp: AnySequence<ExprP>, debuggingSettings d: DebuggingSettings, rockin: @escaping Rockin, rockout: @escaping Rockout) {
         _exprs = inp.makeIterator()
         _listen = rockin
         _shout = rockout
+        debuggingSettings = d
     }
 
     func getVariableOwner(_ n: String) -> EvalContext? {
@@ -487,6 +494,10 @@ protocol NestedEvalContext: EvalContext {
 }
 
 extension NestedEvalContext {
+    var debuggingSettings: DebuggingSettings {
+        parent.debuggingSettings
+    }
+
     func getVariable(_ n: String) -> Any? {
         variables[n] ?? parent.getVariable(n)
     }
@@ -585,6 +596,7 @@ class LoopEvalContext: NestedEvalContext {
     }
 
     func eval(_ l: LoopExpr) throws {
+        var loopCounter = debuggingSettings.maxLoopRecursions
         rockLoop: while try evalTruthiness(l.condition) {
             didBreak = false
             didContinue = false
@@ -594,6 +606,12 @@ class LoopEvalContext: NestedEvalContext {
                 if didBreak { break rockLoop }
                 if didContinue { continue rockLoop }
             }
+
+            guard let i = loopCounter else { continue }
+            guard i > 0 else {
+                throw MaxLoopRecursionExceededError(expr: l)
+            }
+            loopCounter = i-1
         }
     }
 }

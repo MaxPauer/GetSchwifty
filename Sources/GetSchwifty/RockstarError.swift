@@ -179,3 +179,11 @@ struct InvalidArgumentCountError: IRuntimeError {
         "mismatching function argument count expected \(expecting), got \(got)"
     }
 }
+
+struct MaxLoopRecursionExceededError:IRuntimeError {
+    let expr: ExprP
+    var startPos: LexPos { expr.range.start }
+    var debugDescription: String {
+        "maximum number of loop recursions reached"
+    }
+}
