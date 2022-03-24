@@ -1,7 +1,7 @@
 import Foundation
 
 struct DebuggingSettings {
-    let maxLoopRecursions: UInt?
+    let maxLoopIterations: UInt?
 }
 
 protocol EvalContext: AnyObject {
@@ -620,7 +620,7 @@ class LoopEvalContext: NestedEvalContext {
     }
 
     func eval(_ l: LoopExpr) throws {
-        var loopCounter = debuggingSettings.maxLoopRecursions
+        var loopCounter = debuggingSettings.maxLoopIterations
         rockLoop: while try evalTruthiness(l.condition) {
             didBreak = false
             didContinue = false

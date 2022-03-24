@@ -2,7 +2,7 @@ import XCTest
 @testable import GetSchwifty
 
 final class EvalTests: XCTestCase {
-    func context(input inp: String, maxLoopRecursions: UInt? = nil, stdin: @escaping Rockin = { Rockstar.null }, stdout: @escaping Rockout = {_ in}) throws -> MainEvalContext {
+    func context(input inp: String, maxLoopIterations: UInt? = nil, stdin: @escaping Rockin = { Rockstar.null }, stdout: @escaping Rockout = {_ in}) throws -> MainEvalContext {
         var p = Parser(input: inp)
         let exprCache = DLinkedList<ExprP>()
         while let e = try p.next() {
@@ -10,13 +10,13 @@ final class EvalTests: XCTestCase {
         }
         return MainEvalContext(
             input: exprCache.consumeFrontToBack,
-            debuggingSettings: DebuggingSettings(maxLoopRecursions: maxLoopRecursions),
+            debuggingSettings: DebuggingSettings(maxLoopIterations: maxLoopIterations),
             rockin: stdin,
             rockout: stdout)
     }
 
-    func errorTest<T>(_ inp: String, _ pos: (UInt,UInt), maxLoopRecursions: UInt? = nil) throws -> T where T: IRuntimeError {
-        let c = try context(input: inp, maxLoopRecursions: maxLoopRecursions)
+    func errorTest<T>(_ inp: String, _ pos: (UInt,UInt), maxLoopIterations: UInt? = nil) throws -> T where T: IRuntimeError {
+        let c = try context(input: inp, maxLoopIterations: maxLoopIterations)
         var error: Error?
         XCTAssertThrowsError(try c.run()) { (e: Error) in
             error = e
@@ -37,8 +37,8 @@ final class EvalTests: XCTestCase {
         XCTAssertEqual(err.op, op)
     }
 
-    func errorTest(_ inp: String, maxLoopRecursions: UInt, _ pos: (UInt,UInt)) throws {
-        let _: MaxLoopRecursionExceededError = try errorTest(inp, pos, maxLoopRecursions: maxLoopRecursions)
+    func errorTest(_ inp: String, maxLoopIterations: UInt, _ pos: (UInt,UInt)) throws {
+        let _: MaxLoopRecursionExceededError = try errorTest(inp, pos, maxLoopIterations: maxLoopIterations)
     }
 
     func assertVariable<T>(_ c: EvalContext, _ v: String, _ val: T) throws where T: Equatable {
@@ -633,6 +633,6 @@ final class EvalTests: XCTestCase {
         let _: StrayExprError = try errorTest("foo takes x\nbreak\n\nfoo taking 1", (2,0))
         let _: InvalidArgumentCountError = try errorTest("foo takes x,y\n\nfoo taking 1", (3,0))
         let _: InvalidArgumentCountError = try errorTest("foo takes x,y\n\nfoo taking 1,2,3", (3,0))
-        try errorTest("while true", maxLoopRecursions: 1, (1,0))
+        try errorTest("while true", maxLoopIterations: 1, (1,0))
     }
 }

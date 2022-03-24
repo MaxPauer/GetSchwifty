@@ -15,7 +15,7 @@ public struct GetSchwifty {
     private var exprCache = DLinkedList<ExprP>()
     private var rockin: Rockin
     private var rockout: Rockout
-    public var maxLoopRecursions: UInt?
+    public var maxLoopIterations: UInt?
 
     init(input inp: String, rockin i: Rockin? = nil, rockout o: Rockout? = nil) throws {
         var parser = Parser(input: inp)
@@ -31,7 +31,7 @@ public struct GetSchwifty {
     func run(rockin i: Rockin? = nil, rockout o: Rockout? = nil) throws {
         let ctx = MainEvalContext(
             input: exprCache.walkFrontToBack,
-            debuggingSettings: DebuggingSettings(maxLoopRecursions: maxLoopRecursions),
+            debuggingSettings: DebuggingSettings(maxLoopIterations: maxLoopIterations),
             rockin: i ?? rockin,
             rockout: o ?? rockout)
         try ctx.run()

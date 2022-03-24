@@ -9,7 +9,7 @@ The interface is quite easy.
 It exposes:
 ```swift
 public struct GetSchwifty {
-    public var maxLoopRecursions: UInt?
+    public var maxLoopIterations: UInt?
 
     init(input: String, rockin: Rockin? = nil, rockout: Rockout? = nil) throws
     func run(rockin: Rockin? = nil, rockout: Rockout? = nil) throws
@@ -26,8 +26,8 @@ You can `run` the program multiple times with different `rockin` and `rockout` f
 If you never specify `rockin` or `rockout`, every Rockstar call to `listen` will be handled like a `nil` input and `shout` will do nothing.
 Shout into the void, if you will.
 
-You can use the `maxLoopRecursions` property if you tend to fuck up your Rockstar programs, like I do, and run into endless loops constantly.
-If the property is set, loops in your Rockstar program will throw a `RuntimeError` if they run too long, i.e. more iterations than `maxLoopRecursions`.
+You can use the `maxLoopIterations` property if you tend to fuck up your Rockstar programs, like I do, and run into endless loops constantly.
+If the property is set, loops in your Rockstar program will throw a `RuntimeError` if they run too long, i.e. more iterations than `maxLoopIterations`.
 
 While we're at `RuntimeError`, GetSchwifty also exposes three `Error` types:
 ```swift
