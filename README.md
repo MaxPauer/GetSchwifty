@@ -133,7 +133,7 @@ If you really want to, you could however use it to implement a PlugIn sytem for 
 But if you decide to use it, do not blame me if it turns out to be a horrible idea. See also `COPYING`.
 
 ### Why?
-40% because I can, 30% to prove myself I can, 15% to improve my Swift skills, 10% to write this document, and 5% because winter evenings are dark and full of terrors.
+35% because I can, 25% to prove myself I can, 15% so I can make a project called GetSchwifty, 10% to improve my Swift skills, 10% to write this document, and 5% because winter evenings are dark and full of terrors.
 
 ### Where can I find further documentation?
 About Rockstar? See the links above. About GetSchwifty? Oh boy... Look at the code. Especially the tests. I'm happy to announce that due to me elite rockstar developing skills my code is so self-documenting it does not contain one line of comments. I mean, this is Rock'n'Roll, not rocket science.
