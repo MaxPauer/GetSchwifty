@@ -1,10 +1,10 @@
 public struct Rockstar {
     private init() {}
 
-    public struct Null: Equatable {}
+    internal struct Null: Equatable {}
     public struct Mysterious: Equatable {}
 
-    static public let null = Null()
+    static internal let null = Null()
     static public let mysterious = Mysterious()
 }
 
