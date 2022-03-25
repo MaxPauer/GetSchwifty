@@ -17,7 +17,7 @@ extension ExprBuilder {
     func build<T>(asChildOf parent: ExprBuilder) throws -> T {
         let ep = try self.build()
         guard let tep = ep as? T else {
-            throw UnexpectedExprError<T>(got: ep, startPos: range.start, parsing: parent)
+            throw UnexpectedExprError<T>(got: ep, parsing: parent)
         }
         return tep
     }
@@ -42,10 +42,9 @@ protocol SingleExprBuilder: ExprBuilder {
 
 extension SingleExprBuilder {
     func push(_ lex: Lex) throws -> PartialExpr {
-        if lex is NewlineLex {
-            return .expr(try build())
-        }
-        return .builder(try partialPush(lex))
+        return lex is NewlineLex ?
+            .expr(try build()) :
+            .builder(try partialPush(lex))
     }
 
     func partialPush(_ lex: Lex) throws -> ExprBuilder {
@@ -73,9 +72,7 @@ class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespa
 
     var range: LexRange! {
         get {
-            if _range == nil {
-                _range = -parent!.range.end
-            }
+            _range = _range ?? -parent!.range.end
             return _range!
         } set {
             _range = newValue
@@ -188,7 +185,7 @@ class AssignmentExprBuilder: SingleExprBuilder,
     var op: FunctionCallExpr.Op?
     var range: LexRange!
 
-    private(set) var expectingTarget: Bool
+    private var expectingTarget: Bool
     private var expectingValue: Bool { !expectingTarget }
     private var gotSomeValue: Bool { !value.isVanilla }
     private var gotSomeTarget: Bool { !target.isVanilla }
@@ -538,7 +535,9 @@ class BreakExprBuilder: SingleExprBuilder,
     var requiresDown: Bool = false
 
     func build() throws -> ExprP {
-        guard !requiresDown else { throw UnfinishedExprError(parsing: self, expecting: String.downIdentifiers) }
+        guard !requiresDown else {
+            throw UnfinishedExprError(parsing: self, expecting: String.downIdentifiers)
+        }
         return BreakExpr(range: range)
     }
 
@@ -568,12 +567,11 @@ class ContinueExprBuilder: SingleExprBuilder,
     }
     convenience init(itToTheTop: Bool) {
         self.init()
-        if itToTheTop {
-            requires.pushBack(String.itIdentifiers)
-            requires.pushBack(String.toIdentifiers)
-            requires.pushBack(String.theIdentifiers)
-            requires.pushBack(String.topIdentifiers)
-        }
+        guard itToTheTop else { return }
+        requires.pushBack(String.itIdentifiers)
+        requires.pushBack(String.toIdentifiers)
+        requires.pushBack(String.theIdentifiers)
+        requires.pushBack(String.topIdentifiers)
     }
 
     func build() throws -> ExprP {

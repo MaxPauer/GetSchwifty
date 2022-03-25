@@ -9,7 +9,7 @@ fileprivate extension String {
 }
 
 fileprivate extension IdentifierLex {
-    var isIsContraction: Bool { String.isContractionIdentifiers.contains(literal) }
+    var isIsContraction: Bool { String.isContractionIdentifiers ~= literal }
     var poeticNumeralValue: Int {
         let n = isIsContraction ?
             literal.count - 1 : literal.count
@@ -28,7 +28,7 @@ class PoeticConstantExprBuilder: SingleExprBuilder,
     }
 
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        guard constant is VanillaExprBuilder else { return self }
+        guard constant.isVanilla else { return self }
         constant = try constant.partialPush(id)
         return self
     }
@@ -60,15 +60,14 @@ class PoeticNumberExprBuilder: SingleExprBuilder,
     @discardableResult
     func pushPoeticDigit() -> ExprBuilder {
         let oldVal = value ?? 0.0
-        if let n = digit {
-            if divider == 1.0 {
-                value = oldVal * 10 + Double(n % 10)
-            } else {
-                value = oldVal + Double(n) * divider
-                divider *= 0.1
-            }
-            digit = nil
+        guard let n = digit else { return self }
+        if divider == 1.0 {
+            value = oldVal * 10 + Double(n % 10)
+        } else {
+            value = oldVal + Double(n) * divider
+            divider *= 0.1
         }
+        digit = nil
         return self
     }
 

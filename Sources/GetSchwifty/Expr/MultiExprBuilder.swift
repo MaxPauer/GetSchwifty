@@ -29,7 +29,7 @@ class LoopExprBuilder: MultiExprBuilder {
     private let invertedLogic: Bool
     var range: LexRange!
     lazy var currentExpr: ExprBuilder = VanillaExprBuilder(parent: self)
-    var subExprs = DLinkedList<ExprP>()
+    private var subExprs = DLinkedList<ExprP>()
     private var condition: ValueExprP?
 
     init(invertedLogic i: Bool) {
@@ -39,7 +39,7 @@ class LoopExprBuilder: MultiExprBuilder {
     func push(_ expr: ExprP) throws {
         if condition == nil {
             guard let c = expr as? ValueExprP else {
-                throw UnexpectedExprError<ValueExprP>(got: expr, startPos: expr.range.start, parsing: self)
+                throw UnexpectedExprError<ValueExprP>(got: expr, parsing: self)
             }
             condition = c
         } else if !(expr is NopExpr) {
@@ -75,12 +75,12 @@ class FunctionDeclExprBuilder: MultiExprBuilder {
         case let l as ListExpr:
             return try l.members.map {
                 guard let m = $0 as? VariableNameExpr else {
-                    throw UnexpectedExprError<VariableNameExpr>(got: $0, startPos: $0.range.start, parsing: self)
+                    throw UnexpectedExprError<VariableNameExpr>(got: $0, parsing: self)
                 }
                 return m
             }
         default:
-            throw UnexpectedExprError<VariableNameExpr>(got: args, startPos: args.range.start, parsing: self)
+            throw UnexpectedExprError<VariableNameExpr>(got: args, parsing: self)
         }
     }
 
@@ -112,7 +112,7 @@ class ConditionalExprBuilder: MultiExprBuilder {
     func push(_ expr: ExprP) throws {
         if condition == nil {
             guard let c = expr as? ValueExprP else {
-                throw UnexpectedExprError<ValueExprP>(got: expr, startPos: expr.range.start, parsing: self)
+                throw UnexpectedExprError<ValueExprP>(got: expr, parsing: self)
             }
             condition = c
         } else if expr is NopExpr {

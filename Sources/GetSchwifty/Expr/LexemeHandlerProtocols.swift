@@ -42,7 +42,7 @@ extension ThrowsDelimiterLexP {
 }
 
 protocol CanPushLexThroughP: ExprBuilder {
-    func pushThrough(_ lex: Lex) throws -> ExprBuilder
+    func pushThrough(_: Lex) throws -> ExprBuilder
 }
 protocol PushesIdentifierLexThroughP: CanPushLexThroughP {}
 protocol PushesStringLexThroughP: CanPushLexThroughP {}

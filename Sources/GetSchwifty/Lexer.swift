@@ -42,13 +42,14 @@ protocol Lex: PrettyNamed {
 struct NewlineLex: Lex {
     let literal: String
     let range: LexRange
+    static let EOF: Character = "\u{03}"
 
     var prettyLiteral: String? {
         String(literal.map {
             switch $0 {
             case "\r": return "␍"
             case "\n": return "␊"
-            case "\u{03}": return "␃"
+            case Self.EOF: return "␃"
             default: return $0
             }
         })
@@ -60,7 +61,7 @@ struct NewlineLex: Lex {
     }
 
     init(EOF start: LexPos) {
-        self.init("\u{03}", start: start)
+        self.init(Self.EOF, start: start)
     }
 }
 

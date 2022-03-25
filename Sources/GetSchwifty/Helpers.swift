@@ -32,13 +32,14 @@ class DLinkedList<T> {
     private var back: LLNode<T>?
 
     var isEmpty: Bool {
-        front == nil
+        assert((front == nil) == (back == nil))
+        return front == nil
     }
 
     func pushFront(_ v: T?) {
         guard let v = v else { return }
         let node = LLNode(v)
-        if front == nil {
+        if isEmpty {
             front = node
             back = node
         } else {
@@ -51,7 +52,7 @@ class DLinkedList<T> {
     func pushBack(_ v: T?) {
         guard let v = v else { return }
         let node = LLNode(v)
-        if back == nil {
+        if isEmpty {
             back = node
             front = node
         } else {

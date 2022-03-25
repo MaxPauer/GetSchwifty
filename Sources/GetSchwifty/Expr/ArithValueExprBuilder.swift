@@ -164,13 +164,11 @@ class PopExprBuilder: ArithExprBuilder,
     }
 
     func postHandleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder {
-        switch i.literal {
-        case String.intoIdentifiers:
+        if String.intoIdentifiers ~= i.literal {
             expectsTarget = true
             return self
-        default:
-            return try pushThrough(i)
         }
+        return try pushThrough(i)
     }
 }
 

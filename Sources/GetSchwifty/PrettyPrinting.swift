@@ -8,21 +8,17 @@ extension Lex {
     }
 }
 extension ExprBuilder {
-    var description: String {
-        "‹‹\(prettyName)››"
-    }
+    var description: String { "‹‹\(prettyName)››" }
 }
 extension ExprP {
-    var description: String {
-        "‹‹‹\(prettyName)›››"
-    }
+    var description: String { "‹‹‹\(prettyName)›››" }
 }
 
 extension NewlineLex {
     var prettyName: String { "Newline" }
 }
 extension DelimiterLex {
-    var prettyName: String {"Delimiter" }
+    var prettyName: String { "Delimiter" }
 }
 extension ContractionLex {
     var prettyName: String { "Contraction" }

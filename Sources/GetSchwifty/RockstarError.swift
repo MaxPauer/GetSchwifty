@@ -37,6 +37,14 @@ extension ILexemeError {
     var startPos: LexPos { got.range.start }
 }
 
+protocol IExprError: IRuntimeError {
+    var expr: ExprP { get }
+}
+
+extension IExprError {
+    var startPos: LexPos { expr.range.start }
+}
+
 struct UnexpectedIdentifierError: ILexemeError {
     let got: Lex
     let parsing: ExprBuilder
@@ -73,8 +81,9 @@ struct UnparsableNumberLexemeError: ILexemeError {
 
 struct UnexpectedExprError<Expecting>: IParserError {
     let got: ExprP
-    let startPos: LexPos
     let parsing: ExprBuilder
+
+    var startPos: LexPos { got.range.start }
 
     var debugDescription: String {
         "encountered unexpected \(got) expression while parsing \(parsing) expression, expecting: \(Expecting.self)"
@@ -98,7 +107,7 @@ struct UnfinishedExprError: IParserError {
     }
 }
 
-struct LocationError: IRuntimeError {
+struct LocationError: IExprError {
     enum Op: CustomStringConvertible {
         case read; case write
         case readPronoun; case writePronoun
@@ -112,15 +121,14 @@ struct LocationError: IRuntimeError {
             }
         }
     }
-    let location: LocationExprP
+    let expr: ExprP
     let op: Op
-    var startPos: LexPos { location.range.start }
     var debugDescription: String {
-        "\(op) \(location) before assignment"
+        "\(op) \(expr) before assignment"
     }
 }
 
-struct UnfitExprError: IRuntimeError {
+struct UnfitExprError: IExprError {
     enum Op: CustomStringConvertible {
         case bool; case equation; case numeric
         case string; case array; case call; case index
@@ -148,24 +156,21 @@ struct UnfitExprError: IRuntimeError {
     let expr: ExprP
     let val: Any
     let op: Op
-    var startPos: LexPos { expr.range.start }
     var debugDescription: String {
         "expression \(expr) evaluated to \(val) cannot be used for \(op) operations"
     }
 }
 
-struct StrayExprError: IRuntimeError {
+struct StrayExprError: IExprError {
     let expr: ExprP
-    var startPos: LexPos { expr.range.start }
     var debugDescription: String {
         "stray \(expr) expression"
     }
 }
 
-struct InvalidIndexError: IRuntimeError {
-    let expr: LocationExprP
+struct InvalidIndexError: IExprError {
+    let expr: ExprP
     let index: Any
-    var startPos: LexPos { expr.range.start }
     var debugDescription: String {
         "location \(expr) cannot be indexed with \(index)"
     }
@@ -180,9 +185,8 @@ struct InvalidArgumentCountError: IRuntimeError {
     }
 }
 
-struct MaxLoopRecursionExceededError: IRuntimeError {
+struct MaxLoopRecursionExceededError: IExprError {
     let expr: ExprP
-    var startPos: LexPos { expr.range.start }
     var debugDescription: String {
         "maximum number of loop recursions reached"
     }

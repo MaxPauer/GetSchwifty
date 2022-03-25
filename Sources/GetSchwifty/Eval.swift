@@ -28,7 +28,7 @@ extension EvalContext {
 
     func _set(_ p: PronounExpr, _ newValue: Any) throws {
         guard let lv = lastVariable else {
-            throw LocationError(location: p, op: .writePronoun)
+            throw LocationError(expr: p, op: .writePronoun)
         }
         setVariable(lv, newValue)
     }
@@ -66,14 +66,14 @@ extension EvalContext {
 
     func _get(_ v: VariableNameExpr) throws -> Any {
         guard let value = getVariable(v.name) else {
-            throw LocationError(location: v, op: .read)
+            throw LocationError(expr: v, op: .read)
         }
         return value
     }
 
     func _get(_ p: PronounExpr) throws -> Any {
         guard let lv = lastVariable else {
-            throw LocationError(location: p, op: .readPronoun)
+            throw LocationError(expr: p, op: .readPronoun)
         }
         return getVariable(lv)!
     }
@@ -115,38 +115,41 @@ extension EvalContext {
     }
 
     func evalTruthiness(_ expr: ValueExprP) throws -> Bool {
-        let i = try eval(expr)
-        if let b = i as? Bool { return b }
-        if let d = i as? Double { return d != 0 }
-        if i is String { return true }
-        if i is Rockstar.Null { return false }
-        if i is Rockstar.Mysterious { return false }
-        throw UnfitExprError(expr: expr, val: i, op: .bool)
+        let v = try eval(expr)
+        switch v {
+        case let b as Bool: return b
+        case let d as Double: return d != 0.0
+        case is String: return true
+        case is Rockstar.Null,
+             is Rockstar.Mysterious: return false
+        default:
+            throw UnfitExprError(expr: expr, val: v, op: .bool)
+        }
     }
 
-    func implicitNull(_ v: Any) -> Any {
+    func implicitZero(_ v: Any) -> Any {
         v is Rockstar.Null ? 0.0 : v
     }
 
     func evalEq(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (AnyHashable, AnyHashable) -> Bool) throws -> Bool {
-        let l = implicitNull(try eval(lhs))
+        let l = implicitZero(try eval(lhs))
         guard let ll = l as? AnyHashable else { throw UnfitExprError(expr: lhs, val: l, op: .equation) }
-        let r = implicitNull(try eval(rhs))
+        let r = implicitZero(try eval(rhs))
         guard let rr = r as? AnyHashable else { throw UnfitExprError(expr: rhs, val: r, op: .equation) }
         return op(ll, rr)
     }
 
     func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
-        let l = implicitNull(try eval(lhs))
+        let l = implicitZero(try eval(lhs))
         guard let ll = l as? Double else { throw UnfitExprError(expr: lhs, val: l, op: .numeric) }
-        let r = implicitNull(try eval(rhs))
+        let r = implicitZero(try eval(rhs))
         guard let rr = r as? Double else { throw UnfitExprError(expr: rhs, val: r, op: .numeric) }
         return op(ll, rr)
     }
 
     func evalAdd(_ lhs: ValueExprP, _ rhs: ValueExprP) throws -> Any {
-        let l = implicitNull(try eval(lhs))
-        let r = implicitNull(try eval(rhs))
+        let l = implicitZero(try eval(lhs))
+        let r = implicitZero(try eval(rhs))
         switch (l, r) {
         case (let ll as Double, let rr as Double):
             return ll+rr

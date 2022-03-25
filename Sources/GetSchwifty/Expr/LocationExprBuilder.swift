@@ -11,8 +11,7 @@ extension FinalizedLocationExprBuilder {
     var precedence: Precedence { .literal }
 
     func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
-        let word = id.literal
-        switch word {
+        switch id.literal {
         case String.sayPoeticStringIdentifiers:
             return PoeticStringAssignmentExprBuilder(target: self)
         case String.indexingIdentifiers:
@@ -117,8 +116,7 @@ class ProperVariableNameExprBuilder: SingleExprBuilder,
         if word.firstCharIsUpperCase {
             words.append(word)
             return self
-        } else {
-            return try pushThrough(id)
         }
+        return try pushThrough(id)
     }
 }
