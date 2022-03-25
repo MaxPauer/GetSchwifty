@@ -12,9 +12,4 @@ line_length: 130
 
 included:
  - Sources
-
-excluded:
- - Tests/**
- - .build
- - .github
- - .vscode
+ - Tests

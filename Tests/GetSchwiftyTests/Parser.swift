@@ -38,7 +38,7 @@ final class ParserTests: XCTestCase {
         let ass = try XCTUnwrap(p.next() as? VoidCallExpr)
         XCTAssertEqual(ass.head, .assign)
         XCTAssert(try p.next() is NopExpr)
-        XCTAssertEqual((ass.target as! VariableNameExpr).name, expVarName)
+        XCTAssertEqual((ass.target as? VariableNameExpr)?.name ?? "", expVarName)
         let rhs = try XCTUnwrap(ass.source as? LiteralExpr<U>)
         XCTAssertEqual(rhs.literal, expValue)
     }
@@ -75,10 +75,14 @@ final class ParserTests: XCTestCase {
     }
 
     func testPoeticStringLiteral() throws {
-        try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
-        try assignParseTest("(when i was 17) my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
-        try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
-        try assignParseTest("(when i was 17) my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
+        try assignParseTest(
+            "(when i was 17) my father said to me A wealthy man had the things I wanted", "my father", "to me A wealthy man had the things I wanted")
+        try assignParseTest(
+            "(when ) my father said to me A wealthy man had the thing's I wanted", "my father", "to me A wealthy man had the thing's I wanted")
+        try assignParseTest(
+            "(when i was 17) my father said to me A wealthy man had the things I wan'ed", "my father", "to me A wealthy man had the things I wan'ed")
+        try assignParseTest(
+            "(when i was 17) my father said to me A wealthy man had the things I waned'", "my father", "to me A wealthy man had the things I waned'")
         try assignParseTest("Mother says good \"night\" good(fright)\t good124.5e2", "mother", "good \"night\" good(fright)\t good124.5e2")
         try assignParseTest("Father say  \\ lala 'sick hui'  ", "father", " \\ lala 'sick hui'  ")
         try assignParseTest("brother say ", "brother", "")
@@ -165,7 +169,7 @@ final class ParserTests: XCTestCase {
             let t = try XCTUnwrap(o.target as? T)
             let s = try XCTUnwrap(o.source as? FunctionCallExpr)
             XCTAssertEqual(s.head, .add)
-            let _ = try XCTUnwrap(s.args[0] as? T)
+            _ = try XCTUnwrap(s.args[0] as? T)
             let v = try XCTUnwrap(s.args[1] as? LiteralExpr<Double>)
             XCTAssertEqual(v.literal, Double(value))
             return t
@@ -213,12 +217,12 @@ final class ParserTests: XCTestCase {
     }
 
     func testIndexing() throws {
-        func testParse<S,I>(_ inp: String) throws -> (S,I) {
+        func testParse<S, I>(_ inp: String) throws -> (S, I) {
             var p = try XCTUnwrap(self.parse(inp))
             let i = try XCTUnwrap(p.next() as? IndexingExpr)
             let s = try XCTUnwrap(i.source as? S)
             let ii = try XCTUnwrap(i.operand as? I)
-            return (s,ii)
+            return (s, ii)
         }
 
         let _: (VariableNameExpr, LiteralExpr<Double>) = try testParse("A horse at 5")
@@ -228,6 +232,7 @@ final class ParserTests: XCTestCase {
 
     func testArithmetic() throws {
         func stringifyParse(_ inp: String) throws -> String {
+            // swiftlint:disable:next cyclomatic_complexity
             func str(_ op: FunctionCallExpr.Op) -> String {
                 switch op {
                 case .add: return "+"
@@ -310,26 +315,26 @@ final class ParserTests: XCTestCase {
             var p = try XCTUnwrap(self.parse(inp))
             let i = try XCTUnwrap(p.next() as? ListExpr)
             XCTAssertEqual(i.members.count, exp.count)
-            for (m,e) in zip(i.members, exp) {
+            for (m, e) in zip(i.members, exp) {
                 if let ee = e as? Int {
                     let mm = try XCTUnwrap(m as? LiteralExpr<Double>)
                     XCTAssertEqual(mm.literal, Double(ee))
                 } else {
-                    let ee = e as! [Any]
+                    let ee = e as? [Any] ?? []
                     let mm = try XCTUnwrap(m as? FunctionCallExpr)
                     XCTAssertEqual(mm.head, .and)
                     for i in 0...1 {
-                        let eee = ee[i] as! Int
+                        let eee = ee[i] as? Int ?? -1
                         let mmm = try XCTUnwrap(mm.args[i] as? LiteralExpr<Double>)
                         XCTAssertEqual(mmm.literal, Double(eee))
                     }
                 }
             }
         }
-        try testParse("5, 6 & 7, and 8, 9 & 10", [5,6,7,8,9,10])
-        try testParse("5, 6 and 7, and 8", [5,[6,7],8])
-        try testParse("5, 6 & 7, and 8, ", [5,6,7,8])
-        try testParse("5, 6 ", [5,6])
+        try testParse("5, 6 & 7, and 8, 9 & 10", [5, 6, 7, 8, 9, 10])
+        try testParse("5, 6 and 7, and 8", [5, [6, 7], 8])
+        try testParse("5, 6 & 7, and 8, ", [5, 6, 7, 8])
+        try testParse("5, 6 ", [5, 6])
     }
 
     func testListReduction() throws {
@@ -494,7 +499,7 @@ final class ParserTests: XCTestCase {
             var p = Parser(input: inp)
             while let _ = try p.next() {}
         }
-        let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
+        let fizzbuzz = try String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
 
         try parseDiscardAll(fizzbuzz)
     }

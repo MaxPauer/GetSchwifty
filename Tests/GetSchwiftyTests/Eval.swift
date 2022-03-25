@@ -2,7 +2,9 @@ import XCTest
 @testable import GetSchwifty
 
 final class EvalTests: XCTestCase {
-    func context(input inp: String, maxLoopIterations: UInt? = nil, stdin: @escaping Rockin = { Rockstar.null }, stdout: @escaping Rockout = {_ in}) throws -> MainEvalContext {
+    func context(input inp: String, maxLoopIterations: UInt? = nil,
+                 stdin: @escaping Rockin = { Rockstar.null },
+                 stdout: @escaping Rockout = {_ in}) throws -> MainEvalContext {
         var p = Parser(input: inp)
         let exprCache = DLinkedList<ExprP>()
         while let e = try p.next() {
@@ -15,7 +17,7 @@ final class EvalTests: XCTestCase {
             rockout: stdout)
     }
 
-    func errorTest<T>(_ inp: String, _ pos: (UInt,UInt), maxLoopIterations: UInt? = nil) throws -> T where T: IRuntimeError {
+    func errorTest<T>(_ inp: String, _ pos: (UInt, UInt), maxLoopIterations: UInt? = nil) throws -> T where T: IRuntimeError {
         let c = try context(input: inp, maxLoopIterations: maxLoopIterations)
         var error: Error?
         XCTAssertThrowsError(try c.run()) { (e: Error) in
@@ -27,17 +29,17 @@ final class EvalTests: XCTestCase {
         return err
     }
 
-    func errorTest(_ inp: String, _ op: UnfitExprError.Op, _ pos: (UInt,UInt)) throws {
+    func errorTest(_ inp: String, _ op: UnfitExprError.Op, _ pos: (UInt, UInt)) throws {
         let err: UnfitExprError = try errorTest(inp, pos)
         XCTAssertEqual(err.op, op)
     }
 
-    func errorTest(_ inp: String, _ op: LocationError.Op, _ pos: (UInt,UInt)) throws {
+    func errorTest(_ inp: String, _ op: LocationError.Op, _ pos: (UInt, UInt)) throws {
         let err: LocationError = try errorTest(inp, pos)
         XCTAssertEqual(err.op, op)
     }
 
-    func errorTest(_ inp: String, maxLoopIterations: UInt, _ pos: (UInt,UInt)) throws {
+    func errorTest(_ inp: String, maxLoopIterations: UInt, _ pos: (UInt, UInt)) throws {
         let _: MaxLoopRecursionExceededError = try errorTest(inp, pos, maxLoopIterations: maxLoopIterations)
     }
 
@@ -59,8 +61,8 @@ final class EvalTests: XCTestCase {
     func assertArray(_ c: EvalContext, _ v: String, _ val: [AnyHashable]) throws {
         let vval = try XCTUnwrap(c.getVariable(v) as? [AnyHashable])
         XCTAssertEqual(vval.count, val.count)
-        for (l,r) in zip(val, vval) {
-            XCTAssertEqual(l,r)
+        for (l, r) in zip(val, vval) {
+            XCTAssertEqual(l, r)
         }
     }
 
@@ -89,7 +91,11 @@ final class EvalTests: XCTestCase {
     }
 
     func testPoeticPronounAssignment() throws {
-        var c = try context(input: "(when i was 17) my father said to me A wealthy man had the things I wanted\nhe is nothing\nit is beating like a jungle drum")
+        var c = try context(input: """
+            (when i was 17) my father said to me A wealthy man had the things I wanted
+            he is nothing
+            it is beating like a jungle drum
+        """)
         try step(&c) {
             try assertVariable($0, "my father", "to me A wealthy man had the things I wanted")
         }
@@ -102,7 +108,13 @@ final class EvalTests: XCTestCase {
     }
 
     func testBooleanLogicAssignment() throws {
-        var c = try context(input: "let my life be not mysterious\nlet it be right and wrong\nlet it be 5 is greater than 4\nlet it be 5 ain't 5\nlet it be 5 is as great as 1")
+        var c = try context(input: """
+            let my life be not mysterious
+            let it be right and wrong
+            let it be 5 is greater than 4
+            let it be 5 ain't 5
+            let it be 5 is as great as 1
+            """)
         try step(&c) {
             try assertVariable($0, "my life", true)
         }
@@ -212,7 +224,7 @@ final class EvalTests: XCTestCase {
             try assertVariable($0, "my heart", "cool")
         }
         try step(&c) {
-            try assertArray($0, "foo", [1.0,2.0,3.0,4.0])
+            try assertArray($0, "foo", [1.0, 2.0, 3.0, 4.0])
         }
         try step(&c) {
             try assertVariable($0, "bar", Rockstar.mysterious)
@@ -598,41 +610,41 @@ final class EvalTests: XCTestCase {
     }
 
     func testErrors() throws {
-        try errorTest("put my heart into my soul", .read, (1,4))
-        try errorTest("it is nothing", .writePronoun, (1,0))
-        try errorTest("let my life be 5 is greater than \"4\"", .numeric, (1,32))
-        try errorTest("let my life be 5 without \"4\"", .numeric, (1,24))
-        try errorTest("let my life be true without false", .numeric, (1,15))
-        let _: StrayExprError = try errorTest("give it back", (1,0))
-        let _: StrayExprError = try errorTest("else", (1,0))
-        let _: StrayExprError = try errorTest("take it to the top", (1,0))
-        let _: StrayExprError = try errorTest("break it down", (1,0))
-        try errorTest("my life is nothing\nmy life taking 1", .call, (2,0))
-        try errorTest("let my life be 4\nmy life at 5", .index, (2,0))
-        try errorTest("it at 0 is nothing", .readPronoun, (1,0))
-        try errorTest("put my heart at 5 into my soul", .read, (1,4))
-        try errorTest("let my heart at 0 be 1", .read, (1,4))
-        try errorTest("let my life be 4,5\nmy life at 5,5", .index, (2,0))
-        let _: InvalidIndexError = try errorTest("let my life be 5\nlet my life at 1 be 0\nmy life at nothing", (3,0))
-        try errorTest("cut 5 into pieces", .string, (1,4))
-        try errorTest("let my life be 5\ncut my life into pieces", .string, (2,4))
-        try errorTest("cut \"my life\" into pieces with 5", .string, (1,31))
-        try errorTest("join 5 into pieces", .array, (1,5))
-        try errorTest("rock my life\nrock my life with 5,6\njoin my life into pieces", .string, (3,5))
-        try errorTest("rock my life\nrock my life with \"a\",\"b\"\njoin my life with 5", .string, (3,18))
-        try errorTest("cast nothing into x", .cast, (1,5))
-        try errorTest("cast 123.4 into x", .castString, (1,5))
-        try errorTest("cast -1 into x", .castString, (1,5))
-        try errorTest("cast 55296 into x", .castString, (1,5))
-        try errorTest("cast \"foo\" into x", .castDouble, (1,5))
-        try errorTest("cast \"10\" into x with mysterious", .castIntRadix, (1,22))
-        try errorTest("cast \"10\" into x with 37", .castIntRadix, (1,22))
-        try errorTest("cast \"foo\" into x with 10", .castInt, (1,5))
-        let _: StrayExprError = try errorTest("if 1\nbreak", (2,0))
-        let _: StrayExprError = try errorTest("while 1\nreturn 1", (2,0))
-        let _: StrayExprError = try errorTest("foo takes x\nbreak\n\nfoo taking 1", (2,0))
-        let _: InvalidArgumentCountError = try errorTest("foo takes x,y\n\nfoo taking 1", (3,0))
-        let _: InvalidArgumentCountError = try errorTest("foo takes x,y\n\nfoo taking 1,2,3", (3,0))
-        try errorTest("while true", maxLoopIterations: 1, (1,0))
+        try errorTest("put my heart into my soul", .read, (1, 4))
+        try errorTest("it is nothing", .writePronoun, (1, 0))
+        try errorTest("let my life be 5 is greater than \"4\"", .numeric, (1, 32))
+        try errorTest("let my life be 5 without \"4\"", .numeric, (1, 24))
+        try errorTest("let my life be true without false", .numeric, (1, 15))
+        let _: StrayExprError = try errorTest("give it back", (1, 0))
+        let _: StrayExprError = try errorTest("else", (1, 0))
+        let _: StrayExprError = try errorTest("take it to the top", (1, 0))
+        let _: StrayExprError = try errorTest("break it down", (1, 0))
+        try errorTest("my life is nothing\nmy life taking 1", .call, (2, 0))
+        try errorTest("let my life be 4\nmy life at 5", .index, (2, 0))
+        try errorTest("it at 0 is nothing", .readPronoun, (1, 0))
+        try errorTest("put my heart at 5 into my soul", .read, (1, 4))
+        try errorTest("let my heart at 0 be 1", .read, (1, 4))
+        try errorTest("let my life be 4,5\nmy life at 5,5", .index, (2, 0))
+        let _: InvalidIndexError = try errorTest("let my life be 5\nlet my life at 1 be 0\nmy life at nothing", (3, 0))
+        try errorTest("cut 5 into pieces", .string, (1, 4))
+        try errorTest("let my life be 5\ncut my life into pieces", .string, (2, 4))
+        try errorTest("cut \"my life\" into pieces with 5", .string, (1, 31))
+        try errorTest("join 5 into pieces", .array, (1, 5))
+        try errorTest("rock my life\nrock my life with 5,6\njoin my life into pieces", .string, (3, 5))
+        try errorTest("rock my life\nrock my life with \"a\",\"b\"\njoin my life with 5", .string, (3, 18))
+        try errorTest("cast nothing into x", .cast, (1, 5))
+        try errorTest("cast 123.4 into x", .castString, (1, 5))
+        try errorTest("cast -1 into x", .castString, (1, 5))
+        try errorTest("cast 55296 into x", .castString, (1, 5))
+        try errorTest("cast \"foo\" into x", .castDouble, (1, 5))
+        try errorTest("cast \"10\" into x with mysterious", .castIntRadix, (1, 22))
+        try errorTest("cast \"10\" into x with 37", .castIntRadix, (1, 22))
+        try errorTest("cast \"foo\" into x with 10", .castInt, (1, 5))
+        let _: StrayExprError = try errorTest("if 1\nbreak", (2, 0))
+        let _: StrayExprError = try errorTest("while 1\nreturn 1", (2, 0))
+        let _: StrayExprError = try errorTest("foo takes x\nbreak\n\nfoo taking 1", (2, 0))
+        let _: InvalidArgumentCountError = try errorTest("foo takes x,y\n\nfoo taking 1", (3, 0))
+        let _: InvalidArgumentCountError = try errorTest("foo takes x,y\n\nfoo taking 1,2,3", (3, 0))
+        try errorTest("while true", maxLoopIterations: 1, (1, 0))
     }
 }

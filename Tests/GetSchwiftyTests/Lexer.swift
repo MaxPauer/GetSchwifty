@@ -1,15 +1,17 @@
 import XCTest
 @testable import GetSchwifty
 
-fileprivate struct WS {}
-fileprivate struct NL {}
-fileprivate struct SEP {}
-fileprivate struct S {
+// swiftlint:disable type_name
+private struct WS {}
+private struct NL {}
+private struct SEP {}
+private struct S {
     let s: String
 }
+// swiftlint:enable type_name
 
 extension LexPos: Equatable {
-    public static func ==(lhs: LexPos, rhs: LexPos) -> Bool {
+    public static func == (lhs: LexPos, rhs: LexPos) -> Bool {
         lhs.line == rhs.line && lhs.char == rhs.char
     }
 }
@@ -135,35 +137,35 @@ final class LexerTests: XCTestCase {
     }
 
     func testNums() throws {
-        let testLex = { (inp: String, exp: [Double]) in
+        let testLex = { (inp: String, exp: [Double]) throws in
             var lexemes = LexIterator(input: inp)
             for e in exp {
                 let l = lexemes.next()
-                let num = try! XCTUnwrap(l as? NumberLex)
+                let num = try XCTUnwrap(l as? NumberLex)
                 XCTAssertEqual(e, Double(num.literal)!)
             }
             XCTAssert(lexemes.next() is NewlineLex)
             XCTAssertNil(lexemes.next())
         }
 
-        testLex("0", [0])
-        testLex("1", [1.0])
-        testLex("123", [123])
-        testLex("+23", [23])
-        testLex("-23", [-23])
-        testLex("1.23", [1.23])
-        testLex("1.2e3", [1.2e3])
-        testLex("1.2E3", [1.2e3])
-        testLex("12e3", [12e3])
-        testLex("-1.2e+3", [-1.2e+3])
-        testLex("-1.2E-3", [-1.2e-3])
-        testLex("1.2e3", [1.2e3])
-        testLex(".23", [0.23])
-        testLex(".11.99", [0.11, 0.99])
-        testLex("22+33", [22, 33])
-        testLex("-4e-3", [-4e-3])
-        testLex(".2", [0.2])
-        testLex("-2", [-2])
+        try testLex("0", [0])
+        try testLex("1", [1.0])
+        try testLex("123", [123])
+        try testLex("+23", [23])
+        try testLex("-23", [-23])
+        try testLex("1.23", [1.23])
+        try testLex("1.2e3", [1.2e3])
+        try testLex("1.2E3", [1.2e3])
+        try testLex("12e3", [12e3])
+        try testLex("-1.2e+3", [-1.2e+3])
+        try testLex("-1.2E-3", [-1.2e-3])
+        try testLex("1.2e3", [1.2e3])
+        try testLex(".23", [0.23])
+        try testLex(".11.99", [0.11, 0.99])
+        try testLex("22+33", [22, 33])
+        try testLex("-4e-3", [-4e-3])
+        try testLex(".2", [0.2])
+        try testLex("-2", [-2])
     }
 
     func testDelimiter() throws {
@@ -184,47 +186,49 @@ final class LexerTests: XCTestCase {
     }
 
     func testRanges() throws {
-        let testLex = {(inp: String, exp: [(Lex.Type, (UInt,UInt), (UInt,UInt))]) in
+        let testLex = {(inp: String, exp: [(Lex.Type, (UInt, UInt), (UInt, UInt))]) in
             let lexemes = LexIterator(input: inp)
-            for (l,e) in zip(lexemes, exp) {
+            for (l, e) in zip(lexemes, exp) {
                 let (t, start, end) = e
                 XCTAssert(type(of: l) == t)
-                var (line,char) = start
+                var (line, char) = start
                 XCTAssertEqual(l.range.start, LexPos(line: line, char: char))
-                (line,char) = end
+                (line, char) = end
                 XCTAssertEqual(l.range.end, LexPos(line: line, char: char))
             }
         }
 
+        // swiftlint:disable comma
         testLex("A  dream is 2.5 (that's\nsick)", [
-            (IdentifierLex.self, (1,0), (1,1)),
-            (WhitespaceLex.self, (1,1), (1,3)),
-            (IdentifierLex.self, (1,3), (1,8)),
-            (WhitespaceLex.self, (1,8), (1,9)),
-            (IdentifierLex.self, (1,9), (1,11)),
-            (WhitespaceLex.self, (1,11), (1,12)),
-            (NumberLex.self,     (1,12), (1,15)),
-            (WhitespaceLex.self, (1,15), (1,16)),
-            (CommentLex.self,    (1,16), (2,5)),
-            (NewlineLex.self,    (2,5), (3,0)),
+            (IdentifierLex.self, (1, 0), (1, 1)),
+            (WhitespaceLex.self, (1, 1), (1, 3)),
+            (IdentifierLex.self, (1, 3), (1, 8)),
+            (WhitespaceLex.self, (1, 8), (1, 9)),
+            (IdentifierLex.self, (1, 9), (1, 11)),
+            (WhitespaceLex.self, (1, 11), (1, 12)),
+            (NumberLex.self,     (1, 12), (1, 15)),
+            (WhitespaceLex.self, (1, 15), (1, 16)),
+            (CommentLex.self,    (1, 16), (2, 5)),
+            (NewlineLex.self,    (2, 5), (3, 0)),
         ])
 
         testLex("\n\"A\t\r\ndream\" isn't \"nice\"&cool", [
-            (NewlineLex.self,    (1,0), (2,0)),
-            (StringLex.self,    (2,0), (3,6)),
-            (WhitespaceLex.self, (3,6), (3,7)),
-            (IdentifierLex.self, (3,7), (3,10)),
-            (ContractionLex.self, (3,10), (3,12)),
-            (WhitespaceLex.self, (3,12), (3,13)),
-            (StringLex.self,     (3,13), (3,19)),
-            (DelimiterLex.self,  (3,19), (3,20)),
-            (IdentifierLex.self, (3,20), (3,24)),
-            (NewlineLex.self,    (3,24), (4,0)),
+            (NewlineLex.self,     (1, 0), (2, 0)),
+            (StringLex.self,      (2, 0), (3, 6)),
+            (WhitespaceLex.self,  (3, 6), (3, 7)),
+            (IdentifierLex.self,  (3, 7), (3, 10)),
+            (ContractionLex.self, (3, 10), (3, 12)),
+            (WhitespaceLex.self,  (3, 12), (3, 13)),
+            (StringLex.self,      (3, 13), (3, 19)),
+            (DelimiterLex.self,   (3, 19), (3, 20)),
+            (IdentifierLex.self,  (3, 20), (3, 24)),
+            (NewlineLex.self,     (3, 24), (4, 0)),
         ])
+        // swiftlint:enable comma
     }
 
     func testFizzBuzz() throws {
-        let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
+        let fizzbuzz = try String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         let lexemes = LexIterator(input: fizzbuzz)
 
         let expected: [Any] = [
@@ -240,7 +244,8 @@ final class LexerTests: XCTestCase {
             "Hate", WS(), "is", WS(), "water", NL(),
             "Until", WS(), "my", WS(), "world", WS(), "is", WS(), "Desire", SEP(), NL(),
             "Build", WS(), "my", WS(), "world", WS(), "up", NL(),
-            "If", WS(), "Midnight", WS(), "taking", WS(), "my", WS(), "world", SEP(), WS(), "Fire", WS(), "is", WS(), "nothing", WS(), "and", WS(), "Midnight", WS(), "taking", WS(), "my", WS(), "world", SEP(), WS(), "Hate", WS(), "is", WS(), "nothing", NL(),
+            "If", WS(), "Midnight", WS(), "taking", WS(), "my", WS(), "world", SEP(), WS(), "Fire", WS(), "is", WS(), "nothing", WS(),
+            "and", WS(), "Midnight", WS(), "taking", WS(), "my", WS(), "world", SEP(), WS(), "Hate", WS(), "is", WS(), "nothing", NL(),
             "Shout", WS(), S(s: "FizzBuzz!"), NL(),
             "Take", WS(), "it", WS(), "to", WS(), "the", WS(), "top", NL(),
             NL(),
@@ -256,15 +261,15 @@ final class LexerTests: XCTestCase {
         ]
 
         var count = 0
-        for (lex, e) in zip (lexemes, expected) {
+        for (lex, e) in zip(lexemes, expected) {
             count += 1
             switch lex {
-            case let id as IdentifierLex: XCTAssertEqual(id.literal, e as! String)
-            case let str as StringLex:    XCTAssertEqual(str.literal, (e as! S).s)
+            case let id as IdentifierLex: XCTAssertEqual(id.literal, e as? String ?? "zzz")
+            case let str as StringLex:    XCTAssertEqual(str.literal, (e as? S)?.s ?? "yyy")
             case is WhitespaceLex:        XCTAssert(e is WS)
             case is NewlineLex:           XCTAssert(e is NL)
             case is DelimiterLex:         XCTAssert(e is SEP)
-            default:                      XCTFail()
+            default:                      XCTFail("Unhandled lexeme")
             }
         }
         XCTAssertEqual(count, expected.count)

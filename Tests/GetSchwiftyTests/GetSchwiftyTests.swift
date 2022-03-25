@@ -19,7 +19,7 @@ final class GetSchwiftyTests: XCTestCase {
         }
 
         var i = 1
-        let fizzbuzz = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
+        let fizzbuzz = try String(contentsOf: URL(fileURLWithPath: "./Tests/fizzbuzz.rock"))
         let x = try GetSchwifty(input: fizzbuzz, rockout: {o throws in
             let out = try XCTUnwrap(o as? AnyHashable)
             XCTAssertEqual(out, fizzBuzz(n: i))
@@ -27,7 +27,7 @@ final class GetSchwiftyTests: XCTestCase {
             i += 1
         })
 
-        try! x.run()
+        try x.run()
     }
 
     func testIsEven() throws {
@@ -45,7 +45,7 @@ final class GetSchwiftyTests: XCTestCase {
             -4.9: false,
             -6: true]
 
-        let isEven = try! String(contentsOf: URL(fileURLWithPath: "./Tests/iseven.rock"))
+        let isEven = try String(contentsOf: URL(fileURLWithPath: "./Tests/iseven.rock"))
         let x = try GetSchwifty(input: isEven)
         for (i, v) in exp {
             try x.run(rockin: { i }, rockout: {o throws in
@@ -66,7 +66,7 @@ final class GetSchwiftyTests: XCTestCase {
             6: 13,
             7: 21]
 
-        let fibonacci = try! String(contentsOf: URL(fileURLWithPath: "./Tests/fibonacci.rock"))
+        let fibonacci = try String(contentsOf: URL(fileURLWithPath: "./Tests/fibonacci.rock"))
         let x = try GetSchwifty(input: fibonacci)
         for (i, v) in exp {
             try x.run(rockin: { i }, rockout: {o throws in
@@ -119,7 +119,7 @@ final class GetSchwiftyTests: XCTestCase {
             shout logicXor taking z,85
         """
 
-        let logic = try! String(contentsOf: URL(fileURLWithPath: "./Tests/logic.rock"))
+        let logic = try String(contentsOf: URL(fileURLWithPath: "./Tests/logic.rock"))
 
         for (exp, code) in zip([not, and, or, xor], [testNot, testAnd, testOr, testXor]) {
             let x = try GetSchwifty(input: logic + code)
