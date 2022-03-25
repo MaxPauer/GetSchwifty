@@ -26,20 +26,20 @@ You can `run` the program multiple times with different `rockin` and `rockout` f
 If you never specify `rockin` or `rockout`, every Rockstar call to `listen` will be handled like a `nil` input and `shout` will do nothing.
 Shout into the void, if you will.
 
-You can use the `maxLoopIterations` property if you tend to fuck up your Rockstar programs, like I do, and run into endless loops constantly.
+You can use the `maxLoopIterations` property if you tend to fuck up your Rockstar programs, like I do, and run into infinite loops constantly.
 If the property is set, loops in your Rockstar program will throw a `RuntimeError` if they run too long, i.e. more iterations than `maxLoopIterations`.
 
 While we're at `RuntimeError`, GetSchwifty also exposes three `Error` types:
 ```swift
 public protocol RockstarError: Error, CustomStringConvertible {
-    var errorPos: (UInt, UInt) { get }
+    var errorPos: (line: UInt, char: UInt) { get }
 }
 public protocol ParserError: RockstarError {}
 public protocol RuntimeError: RockstarError {}
 ```
 You can catch these to handle syntactical (`ParserError`) or semantical (`RuntimeError`) errors.
 The `errorPos` property should give you a good hint about where you fucked up.
-The first tuple value will represent the line (starting at 1), and the second one will represent the character offset within the line (starting at 0, because counting chars from 1 just feels wrong).
+The first tuple value will represent the error's line (starting at 1), and the second one will represent the character offset within the line (starting at 0, because counting chars from 1 just feels wrong).
 As these `Errors` comply to `CustomStringConvertible`, the `description` property should also give you a textual representation of what went wrong.
 
 A special type and its singleton to represent uninitialised Rockstar variables are also exposed:

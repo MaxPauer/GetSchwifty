@@ -1,5 +1,5 @@
 public protocol RockstarError: Error, CustomStringConvertible {
-    var errorPos: (UInt, UInt) { get }
+    var errorPos: (line: UInt, char: UInt) { get }
 }
 public protocol ParserError: RockstarError {}
 public protocol RuntimeError: RockstarError {}
@@ -9,7 +9,7 @@ protocol IRockstarError: RockstarError, CustomDebugStringConvertible {
 }
 
 extension IRockstarError {
-    var errorPos: (UInt, UInt) { (startPos.line, startPos.char) }
+    var errorPos: (line: UInt, char: UInt) { (line: startPos.line, char: startPos.char) }
 }
 
 protocol IParserError: IRockstarError, ParserError {
