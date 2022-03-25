@@ -109,9 +109,9 @@ Maybe I will add a protocol for that in the future.
 Apart from these types you can also pass closures with the following signatures into `Rockin` and call them from Rockstar:
 ```swift
 () throws -> Void
-([Any]) throws -> Void
 () throws -> Any
 () throws -> Any?
+([Any]) throws -> Void
 ([Any]) throws -> Any
 ([Any]) throws -> Any?
 ```
