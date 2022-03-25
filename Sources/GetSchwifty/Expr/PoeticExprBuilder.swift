@@ -17,8 +17,8 @@ fileprivate extension IdentifierLex {
     }
 }
 
-class PoeticConstantExprBuilder:
-        SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class PoeticConstantExprBuilder: SingleExprBuilder,
+        IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy private var constant: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
@@ -46,11 +46,11 @@ class PoeticConstantExprBuilder:
     }
 }
 
-class PoeticNumberExprBuilder:
-        SingleExprBuilder, ThrowsNumberLexP, ThrowsStringLexP {
+class PoeticNumberExprBuilder: SingleExprBuilder,
+        ThrowsNumberLexP, ThrowsStringLexP {
     private var value: Double?
     private var divider: Double = 1.0
-    private var digit: Int? = nil
+    private var digit: Int?
     var range: LexRange!
 
     func addToPoeticDigit(from id: IdentifierLex) {
@@ -111,8 +111,8 @@ class PoeticNumberExprBuilder:
     }
 }
 
-class PoeticNumberishAssignmentExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesIdentifierLexThroughP, ThrowsStringLexP, ThrowsNumberLexP {
+class PoeticNumberishAssignmentExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesIdentifierLexThroughP, ThrowsStringLexP, ThrowsNumberLexP {
     var target: ExprBuilder
     lazy var source: ExprBuilder = self |=> PoeticNumberExprBuilder()
     var range: LexRange!
@@ -142,8 +142,8 @@ class PoeticNumberishAssignmentExprBuilder:
     }
 }
 
-class PoeticStringAssignmentExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesIdentifierLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP {
+class PoeticStringAssignmentExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesIdentifierLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP {
     var target: ExprBuilder
     lazy private var value: String = ""
     private var whitespaceSeen = false

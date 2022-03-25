@@ -58,7 +58,7 @@ extension IndexingExprBuilder {
 extension CommonVariableNameExprBuilder {
     var prettyName: String { "Variable Name: unfinished=\(first) …" }
 }
-extension ProperVariableNameExprBuilder{
+extension ProperVariableNameExprBuilder {
     var prettyName: String { "Variable Name: unfinished=\(name) …" }
 }
 extension PoeticConstantExprBuilder {
@@ -139,7 +139,6 @@ extension ContinueExprBuilder {
 extension ConditionalExprBuilder {
     var prettyName: String { "Conditional" }
 }
-
 
 extension NopExpr {
     var prettyName: String { "Nop" }

@@ -180,7 +180,7 @@ struct InvalidArgumentCountError: IRuntimeError {
     }
 }
 
-struct MaxLoopRecursionExceededError:IRuntimeError {
+struct MaxLoopRecursionExceededError: IRuntimeError {
     let expr: ExprP
     var startPos: LexPos { expr.range.start }
     var debugDescription: String {

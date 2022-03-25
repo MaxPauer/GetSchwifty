@@ -8,17 +8,17 @@ protocol EvalContext: AnyObject {
     var lastVariable: String? { get set }
     var debuggingSettings: DebuggingSettings { get }
 
-    func getVariableOwner(_ n: String) -> EvalContext?
-    func getVariable(_ n: String) -> Any?
-    func setVariable(_ n: String, _ v: Any)
-    func _setVariable(_ n: String, _ v: Any)
+    func getVariableOwner(_: String) -> EvalContext?
+    func getVariable(_: String) -> Any?
+    func setVariable(_: String, _: Any)
+    func _setVariable(_: String, _: Any)
 
     func shout(_: Any) throws
     func listen() throws -> Any
 
-    func doReturn(_ r: ReturnExpr) throws
-    func doBreak(_ b: BreakExpr) throws
-    func doContinue(_ c: ContinueExpr) throws
+    func doReturn(_: ReturnExpr) throws
+    func doBreak(_: BreakExpr) throws
+    func doContinue(_: ContinueExpr) throws
 }
 
 extension EvalContext {
@@ -120,7 +120,7 @@ extension EvalContext {
         if let d = i as? Double { return d != 0 }
         if i is String { return true }
         if i is Rockstar.Null { return false }
-        if i is Rockstar.Mysterious{ return false }
+        if i is Rockstar.Mysterious { return false }
         throw UnfitExprError(expr: expr, val: i, op: .bool)
     }
 
@@ -224,6 +224,7 @@ extension EvalContext {
         case .sub: return try evalMath(expr.args[0], expr.args[1], {$0 - $1})
         case .mul: return try evalMath(expr.args[0], expr.args[1], {$0 * $1})
         case .div: return try evalMath(expr.args[0], expr.args[1], {$0 / $1})
+        // swiftlint:disable force_cast
         case .pop: return try evalPop(expr.args[0] as! LocationExprP)
         case .custom: return try call(expr.args[0] as! LocationExprP, expr.args[1])
         }
@@ -244,7 +245,7 @@ extension EvalContext {
         case let l as LocationExprP:
             return try get(l)
         case let l as ListExpr:
-            return try l.members.map{ try eval($0) }
+            return try l.members.map { try eval($0) }
         case let f as FunctionCallExpr:
             return try eval(f)
         default:
@@ -264,7 +265,7 @@ extension EvalContext {
             var arr = arr
             switch val {
             case let list as [Any]:
-                list.forEach{ arr.push($0) }
+                list.forEach { arr.push($0) }
             default:
                 arr.push(val)
             }
@@ -302,7 +303,7 @@ extension EvalContext {
             try set(target, RockstarArray(split))
             return
         }
-        try set(target, RockstarArray(Array(s).map{ String($0) }))
+        try set(target, RockstarArray(Array(s).map { String($0) }))
     }
 
     func join(_ target: LocationExprP, _ source: ValueExprP?, _ arg: ValueExprP?) throws {
@@ -385,6 +386,7 @@ extension EvalContext {
         case .print:  try shout(eval(expr.source!))
         case .scan:   try set(expr.target!, listen())
         case .push:   try evalPush(expr.target!, expr.arg)
+        // swiftlint:disable force_cast
         case .pop:    try evalPop(expr.target!, expr.source! as! LocationExprP)
         case .split:  try split(expr.target!, expr.source, expr.arg)
         case .join:   try join(expr.target!, expr.source, expr.arg)
@@ -429,7 +431,7 @@ extension EvalContext {
 
 class MainEvalContext: EvalContext {
     var variables = [String: Any]()
-    var lastVariable: String? = nil
+    var lastVariable: String?
     let debuggingSettings: DebuggingSettings
 
     var _exprs: AnySequence<ExprP>.Iterator
@@ -648,7 +650,7 @@ class RockFunEvalContext: NestedEvalContext {
     var variables = [String: Any]()
     var _lastVariable: String?
 
-    var returnValue: Any? = nil
+    var returnValue: Any?
 
     init(parent p: EvalContext, argNames a: [String], _ e: [ExprP]) {
         parent = p
@@ -675,7 +677,7 @@ class RockFunEvalContext: NestedEvalContext {
 
         returnValue = nil
         variables.removeAll()
-        for (a,v) in zip(argNames, argVals) {
+        for (a, v) in zip(argNames, argVals) {
             variables[a] = v
         }
 

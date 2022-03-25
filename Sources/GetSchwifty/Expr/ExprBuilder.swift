@@ -158,7 +158,7 @@ class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespa
         case String.continueIdentifiers:
             return ContinueExprBuilder()
         case String.takeIdentifiers:
-            return ContinueExprBuilder(itToTheTop:true)
+            return ContinueExprBuilder(itToTheTop: true)
 
         case \.firstCharIsUpperCase:
             return ProperVariableNameExprBuilder(first: word, isStatement: isStatement)
@@ -180,8 +180,8 @@ class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespa
     }
 }
 
-class AssignmentExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class AssignmentExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var value: ExprBuilder = VanillaExprBuilder(parent: self)
     var op: FunctionCallExpr.Op?
@@ -204,7 +204,7 @@ class AssignmentExprBuilder:
         let t: LocationExprP = try target.build(asChildOf: self)
         var s: ValueExprP = try value.build(asChildOf: self)
         if let op = op {
-            s = FunctionCallExpr(head: op, args: [t,s], range: range)
+            s = FunctionCallExpr(head: op, args: [t, s], range: range)
         }
         return VoidCallExpr(head: .assign, target: t, source: s, arg: nil, range: range)
     }
@@ -254,8 +254,8 @@ class AssignmentExprBuilder:
     }
 }
 
-class PushExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP {
+class PushExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var value: ExprBuilder?
     var range: LexRange!
@@ -302,8 +302,8 @@ class PushExprBuilder:
     }
 }
 
-class RoundExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class RoundExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
     private var op: VoidCallExpr.Op?
     var range: LexRange!
@@ -339,8 +339,8 @@ class RoundExprBuilder:
     }
 }
 
-class VoidCallExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP  {
+class VoidCallExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     let op: VoidCallExpr.Op
     var source: ExprBuilder?
@@ -382,8 +382,8 @@ class VoidCallExprBuilder:
     }
 }
 
-class CrementExprBuilder:
-        SingleExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class CrementExprBuilder: SingleExprBuilder,
+        PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var targetFinished: Bool = false
     let isIncrement: Bool
     var isDecrement: Bool { !isIncrement }
@@ -434,8 +434,8 @@ class CrementExprBuilder:
     }
 }
 
-class InputExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP  {
+class InputExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     private var target: ExprBuilder?
     private var hasTarget: Bool { target != nil }
     var range: LexRange!
@@ -466,8 +466,8 @@ class InputExprBuilder:
     }
 }
 
-class OutputExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, PushesIdentifierLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class OutputExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, PushesIdentifierLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
@@ -482,8 +482,8 @@ class OutputExprBuilder:
     }
 }
 
-class ReturnExprBuilder:
-        SingleExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class ReturnExprBuilder: SingleExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let initialBackAllowed: Bool
     var backReceived: Bool = false
     lazy var arg: ExprBuilder = VanillaExprBuilder(parent: self)
@@ -521,16 +521,16 @@ class ReturnExprBuilder:
     }
 }
 
-class ElseExprBuilder:
-        SingleExprBuilder, ThrowsDelimiterLexP, ThrowsIdentifierLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class ElseExprBuilder: SingleExprBuilder,
+        ThrowsDelimiterLexP, ThrowsIdentifierLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var range: LexRange!
     func build() -> ExprP {
         return ElseExpr(range: range)
     }
 }
 
-class BreakExprBuilder:
-        SingleExprBuilder, ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class BreakExprBuilder: SingleExprBuilder,
+        ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var range: LexRange!
     var acceptsIt: Bool = true
     var requiresDown: Bool = false
@@ -555,8 +555,8 @@ class BreakExprBuilder:
     }
 }
 
-class ContinueExprBuilder:
-        SingleExprBuilder, ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class ContinueExprBuilder: SingleExprBuilder,
+        ThrowsDelimiterLexP, ThrowsNumberLexP, ThrowsStringLexP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var range: LexRange!
     var requires: DLinkedList<Set<String>>
 
@@ -565,7 +565,7 @@ class ContinueExprBuilder:
     }
     convenience init(itToTheTop: Bool) {
         self.init()
-        if (itToTheTop) {
+        if itToTheTop {
             requires.pushBack(String.itIdentifiers)
             requires.pushBack(String.toIdentifiers)
             requires.pushBack(String.theIdentifiers)

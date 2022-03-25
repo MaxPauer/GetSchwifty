@@ -2,8 +2,8 @@ extension DelimiterLex {
     var isComma: Bool { literal == "," }
 }
 
-class IndexingExprBuilder:
-        DelimiterLexToListP, PushesStringLexThroughP, PushesNumberLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class IndexingExprBuilder: DelimiterLexToListP,
+        PushesStringLexThroughP, PushesNumberLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let target: ExprBuilder
     lazy var index: ExprBuilder = VanillaExprBuilder(parent: self)
     let isStatement: Bool
@@ -31,8 +31,8 @@ class IndexingExprBuilder:
     }
 }
 
-class FunctionCallExprBuilder:
-        ArithExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresWhitespaceLexP, IgnoresCommentLexP {
+class FunctionCallExprBuilder: ArithExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresWhitespaceLexP, IgnoresCommentLexP {
     var head: ExprBuilder
     lazy var args: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
@@ -68,8 +68,8 @@ class FunctionCallExprBuilder:
     }
 }
 
-class ListExprBuilder:
-        ArithExprBuilder, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class ListExprBuilder: ArithExprBuilder,
+        PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     var sources = DLinkedList<ExprBuilder>()
     lazy var currSource: ExprBuilder = VanillaExprBuilder(parent: self)
     var takesAnd: Bool
@@ -135,8 +135,8 @@ class ListExprBuilder:
     }
 }
 
-class PopExprBuilder:
-        ArithExprBuilder, PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class PopExprBuilder: ArithExprBuilder,
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var source: ExprBuilder = VanillaExprBuilder(parent: self)
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var expectsTarget: Bool = false
@@ -174,8 +174,8 @@ class PopExprBuilder:
     }
 }
 
-class StringExprBuilder:
-        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP {
+class StringExprBuilder: DelimiterLexToListP,
+        IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP {
     let literal: String
     var range: LexRange!
     let isStatement = false
@@ -196,8 +196,8 @@ class StringExprBuilder:
     }
 }
 
-class NumberExprBuilder:
-        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
+class NumberExprBuilder: DelimiterLexToListP,
+        IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let literal: Double
     var range: LexRange!
     let isStatement = false
@@ -223,8 +223,8 @@ class NumberExprBuilder:
     }
 }
 
-class LiteralExprBuilder<T>:
-        DelimiterLexToListP, IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
+class LiteralExprBuilder<T>: DelimiterLexToListP,
+        IgnoresCommentLexP, IgnoresWhitespaceLexP, ThrowsNumberLexP, ThrowsStringLexP {
     let literal: T
     var range: LexRange!
     let isStatement = false

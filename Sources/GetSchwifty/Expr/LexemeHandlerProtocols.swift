@@ -6,13 +6,13 @@ protocol ThrowsNumberLexP: ExprBuilder {}
 protocol ThrowsDelimiterLexP: ExprBuilder {}
 
 extension IgnoresWhitespaceLexP {
-    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder {
+    func handleWhitespaceLex(_: WhitespaceLex) throws -> ExprBuilder {
         return self
     }
 }
 
 extension IgnoresCommentLexP {
-    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder {
+    func handleCommentLex(_: CommentLex) throws -> ExprBuilder {
         return self
     }
 }

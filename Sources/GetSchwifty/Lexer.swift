@@ -1,22 +1,24 @@
 prefix operator ↵
 prefix operator →
 
-fileprivate typealias StringFifo = Fifo<String.Iterator>
+private typealias StringFifo = Fifo<String.Iterator>
 
 struct LexPos {
     let line: UInt
     let char: UInt
 
-    static prefix func →(op: LexPos) -> LexPos {
+    // swiftlint:disable identifier_name
+    static prefix func → (op: LexPos) -> LexPos {
         LexPos(line: op.line, char: op.char+1)
     }
-    static prefix func ↵(op: LexPos) -> LexPos {
+    // swiftlint:disable identifier_name
+    static prefix func ↵ (op: LexPos) -> LexPos {
         LexPos(line: op.line+1, char: 0)
     }
-    static func -(end: LexPos, start: LexPos) -> LexRange {
+    static func - (end: LexPos, start: LexPos) -> LexRange {
         LexRange(start: start, end: end)
     }
-    static prefix func -(end: LexPos) -> LexRange {
+    static prefix func - (end: LexPos) -> LexRange {
         return end-end
     }
     static var origin: LexPos { LexPos(line: 1, char: 0) }
@@ -26,7 +28,7 @@ struct LexRange {
     let start: LexPos
     let end: LexPos
 
-    static func +(lhs: LexRange, rhs: LexRange) -> LexRange {
+    static func + (lhs: LexRange, rhs: LexRange) -> LexRange {
         LexRange(start: lhs.start, end: rhs.end)
     }
 }
@@ -277,7 +279,7 @@ fileprivate extension Character {
     }
 }
 
-func ~=<T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
+func ~= <T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
 

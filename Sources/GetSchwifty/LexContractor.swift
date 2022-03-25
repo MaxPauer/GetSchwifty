@@ -32,7 +32,7 @@ struct LexContractor: IteratorProtocol, Sequence {
     mutating func next() -> Lex? {
         while let l = lexemes.next() {
             if let c = l as? ContractionLex {
-                c.contract(ll.popBack()).forEach{ ll.pushBack($0) }
+                c.contract(ll.popBack()).forEach { ll.pushBack($0) }
             } else {
                 ll.pushBack(l)
                 break

@@ -9,7 +9,7 @@ enum Precedence: Int, Equatable, Comparable {
     case index   = 26
     case literal = 99
 
-    static func <(lhs: Precedence, rhs: Precedence) -> Bool { lhs.rawValue < rhs.rawValue }
+    static func < (lhs: Precedence, rhs: Precedence) -> Bool { lhs.rawValue < rhs.rawValue }
 }
 
 extension FunctionCallExpr.Op {
@@ -74,8 +74,8 @@ extension ArithExprBuilder {
     }
 }
 
-class BiArithExprBuilder:
-        ArithExprBuilder, PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class BiArithExprBuilder: ArithExprBuilder,
+        PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     private(set) var op: FunctionCallExpr.Op
     var opMustContinueWith: Set<String> = Set()
     var hasRhs: Bool = false
@@ -93,7 +93,7 @@ class BiArithExprBuilder:
     func build() throws -> ExprP {
         let l: ValueExprP = try lhs.build(asChildOf: self)
         let r: ValueExprP = try rhs.build(asChildOf: self)
-        return FunctionCallExpr(head: op, args: [l,r], range: range)
+        return FunctionCallExpr(head: op, args: [l, r], range: range)
     }
 
     func pushThrough(_ lex: Lex) throws -> ExprBuilder {
@@ -151,8 +151,8 @@ class BiArithExprBuilder:
     }
 }
 
-class UnArithExprBuilder:
-        ArithExprBuilder, PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+class UnArithExprBuilder: ArithExprBuilder,
+        PushesStringLexThroughP, PushesNumberLexThroughP, PushesDelimiterLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
     let op: FunctionCallExpr.Op
     lazy var rhs: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!

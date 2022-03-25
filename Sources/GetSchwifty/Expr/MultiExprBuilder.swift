@@ -95,6 +95,7 @@ class FunctionDeclExprBuilder: MultiExprBuilder {
     func build() throws -> ExprP {
         try push(currentExpr.build())
 
+        // swiftlint:disable force_cast
         let head = try self.head.build() as! VariableNameExpr
         return FunctionDeclExpr(head: head, args: args!, funBlock: Array(subExprs.consumeFrontToBack), range: range)
     }

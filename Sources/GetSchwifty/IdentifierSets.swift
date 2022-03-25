@@ -1,12 +1,13 @@
 infix operator ∪: AdditionPrecedence
 
 extension Set {
-    static func ∪(lhs: Set, rhs: Set) -> Set {
+    // swiftlint:disable identifier_name
+    static func ∪ (lhs: Set, rhs: Set) -> Set {
         lhs.union(rhs)
     }
 }
 
-func ~=(pattern: Set<String>, value: String) -> Bool {
+func ~= (pattern: Set<String>, value: String) -> Bool {
     pattern.contains(value.lowercased())
 }
 

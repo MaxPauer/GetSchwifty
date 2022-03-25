@@ -89,7 +89,7 @@ class DLinkedList<T> {
     }
 
     var consumeFrontToBack: AnySequence<T> {
-        AnySequence(ConsumingSequencer{ self.popFront() })
+        AnySequence(ConsumingSequencer { self.popFront() })
     }
 
     var walkFrontToBack: AnySequence<T> {
@@ -179,7 +179,7 @@ struct RockstarArray {
     }
 
     init(_ arr: [Any]) {
-        arr.forEach{ self.push($0) }
+        arr.forEach { self.push($0) }
     }
 
     init(_ dict: [AnyHashable: Any]) {
