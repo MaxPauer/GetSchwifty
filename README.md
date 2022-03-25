@@ -145,7 +145,7 @@ The fuck do I know. I told you this is not rocket science. But I'm happy to anou
 I do, but where is the fun in that.
 
 ### What's the dependencies?
-None. Not even `Foundation`.
+None. Except for `Foundation`.
 
 ### What Swift version does it require?
 I developed it on 5.5, but I believe it should run on 5.4 as well. Maybe even before that.
