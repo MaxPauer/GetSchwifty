@@ -1,7 +1,7 @@
 infix operator ∪: AdditionPrecedence
 
 extension Set {
-    // swiftlint:disable identifier_name
+    // swiftlint:disable:next identifier_name
     static func ∪ (lhs: Set, rhs: Set) -> Set {
         lhs.union(rhs)
     }
@@ -46,7 +46,8 @@ extension String {
         Set(["in", "into"])
     }
     static var pronounIdentifiers: Set<String> {
-        Set(["he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"]) ∪ String.itIdentifiers
+        Set(["he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"])
+         ∪ String.itIdentifiers
     }
     static var pushIdentifiers: Set<String> {
         Set(["rock", "push"])

@@ -15,7 +15,9 @@ fileprivate extension ContractionLex {
             return [toSimpleLex()] }
         guard lhs is IdentifierLex && !isIsContraction else {
             return [lhs, toSimpleLex()] }
-        return [IdentifierLex(literal: lhs.literal + literal, prettyLiteral: lhs.prettyLiteral! + prettyLiteral!, range: range.end-lhs.range.start)]
+        return [IdentifierLex(literal: lhs.literal + literal,
+                              prettyLiteral: lhs.prettyLiteral! + prettyLiteral!,
+                              range: range.end-lhs.range.start)]
     }
 }
 

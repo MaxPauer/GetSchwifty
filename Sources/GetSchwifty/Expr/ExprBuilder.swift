@@ -8,8 +8,8 @@ enum PartialExpr {
 protocol ExprBuilder: AnyObject, PrettyNamed {
     var range: LexRange! { get set }
     var consumesAnd: Bool { get }
-    func partialPush(_ lex: Lex) throws -> ExprBuilder
-    func push(_ lex: Lex) throws -> PartialExpr
+    func partialPush(_: Lex) throws -> ExprBuilder
+    func push(_: Lex) throws -> PartialExpr
     func build() throws -> ExprP
 }
 
@@ -32,12 +32,12 @@ extension ExprBuilder {
 }
 
 protocol SingleExprBuilder: ExprBuilder {
-    func handleIdentifierLex(_ i: IdentifierLex) throws -> ExprBuilder
-    func handleWhitespaceLex(_ w: WhitespaceLex) throws -> ExprBuilder
-    func handleCommentLex(_ c: CommentLex) throws -> ExprBuilder
-    func handleStringLex(_ s: StringLex) throws -> ExprBuilder
-    func handleNumberLex(_ n: NumberLex) throws -> ExprBuilder
-    func handleDelimiterLex(_ d: DelimiterLex) throws -> ExprBuilder
+    func handleIdentifierLex(_: IdentifierLex) throws -> ExprBuilder
+    func handleWhitespaceLex(_: WhitespaceLex) throws -> ExprBuilder
+    func handleCommentLex(_: CommentLex) throws -> ExprBuilder
+    func handleStringLex(_: StringLex) throws -> ExprBuilder
+    func handleNumberLex(_: NumberLex) throws -> ExprBuilder
+    func handleDelimiterLex(_: DelimiterLex) throws -> ExprBuilder
 }
 
 extension SingleExprBuilder {
@@ -98,6 +98,7 @@ class VanillaExprBuilder: SingleExprBuilder, IgnoresCommentLexP, IgnoresWhitespa
     private var bestErrorLocation: ExprBuilder { parent ?? self }
     private var isStatement: Bool { parent == nil }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func handleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder {
         let word = id.literal
         switch word {
@@ -467,7 +468,8 @@ class InputExprBuilder: SingleExprBuilder,
 }
 
 class OutputExprBuilder: SingleExprBuilder,
-        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, PushesIdentifierLexThroughP, IgnoresCommentLexP, IgnoresWhitespaceLexP {
+        PushesDelimiterLexThroughP, PushesNumberLexThroughP, PushesStringLexThroughP, PushesIdentifierLexThroughP,
+        IgnoresCommentLexP, IgnoresWhitespaceLexP {
     lazy var target: ExprBuilder = VanillaExprBuilder(parent: self)
     var range: LexRange!
 
@@ -550,7 +552,8 @@ class BreakExprBuilder: SingleExprBuilder,
             requiresDown = false
             return self
         default:
-            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: acceptsIt ? String.itIdentifiers : requiresDown ? String.downIdentifiers : Set())
+            let expecting = acceptsIt ? String.itIdentifiers : requiresDown ? String.downIdentifiers : Set()
+            throw UnexpectedIdentifierError(got: id, parsing: self, expecting: expecting)
         }
     }
 }

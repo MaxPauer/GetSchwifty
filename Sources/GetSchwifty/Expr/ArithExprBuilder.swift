@@ -29,8 +29,8 @@ extension FunctionCallExpr.Op {
 protocol ArithExprBuilder: SingleExprBuilder {
     var precedence: Precedence { get }
     var isStatement: Bool { get }
-    func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder?
-    func postHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder
+    func preHandleIdentifierLex(_: IdentifierLex) throws -> ExprBuilder?
+    func postHandleIdentifierLex(_: IdentifierLex) throws -> ExprBuilder
 }
 
 extension IdentifierLex {
@@ -105,44 +105,51 @@ class BiArithExprBuilder: ArithExprBuilder,
         return self
     }
 
+    func handleOpContinuation(_ id: IdentifierLex) -> Bool {
+        switch id.literal {
+        case String.thanIdentifiers,
+             String.asIdentifiers:
+            opMustContinueWith = Set()
+            return true
+        case String.lowIdentifiers:
+            self.op = .leq
+            opMustContinueWith = String.asIdentifiers
+            return true
+        case String.highIdentifiers:
+            self.op = .geq
+            opMustContinueWith = String.asIdentifiers
+            return true
+        default:
+            return false
+        }
+    }
+
+    func handleEqOpContinuation(_ id: IdentifierLex) -> Bool {
+        switch id.literal {
+        case String.higherIdentifiers:
+            self.op = .gt
+            opMustContinueWith = String.thanIdentifiers
+            return true
+        case String.lowerIdentifiers:
+            self.op = .lt
+            opMustContinueWith = String.thanIdentifiers
+            return true
+        case String.asIdentifiers:
+            opMustContinueWith = String.highIdentifiers ∪ String.lowIdentifiers
+            return true
+        default:
+            return false
+        }
+    }
+
     func preHandleIdentifierLex(_ id: IdentifierLex) throws -> ExprBuilder? {
-        if opMustContinueWith ~= id.literal {
-            switch id.literal {
-            case String.thanIdentifiers,
-                 String.asIdentifiers:
-                opMustContinueWith = Set()
-                return self
-            case String.lowIdentifiers:
-                self.op = .leq
-                opMustContinueWith = String.asIdentifiers
-                return self
-            case String.highIdentifiers:
-                self.op = .geq
-                opMustContinueWith = String.asIdentifiers
-                return self
-            default:
-                break
-            }
+        if opMustContinueWith ~= id.literal && handleOpContinuation(id) {
+            return self
         } else if !opMustContinueWith.isEmpty {
             throw UnexpectedIdentifierError(got: id, parsing: self, expecting: opMustContinueWith)
-        } else if self.op == .eq && !hasRhs {
-            switch id.literal {
-            case String.higherIdentifiers:
-                self.op = .gt
-                opMustContinueWith = String.thanIdentifiers
-                return self
-            case String.lowerIdentifiers:
-                self.op = .lt
-                opMustContinueWith = String.thanIdentifiers
-                return self
-            case String.asIdentifiers:
-                opMustContinueWith = String.highIdentifiers ∪ String.lowIdentifiers
-                return self
-            default:
-                break
-            }
+        } else if self.op == .eq && !hasRhs && handleEqOpContinuation(id) {
+            return self
         }
-
         return nil
     }
 

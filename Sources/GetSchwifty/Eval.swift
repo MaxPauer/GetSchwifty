@@ -208,6 +208,7 @@ extension EvalContext {
         try set(target, evalPop(source))
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func eval(_ expr: FunctionCallExpr) throws -> Any {
         switch expr.head {
         case .not: return try !evalTruthiness(expr.args[0])
@@ -224,8 +225,9 @@ extension EvalContext {
         case .sub: return try evalMath(expr.args[0], expr.args[1], {$0 - $1})
         case .mul: return try evalMath(expr.args[0], expr.args[1], {$0 * $1})
         case .div: return try evalMath(expr.args[0], expr.args[1], {$0 / $1})
-        // swiftlint:disable force_cast
+        // swiftlint:disable:next force_cast
         case .pop: return try evalPop(expr.args[0] as! LocationExprP)
+        // swiftlint:disable:next force_cast
         case .custom: return try call(expr.args[0] as! LocationExprP, expr.args[1])
         }
     }
@@ -380,13 +382,14 @@ extension EvalContext {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func eval(_ expr: VoidCallExpr) throws {
         switch expr.head {
         case .assign: try set(expr.target!, try eval(expr.source!))
         case .print:  try shout(eval(expr.source!))
         case .scan:   try set(expr.target!, listen())
         case .push:   try evalPush(expr.target!, expr.arg)
-        // swiftlint:disable force_cast
+        // swiftlint:disable:next force_cast
         case .pop:    try evalPop(expr.target!, expr.source! as! LocationExprP)
         case .split:  try split(expr.target!, expr.source, expr.arg)
         case .join:   try join(expr.target!, expr.source, expr.arg)
@@ -397,6 +400,7 @@ extension EvalContext {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func _eval(_ expr: ExprP) throws {
         switch expr {
         case let v as VoidCallExpr:
@@ -438,7 +442,10 @@ class MainEvalContext: EvalContext {
     var _listen: Rockin
     var _shout: Rockout
 
-    init(input inp: AnySequence<ExprP>, debuggingSettings d: DebuggingSettings, rockin: @escaping Rockin, rockout: @escaping Rockout) {
+    init(input inp: AnySequence<ExprP>,
+         debuggingSettings d: DebuggingSettings,
+         rockin: @escaping Rockin,
+         rockout: @escaping Rockout) {
         _exprs = inp.makeIterator()
         _listen = rockin
         _shout = rockout

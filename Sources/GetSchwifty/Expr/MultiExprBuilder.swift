@@ -1,6 +1,6 @@
 protocol MultiExprBuilder: ExprBuilder {
     var currentExpr: ExprBuilder { get set }
-    func push(_ expr: ExprP) throws
+    func push(_: ExprP) throws
 }
 
 extension MultiExprBuilder {
@@ -95,7 +95,7 @@ class FunctionDeclExprBuilder: MultiExprBuilder {
     func build() throws -> ExprP {
         try push(currentExpr.build())
 
-        // swiftlint:disable force_cast
+        // swiftlint:disable:next force_cast
         let head = try self.head.build() as! VariableNameExpr
         return FunctionDeclExpr(head: head, args: args!, funBlock: Array(subExprs.consumeFrontToBack), range: range)
     }
@@ -129,6 +129,9 @@ class ConditionalExprBuilder: MultiExprBuilder {
     func build() throws -> ExprP {
         try push(currentExpr.build())
         let cc = condition!
-        return ConditionalExpr(condition: cc, trueBlock: Array(ifBlockExprs.consumeFrontToBack), falseBlock: Array(elseBlockExprs.consumeFrontToBack), range: range)
+        return ConditionalExpr(condition: cc,
+                               trueBlock: Array(ifBlockExprs.consumeFrontToBack),
+                               falseBlock: Array(elseBlockExprs.consumeFrontToBack),
+                               range: range)
     }
 }

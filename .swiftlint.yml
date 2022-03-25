@@ -1,16 +1,14 @@
 disabled_rules:
- - cyclomatic_complexity
- - line_length
  - file_length
- - function_body_length
 
 identifier_name:
  min_length: 1
- max_length: 40
  allowed_symbols: ["_"]
 
 type_name:
- min_length: 2
+ excluded: ["Op"]
+
+line_length: 130
 
 included:
  - Sources

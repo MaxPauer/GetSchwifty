@@ -7,11 +7,11 @@ struct LexPos {
     let line: UInt
     let char: UInt
 
-    // swiftlint:disable identifier_name
+    // swiftlint:disable:next identifier_name
     static prefix func → (op: LexPos) -> LexPos {
         LexPos(line: op.line, char: op.char+1)
     }
-    // swiftlint:disable identifier_name
+    // swiftlint:disable:next identifier_name
     static prefix func ↵ (op: LexPos) -> LexPos {
         LexPos(line: op.line+1, char: 0)
     }
@@ -166,6 +166,7 @@ struct StringLex: Lex {
     let literal: String
     let range: LexRange
 
+    // swiftlint:disable:next cyclomatic_complexity
     fileprivate init(_ chars: inout StringFifo, start: LexPos) {
         var rep = ""
         var end = →start
@@ -283,6 +284,7 @@ func ~= <T>(pattern: KeyPath<T, Bool>, value: T) -> Bool {
     value[keyPath: pattern]
 }
 
+// swiftlint:disable:next cyclomatic_complexity
 private func nextLexeme(_ chars: inout StringFifo, start: LexPos) -> Lex? {
     guard let c = chars.pop() else { return nil }
 
