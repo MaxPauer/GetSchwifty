@@ -130,7 +130,7 @@ struct LocationError: IExprError {
 
 struct UnfitExprError: IExprError {
     enum Op: CustomStringConvertible {
-        case bool; case equation; case numeric
+        case bool; case equation
         case string; case array; case call; case index
         case cast; case castInt; case castIntRadix
         case castDouble; case castString
@@ -139,7 +139,6 @@ struct UnfitExprError: IExprError {
             switch self {
             case .bool: return "boolean"
             case .equation: return "equation"
-            case .numeric: return "numeric"
             case .string: return "string"
             case .array: return "array"
             case .call: return "function call"

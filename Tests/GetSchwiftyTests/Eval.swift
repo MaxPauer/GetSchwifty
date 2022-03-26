@@ -133,7 +133,15 @@ final class EvalTests: XCTestCase {
     }
 
     func testMath() throws {
-        var c = try context(input: "let my life be 5 minus 3\nlet it be 2 plus \"foo\"\nlet it be \"foo\" with \"fighters\"\nlet it be 10 over 2")
+        var c = try context(input: """
+            let my life be 5 minus 3
+            let it be 2 plus \"foo\"
+            let it be \"foo\" with \"fighters\"
+            let it be 10 over 2
+            let my life be 5 is greater than \"4\"
+            let my life be 5 without \"4\"
+            let my life be true without false
+            """)
         try step(&c) {
             try assertVariable($0, "my life", 2.0)
         }
@@ -145,6 +153,24 @@ final class EvalTests: XCTestCase {
         }
         try step(&c) {
             try assertVariable($0, "my life", 5.0)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", Rockstar.mysterious)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", Rockstar.mysterious)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", Rockstar.mysterious)
+        }
+    }
+
+    func testListArith() throws {
+        var c = try context(input: """
+            let my life be 1 with 2,3,4
+        """)
+        try step(&c) {
+            try assertVariable($0, "my life", 10.0)
         }
     }
 
@@ -612,9 +638,6 @@ final class EvalTests: XCTestCase {
     func testErrors() throws {
         try errorTest("put my heart into my soul", .read, (1, 4))
         try errorTest("it is nothing", .writePronoun, (1, 0))
-        try errorTest("let my life be 5 is greater than \"4\"", .numeric, (1, 32))
-        try errorTest("let my life be 5 without \"4\"", .numeric, (1, 24))
-        try errorTest("let my life be true without false", .numeric, (1, 15))
         let _: StrayExprError = try errorTest("give it back", (1, 0))
         let _: StrayExprError = try errorTest("else", (1, 0))
         let _: StrayExprError = try errorTest("take it to the top", (1, 0))

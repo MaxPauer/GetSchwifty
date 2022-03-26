@@ -139,28 +139,32 @@ extension EvalContext {
         return op(ll, rr)
     }
 
-    func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Double, Double) -> Any) throws -> Any {
-        let l = implicitZero(try eval(lhs))
-        guard let ll = l as? Double else { throw UnfitExprError(expr: lhs, val: l, op: .numeric) }
-        let r = implicitZero(try eval(rhs))
-        guard let rr = r as? Double else { throw UnfitExprError(expr: rhs, val: r, op: .numeric) }
-        return op(ll, rr)
+    func rockDoubleMath(_ op: @escaping (Double, Double) -> Any) -> (Any, Any) -> Any {
+        { (lhs, rhs) in
+            guard let l = lhs as? Double else { return Rockstar.mysterious }
+            guard let r = rhs as? Double else { return Rockstar.mysterious }
+            return op(l, r)
+        }
     }
 
-    func evalAdd(_ lhs: ValueExprP, _ rhs: ValueExprP) throws -> Any {
-        let l = implicitZero(try eval(lhs))
-        let r = implicitZero(try eval(rhs))
-        switch (l, r) {
-        case (let ll as Double, let rr as Double):
-            return ll+rr
+    func rockAdd(_ lhs: Any, _ rhs: Any) -> Any {
+        switch (lhs, rhs) {
+        case (let l as Double, let r as Double):
+            return l + r
+        case (_, let r as [Any]):
+            return r.reduce(lhs) { rockAdd($0, $1) }
         case (_, is String),
              (is String, _):
-            return "\(l)\(r)"
-        case (_, is Double):
-            throw UnfitExprError(expr: lhs, val: l, op: .numeric)
+            return "\(lhs)\(rhs)"
         default:
-            throw UnfitExprError(expr: rhs, val: r, op: .numeric)
+            return Rockstar.mysterious
         }
+    }
+
+    func evalMath(_ lhs: ValueExprP, _ rhs: ValueExprP, _ op: (Any, Any) throws -> Any) throws -> Any {
+        let l = implicitZero(try eval(lhs))
+        let r = implicitZero(try eval(rhs))
+        return try op(l, r)
     }
 
     func call(_ head: LocationExprP, _ args: ValueExprP) throws -> Any {
@@ -220,14 +224,14 @@ extension EvalContext {
         case .nor: return try !(evalTruthiness(expr.args[0]) || evalTruthiness(expr.args[1]))
         case .eq:  return try evalEq(expr.args[0], expr.args[1], {$0 == $1})
         case .neq: return try evalEq(expr.args[0], expr.args[1], {$0 != $1})
-        case .gt:  return try evalMath(expr.args[0], expr.args[1], {$0 > $1})
-        case .lt:  return try evalMath(expr.args[0], expr.args[1], {$0 < $1})
-        case .geq: return try evalMath(expr.args[0], expr.args[1], {$0 >= $1})
-        case .leq: return try evalMath(expr.args[0], expr.args[1], {$0 <= $1})
-        case .add: return try evalAdd(expr.args[0], expr.args[1])
-        case .sub: return try evalMath(expr.args[0], expr.args[1], {$0 - $1})
-        case .mul: return try evalMath(expr.args[0], expr.args[1], {$0 * $1})
-        case .div: return try evalMath(expr.args[0], expr.args[1], {$0 / $1})
+        case .gt:  return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 > $1}))
+        case .lt:  return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 < $1}))
+        case .geq: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 >= $1}))
+        case .leq: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 <= $1}))
+        case .add: return try evalMath(expr.args[0], expr.args[1], rockAdd)
+        case .sub: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 - $1}))
+        case .mul: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 * $1}))
+        case .div: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 / $1}))
         // swiftlint:disable:next force_cast
         case .pop: return try evalPop(expr.args[0] as! LocationExprP)
         // swiftlint:disable:next force_cast
@@ -261,7 +265,7 @@ extension EvalContext {
 
     func evalMath(_ opnd: ValueExprP, _ op: (Double) -> Any) throws -> Any {
         let o = try eval(opnd)
-        guard let oo = o as? Double else { throw UnfitExprError(expr: opnd, val: o, op: .numeric) }
+        guard let oo = o as? Double else { return Rockstar.mysterious }
         return op(oo)
     }
 
