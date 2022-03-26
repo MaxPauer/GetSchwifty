@@ -139,25 +139,26 @@ extension EvalContext {
         return op(ll, rr)
     }
 
-    func rockDoubleMath(_ op: @escaping (Double, Double) -> Any) -> (Any, Any) -> Any {
+    func rockMath(_ op: @escaping (Double, Double) -> Any) -> (Any, Any) -> Any {
         { (lhs, rhs) in
-            guard let l = lhs as? Double else { return Rockstar.mysterious }
-            guard let r = rhs as? Double else { return Rockstar.mysterious }
-            return op(l, r)
+            switch (lhs, rhs) {
+            case (let l as Double, let r as Double):
+                return op(l, r)
+            case (let l as Double, let r as [Any]):
+                return r.reduce(l, self.rockMath(op))
+            default:
+                return Rockstar.mysterious
+            }
         }
     }
 
     func rockAdd(_ lhs: Any, _ rhs: Any) -> Any {
         switch (lhs, rhs) {
-        case (let l as Double, let r as Double):
-            return l + r
-        case (_, let r as [Any]):
-            return r.reduce(lhs) { rockAdd($0, $1) }
         case (_, is String),
              (is String, _):
             return "\(lhs)\(rhs)"
         default:
-            return Rockstar.mysterious
+            return rockMath {$0 + $1}(lhs, rhs)
         }
     }
 
@@ -224,14 +225,14 @@ extension EvalContext {
         case .nor: return try !(evalTruthiness(expr.args[0]) || evalTruthiness(expr.args[1]))
         case .eq:  return try evalEq(expr.args[0], expr.args[1], {$0 == $1})
         case .neq: return try evalEq(expr.args[0], expr.args[1], {$0 != $1})
-        case .gt:  return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 > $1}))
-        case .lt:  return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 < $1}))
-        case .geq: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 >= $1}))
-        case .leq: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 <= $1}))
+        case .gt:  return try evalMath(expr.args[0], expr.args[1], rockMath({$0 > $1}))
+        case .lt:  return try evalMath(expr.args[0], expr.args[1], rockMath({$0 < $1}))
+        case .geq: return try evalMath(expr.args[0], expr.args[1], rockMath({$0 >= $1}))
+        case .leq: return try evalMath(expr.args[0], expr.args[1], rockMath({$0 <= $1}))
         case .add: return try evalMath(expr.args[0], expr.args[1], rockAdd)
-        case .sub: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 - $1}))
-        case .mul: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 * $1}))
-        case .div: return try evalMath(expr.args[0], expr.args[1], rockDoubleMath({$0 / $1}))
+        case .sub: return try evalMath(expr.args[0], expr.args[1], rockMath({$0 - $1}))
+        case .mul: return try evalMath(expr.args[0], expr.args[1], rockMath({$0 * $1}))
+        case .div: return try evalMath(expr.args[0], expr.args[1], rockMath({$0 / $1}))
         // swiftlint:disable:next force_cast
         case .pop: return try evalPop(expr.args[0] as! LocationExprP)
         // swiftlint:disable:next force_cast

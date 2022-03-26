@@ -168,9 +168,17 @@ final class EvalTests: XCTestCase {
     func testListArith() throws {
         var c = try context(input: """
             let my life be 1 with 2,3,4
+            let it be without 1,2,3,4,5
+            let it be times 2,3
         """)
         try step(&c) {
             try assertVariable($0, "my life", 10.0)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", -5.0)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", -30.0)
         }
     }
 
