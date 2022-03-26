@@ -141,6 +141,7 @@ final class EvalTests: XCTestCase {
             let my life be 5 is greater than \"4\"
             let my life be 5 without \"4\"
             let my life be true without false
+            let it be "a" times 2
             """)
         try step(&c) {
             try assertVariable($0, "my life", 2.0)
@@ -163,6 +164,9 @@ final class EvalTests: XCTestCase {
         try step(&c) {
             try assertVariable($0, "my life", Rockstar.mysterious)
         }
+        try step(&c) {
+            try assertVariable($0, "my life", "aa")
+        }
     }
 
     func testListArith() throws {
@@ -170,6 +174,8 @@ final class EvalTests: XCTestCase {
             let my life be 1 with 2,3,4
             let it be without 1,2,3,4,5
             let it be times 2,3
+            let it be "a" times 2,3
+            let it be with 1,"a","bc"
         """)
         try step(&c) {
             try assertVariable($0, "my life", 10.0)
@@ -179,6 +185,12 @@ final class EvalTests: XCTestCase {
         }
         try step(&c) {
             try assertVariable($0, "my life", -30.0)
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", "aaaaaa")
+        }
+        try step(&c) {
+            try assertVariable($0, "my life", "aaaaaa1.0abc")
         }
     }
 
